@@ -8,33 +8,51 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Birth Rebel Brand Colors */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 25% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Trustworthy Teal */
+    --primary: 185 85% 35%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 185 75% 45%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Warm Coral */
+    --secondary: 15 85% 65%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: Soft Gray */
+    --muted: 210 15% 96%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Warm Peach */
+    --accent: 25 85% 75%;
+    --accent-foreground: 215 25% 15%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 15% 90%;
+    --input: 210 15% 96%;
+    --ring: 185 85% 35%;
+
+    /* Brand Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(185 85% 35%), hsl(185 75% 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(15 85% 65%), hsl(25 85% 75%));
+    --gradient-soft: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 15% 98%));
+
+    /* Brand Shadows */
+    --shadow-soft: 0 4px 20px -8px hsl(185 85% 35% / 0.15);
+    --shadow-glow: 0 8px 40px -12px hsl(185 75% 45% / 0.25);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
 

@@ -1,0 +1,139 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+
+export const WaitlistForm = () => {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    email: "",
+    userType: ""
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email || !formData.userType) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in your email and select your user type.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // TODO: This will be connected to Supabase once the integration is set up
+    console.log("Form submission (will be saved to Supabase):", formData);
+    
+    setIsSubmitted(true);
+    toast({
+      title: "Successfully joined!",
+      description: "Welcome to Birth Rebel. We'll be in touch soon!",
+    });
+  };
+
+  const getThankYouMessage = () => {
+    if (formData.userType === "caregiver") {
+      return "Thank you for joining Birth Rebel! We'll be in touch soon with opportunities to connect with mothers seeking your support.";
+    }
+    return "Thank you for joining Birth Rebel! You'll be among the first to access affordable, continuous support during pregnancy, birth, and beyond.";
+  };
+
+  if (isSubmitted) {
+    return (
+      <section className="py-20 bg-muted/50">
+        <div className="max-w-2xl mx-auto px-6">
+          <Card className="shadow-glow border-primary/20">
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="text-2xl text-primary">Welcome to Birth Rebel!</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                {getThankYouMessage()}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-20 bg-muted/50">
+      <div className="max-w-2xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <p className="text-lg text-foreground bg-gradient-accent bg-clip-text text-transparent font-semibold">
+            Early sign-ups get exclusive early access to the platform and a 20% discount on their first booking.
+          </p>
+        </div>
+
+        <Card className="shadow-glow border-primary/20">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-2xl text-primary">Join the Waitlist</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-sm text-muted-foreground">
+                  First Name (Optional)
+                </Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="border-muted focus:border-primary transition-smooth"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm text-muted-foreground">
+                  Email Address *
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="border-muted focus:border-primary transition-smooth"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-sm text-muted-foreground">I am a... *</Label>
+                <RadioGroup
+                  value={formData.userType}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, userType: value }))}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-muted hover:border-primary/50 transition-smooth">
+                    <RadioGroupItem value="caregiver" id="caregiver" />
+                    <Label htmlFor="caregiver" className="flex-1 cursor-pointer">
+                      Caregiver (doula, lactation consultant, sleep consultant, midwife, etc.)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-muted hover:border-primary/50 transition-smooth">
+                    <RadioGroupItem value="mother" id="mother" />
+                    <Label htmlFor="mother" className="flex-1 cursor-pointer">
+                      Mother / Expectant Mum
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Button type="submit" variant="form" size="lg" className="mt-8">
+                Join the Waitlist
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+};
