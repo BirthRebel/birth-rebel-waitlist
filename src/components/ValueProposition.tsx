@@ -1,29 +1,74 @@
-import { Check } from "lucide-react";
+import { DollarSign, Video, Globe, Users, Calendar, Shield, MessageCircle, Clock } from "lucide-react";
 
 export const ValueProposition = () => {
-  const benefits = [
-    "Affordable, continuous care at one-third the cost of in-person support",
-    "Fully virtual: video calls, scheduling, and secure messaging all under one roof",
-    "Accessible anywhere, anytime — no geographical barriers"
+  const features = [
+    {
+      icon: DollarSign,
+      title: "One-third the cost",
+      description: "Affordable, continuous care at a fraction of in-person support prices"
+    },
+    {
+      icon: Video,
+      title: "Video and messaging",
+      description: "Fully virtual: video calls, scheduling, and secure messaging all in-platform"
+    },
+    {
+      icon: Globe,
+      title: "No geographical barriers",
+      description: "Accessible anywhere, anytime — breaking down location constraints"
+    },
+    {
+      icon: Users,
+      title: "Expert matching",
+      description: "Intelligent pairing with certified doulas and specialists for your needs"
+    },
+    {
+      icon: Calendar,
+      title: "Flexible scheduling",
+      description: "Book appointments and sessions that fit your schedule and lifestyle"
+    },
+    {
+      icon: Shield,
+      title: "Trusted professionals",
+      description: "All caregivers are certified, vetted, and committed to your wellbeing"
+    },
+    {
+      icon: MessageCircle,
+      title: "Continuous support",
+      description: "Stay connected with your care team throughout your maternal journey"
+    },
+    {
+      icon: Clock,
+      title: "24/7 availability",
+      description: "Access support when you need it most, day or night"
+    }
   ];
 
   return (
     <section className="py-20 bg-background">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="grid gap-8 md:gap-12">
-          {benefits.map((benefit, index) => (
-            <div 
-              key={index} 
-              className="flex items-start gap-4 group hover:transform hover:scale-105 transition-smooth"
-            >
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-hero flex items-center justify-center mt-1">
-                <Check className="w-5 h-5 text-primary-foreground" />
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <div 
+                key={index} 
+                className="text-center group hover:transform hover:scale-105 transition-smooth"
+              >
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-smooth">
+                    <Icon className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-smooth">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <p className="text-lg md:text-xl text-foreground leading-relaxed group-hover:text-primary transition-smooth">
-                {benefit}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
