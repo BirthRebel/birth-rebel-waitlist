@@ -47,6 +47,16 @@ export const ValueProposition = () => {
   return (
     <section className="py-20 bg-background">
       <div className="max-w-6xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Why Birth Rebel?
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            We're building a platform that addresses these challenges head-on, 
+            making quality maternal care accessible, affordable, and available to every mother.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
