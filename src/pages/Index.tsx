@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { HeroSection } from "@/components/HeroSection";
+import { ProblemStats } from "@/components/ProblemStats";
 import { ValueProposition } from "@/components/ValueProposition";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { Footer } from "@/components/Footer";
@@ -14,6 +15,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <HeroSection onJoinWaitlist={scrollToWaitlist} />
+      <ProblemStats />
       <ValueProposition />
       <div ref={waitlistRef}>
         <WaitlistForm />
