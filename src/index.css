@@ -8,48 +8,48 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Birth Rebel Brand Colors - Maternal Care Palette */
-    --background: 0 0% 100%;
-    --foreground: 220 15% 20%;
+    /* Birth Rebel Brand Colors - From Main App */
+    --background: 210 20% 98%;
+    --foreground: 210 15% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 20%;
+    --card-foreground: 210 15% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 20%;
+    --popover-foreground: 210 15% 20%;
 
-    /* Primary: Nurturing Teal */
-    --primary: 180 60% 45%;
+    /* Primary: Birth Rebel Orange */
+    --primary: 16 90% 48%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 180 50% 55%;
+    --primary-glow: 16 80% 58%;
 
-    /* Secondary: Warm Rose */
-    --secondary: 345 75% 65%;
+    /* Secondary: Birth Rebel Green */
+    --secondary: 88 50% 45%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted: Soft Neutral */
-    --muted: 210 20% 96%;
-    --muted-foreground: 220 12% 55%;
+    /* Muted: Soft Gray */
+    --muted: 210 15% 95%;
+    --muted-foreground: 210 10% 50%;
 
-    /* Accent: Gentle Lavender */
-    --accent: 260 40% 85%;
-    --accent-foreground: 220 15% 20%;
+    /* Accent: Light Orange */
+    --accent: 16 75% 90%;
+    --accent-foreground: 210 15% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 15% 90%;
     --input: 210 15% 96%;
-    --ring: 180 60% 45%;
+    --ring: 16 90% 48%;
 
     /* Brand Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(180 60% 45%), hsl(180 50% 55%));
-    --gradient-accent: linear-gradient(135deg, hsl(345 75% 65%), hsl(260 40% 85%));
-    --gradient-soft: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(16 90% 48%), hsl(16 80% 58%));
+    --gradient-accent: linear-gradient(135deg, hsl(16 90% 48%), hsl(88 50% 45%));
+    --gradient-soft: linear-gradient(180deg, hsl(210 20% 98%), hsl(210 15% 95%));
 
     /* Brand Shadows */
-    --shadow-soft: 0 4px 20px -8px hsl(180 60% 45% / 0.15);
-    --shadow-glow: 0 8px 40px -12px hsl(180 50% 55% / 0.25);
+    --shadow-soft: 0 4px 20px -8px hsl(16 90% 48% / 0.15);
+    --shadow-glow: 0 8px 40px -12px hsl(16 80% 58% / 0.25);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
