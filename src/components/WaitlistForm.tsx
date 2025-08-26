@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const WaitlistForm = () => {
   const [formData, setFormData] = useState({
@@ -13,9 +14,10 @@ export const WaitlistForm = () => {
     userType: ""
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.email || !formData.userType) {
@@ -27,14 +29,46 @@ export const WaitlistForm = () => {
       return;
     }
 
-    // TODO: This will be connected to Supabase once the integration is set up
-    console.log("Form submission (will be saved to Supabase):", formData);
-    
-    setIsSubmitted(true);
-    toast({
-      title: "Successfully joined!",
-      description: "Welcome to Birth Rebel. We'll be in touch soon!",
-    });
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('waitlist_signups')
+        .insert([
+          {
+            first_name: formData.firstName || null,
+            email: formData.email,
+            user_type: formData.userType as 'caregiver' | 'mother',
+            user_agent: navigator.userAgent,
+            referrer: document.referrer || null
+          }
+        ]);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        toast({
+          title: "Signup Failed",
+          description: "There was an error joining the waitlist. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setIsSubmitted(true);
+      toast({
+        title: "Successfully joined!",
+        description: "Welcome to Birth Rebel. We'll be in touch soon!",
+      });
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Signup Failed",
+        description: "There was an error joining the waitlist. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getThankYouMessage = () => {
@@ -127,8 +161,14 @@ export const WaitlistForm = () => {
                 </RadioGroup>
               </div>
 
-              <Button type="submit" variant="form" size="lg" className="mt-8">
-                Join the Waitlist
+              <Button 
+                type="submit" 
+                variant="form" 
+                size="lg" 
+                className="mt-8"
+                disabled={isLoading}
+              >
+                {isLoading ? "Joining..." : "Join the Waitlist"}
               </Button>
             </form>
           </CardContent>
