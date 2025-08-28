@@ -17,16 +17,6 @@ export const SolutionStats = () => {
     }
   ];
 
-  const demandStats = [
-    {
-      stat: "~700",
-      description: "Active doulas in the UK serving only 2,000 births per year"
-    },
-    {
-      stat: "~40%",
-      description: "Year on year increase in enquiries reported by UK doula directories"
-    }
-  ];
 
   return (
     <section className="py-20 bg-muted/30">
@@ -56,30 +46,6 @@ export const SolutionStats = () => {
           </div>
         </div>
 
-        {/* Demand Section */}
-        <div className="text-center">
-          <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-8 border-t border-b border-muted py-4">
-            Demand is increasing
-          </h3>
-          
-          <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-            {demandStats.map((item, index) => (
-              <div 
-                key={index}
-                className="text-center group hover:transform hover:scale-105 transition-smooth"
-              >
-                <div className="w-32 h-32 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-smooth">
-                  <span className="text-3xl font-bold text-primary">
-                    {item.stat}
-                  </span>
-                </div>
-                <p className="text-foreground font-medium leading-relaxed max-w-sm mx-auto">
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
