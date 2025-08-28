@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const WaitlistForm = () => {
   const [formData, setFormData] = useState({
     firstName: "",
+    lastName: "",
     email: "",
     userType: ""
   });
@@ -20,10 +21,10 @@ export const WaitlistForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.userType) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.userType) {
       toast({
         title: "Missing Information",
-        description: "Please fill in your email and select your user type.",
+        description: "Please fill in all required fields.",
         variant: "destructive"
       });
       return;
@@ -36,7 +37,8 @@ export const WaitlistForm = () => {
         .from('waitlist_signups')
         .insert([
           {
-            first_name: formData.firstName || null,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
             email: formData.email,
             user_type: formData.userType as 'caregiver' | 'mother',
             user_agent: navigator.userAgent,
@@ -114,13 +116,28 @@ export const WaitlistForm = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="text-sm text-muted-foreground">
-                  First Name (Optional)
+                  First Name *
                 </Label>
                 <Input
                   id="firstName"
                   type="text"
+                  required
                   value={formData.firstName}
                   onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="border-muted focus:border-primary transition-smooth"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-sm text-muted-foreground">
+                  Last Name *
+                </Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
                   className="border-muted focus:border-primary transition-smooth"
                 />
               </div>

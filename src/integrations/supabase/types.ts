@@ -20,6 +20,7 @@ export type Database = {
           email: string
           first_name: string | null
           id: string
+          last_name: string | null
           referrer: string | null
           user_agent: string | null
           user_type: Database["public"]["Enums"]["waitlist_user_type"]
@@ -29,6 +30,7 @@ export type Database = {
           email: string
           first_name?: string | null
           id?: string
+          last_name?: string | null
           referrer?: string | null
           user_agent?: string | null
           user_type: Database["public"]["Enums"]["waitlist_user_type"]
@@ -38,6 +40,7 @@ export type Database = {
           email?: string
           first_name?: string | null
           id?: string
+          last_name?: string | null
           referrer?: string | null
           user_agent?: string | null
           user_type?: Database["public"]["Enums"]["waitlist_user_type"]
