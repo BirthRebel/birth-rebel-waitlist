@@ -25,7 +25,7 @@ export const HeroSection = ({ onJoinWaitlist }: HeroSectionProps) => {
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-          Birth Rebel is a fully virtual maternal care platform — connecting mothers 
+          Birth Rebel is a fully virtual maternal care platform — connecting new and expectant mothers 
           with trusted doulas, lactation consultants, sleep consultants, and more.
         </p>
         
