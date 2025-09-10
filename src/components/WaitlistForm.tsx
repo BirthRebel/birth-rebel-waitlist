@@ -104,7 +104,7 @@ export const WaitlistForm = () => {
       <div className="max-w-2xl mx-auto px-6">
         <div className="text-center mb-12">
           <p className="text-lg text-foreground bg-gradient-accent bg-clip-text text-transparent font-semibold">
-            Early sign-ups get exclusive early access to the platform and a 20% discount on their first booking.
+            Join the waitlist to register your interest and be the first to know when we launch.
           </p>
         </div>
 
