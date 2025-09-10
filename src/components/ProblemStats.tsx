@@ -18,10 +18,6 @@ export const ProblemStats = () => {
             <p className="text-xl md:text-2xl text-primary font-semibold mb-4">
               Trust in maternal care is broken
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              The current healthcare system is failing mothers when they need support most. 
-              These statistics reveal the urgent need for accessible, continuous maternal care.
-            </p>
           </div>
 
           <div className="space-y-4">
