@@ -7,19 +7,18 @@ import { WaitlistForm } from "@/components/WaitlistForm";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
-  const waitlistRef = useRef<HTMLDivElement>(null);
+  const mailingListRef = useRef<HTMLDivElement>(null);
 
-  const scrollToWaitlist = () => {
-    waitlistRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToMailingList = () => {
+    mailingListRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
     <div className="min-h-screen">
-      <HeroSection onJoinWaitlist={scrollToWaitlist} />
-      <ProblemStats />
-      <SolutionStats />
+      <HeroSection onJoinMailingList={scrollToMailingList} />
+...
       <ValueProposition />
-      <div ref={waitlistRef}>
+      <div ref={mailingListRef}>
         <WaitlistForm />
       </div>
       <Footer />

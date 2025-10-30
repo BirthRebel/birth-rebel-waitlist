@@ -55,7 +55,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      waitlist_user_type: "caregiver" | "mother"
+      waitlist_user_type: "caregiver" | "mother" | "interested"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -183,7 +183,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      waitlist_user_type: ["caregiver", "mother"],
+      waitlist_user_type: ["caregiver", "mother", "interested"],
     },
   },
 } as const

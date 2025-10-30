@@ -40,7 +40,7 @@ export const WaitlistForm = () => {
             first_name: formData.firstName,
             last_name: formData.lastName,
             email: formData.email,
-            user_type: formData.userType as 'caregiver' | 'mother',
+            user_type: formData.userType as 'caregiver' | 'mother' | 'interested',
             user_agent: navigator.userAgent,
             referrer: document.referrer || null
           }
@@ -50,7 +50,7 @@ export const WaitlistForm = () => {
         console.error('Supabase error:', error);
         toast({
           title: "Signup Failed",
-          description: "There was an error joining the waitlist. Please try again.",
+          description: "There was an error joining the mailing list. Please try again.",
           variant: "destructive"
         });
         return;
@@ -65,7 +65,7 @@ export const WaitlistForm = () => {
       console.error('Unexpected error:', error);
       toast({
         title: "Signup Failed",
-        description: "There was an error joining the waitlist. Please try again.",
+        description: "There was an error joining the mailing list. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -104,13 +104,13 @@ export const WaitlistForm = () => {
       <div className="max-w-2xl mx-auto px-6">
         <div className="text-center mb-12">
           <p className="text-lg text-foreground bg-gradient-accent bg-clip-text text-transparent font-semibold">
-            Join the waitlist to register your interest and be the first to know when we launch.
+            Join the mailing list to register your interest and be the first to know when we launch.
           </p>
         </div>
 
         <Card className="shadow-glow border-primary/20">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl text-primary">Join the Waitlist</CardTitle>
+            <CardTitle className="text-2xl text-primary">Join the Mailing List</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -175,6 +175,12 @@ export const WaitlistForm = () => {
                       Mother / Expectant Mum
                     </Label>
                   </div>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg border border-muted hover:border-primary/50 transition-smooth">
+                    <RadioGroupItem value="interested" id="interested" />
+                    <Label htmlFor="interested" className="flex-1 cursor-pointer">
+                      Neither, I'm just interested
+                    </Label>
+                  </div>
                 </RadioGroup>
               </div>
 
@@ -185,7 +191,7 @@ export const WaitlistForm = () => {
                 className="mt-8"
                 disabled={isLoading}
               >
-                {isLoading ? "Joining..." : "Join the Waitlist"}
+                {isLoading ? "Joining..." : "Join the Mailing List"}
               </Button>
             </form>
           </CardContent>

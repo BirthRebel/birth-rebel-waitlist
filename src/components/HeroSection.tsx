@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-image.jpg";
 
 interface HeroSectionProps {
-  onJoinWaitlist: () => void;
+  onJoinMailingList: () => void;
 }
 
-export const HeroSection = ({ onJoinWaitlist }: HeroSectionProps) => {
+export const HeroSection = ({ onJoinMailingList }: HeroSectionProps) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-gradient-soft overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -32,10 +32,10 @@ export const HeroSection = ({ onJoinWaitlist }: HeroSectionProps) => {
         <Button 
           variant="hero" 
           size="xl" 
-          onClick={onJoinWaitlist}
+          onClick={onJoinMailingList}
           className="animate-pulse hover:animate-none"
         >
-          Join the Waitlist
+          Join the Mailing List
         </Button>
       </div>
     </section>
