@@ -172,7 +172,7 @@ export const WaitlistForm = () => {
                   <div className="flex items-center space-x-3 p-3 rounded-lg border border-muted hover:border-primary/50 transition-smooth">
                     <RadioGroupItem value="mother" id="mother" />
                     <Label htmlFor="mother" className="flex-1 cursor-pointer">
-                      Mother / Expectant Mum
+                      New / Expectant Mother
                     </Label>
                   </div>
                   <div className="flex items-center space-x-3 p-3 rounded-lg border border-muted hover:border-primary/50 transition-smooth">
