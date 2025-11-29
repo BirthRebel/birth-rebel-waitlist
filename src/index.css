@@ -8,53 +8,53 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Birth Rebel Brand Colors - From Main App */
-    --background: 210 20% 98%;
-    --foreground: 210 15% 20%;
+    /* Modern, Clean Palette */
+    --background: 0 0% 99%;
+    --foreground: 220 20% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 15% 20%;
+    --card-foreground: 220 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 15% 20%;
+    --popover-foreground: 220 20% 15%;
 
-    /* Primary: Birth Rebel Orange */
-    --primary: 16 90% 48%;
+    /* Primary: Soft Coral/Peachy */
+    --primary: 15 85% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 16 80% 58%;
+    --primary-glow: 15 75% 70%;
 
-    /* Secondary: Birth Rebel Green */
-    --secondary: 88 50% 45%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: Soft Periwinkle Blue */
+    --secondary: 230 60% 70%;
+    --secondary-foreground: 220 20% 15%;
 
-    /* Muted: Soft Gray */
-    --muted: 210 15% 95%;
-    --muted-foreground: 210 10% 50%;
+    /* Muted: Very Light Gray */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 45%;
 
-    /* Accent: Light Orange */
-    --accent: 16 75% 90%;
-    --accent-foreground: 210 15% 20%;
+    /* Accent: Soft Pink */
+    --accent: 340 70% 85%;
+    --accent-foreground: 220 20% 15%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 15% 90%;
-    --input: 210 15% 96%;
-    --ring: 16 90% 48%;
+    --border: 220 15% 92%;
+    --input: 220 15% 96%;
+    --ring: 15 85% 60%;
 
-    /* Brand Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(16 90% 48%), hsl(16 80% 58%));
-    --gradient-accent: linear-gradient(135deg, hsl(16 90% 48%), hsl(88 50% 45%));
-    --gradient-soft: linear-gradient(180deg, hsl(210 20% 98%), hsl(210 15% 95%));
+    /* Modern Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(15 85% 60%), hsl(340 70% 75%));
+    --gradient-accent: linear-gradient(135deg, hsl(230 60% 70%), hsl(340 70% 85%));
+    --gradient-soft: linear-gradient(180deg, hsl(0 0% 99%), hsl(220 20% 97%));
 
-    /* Brand Shadows */
-    --shadow-soft: 0 4px 20px -8px hsl(16 90% 48% / 0.15);
-    --shadow-glow: 0 8px 40px -12px hsl(16 80% 58% / 0.25);
+    /* Soft, Modern Shadows */
+    --shadow-soft: 0 2px 20px -5px hsl(220 20% 15% / 0.08);
+    --shadow-glow: 0 8px 30px -10px hsl(15 85% 60% / 0.2);
 
-    /* Transitions */
+    /* Smooth Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
 
