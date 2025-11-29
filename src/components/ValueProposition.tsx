@@ -52,13 +52,13 @@ export const ValueProposition = () => {
       <img 
         src={peachImg} 
         alt="" 
-        className="absolute top-16 right-12 w-24 md:w-32 opacity-40" 
+        className="absolute top-16 right-12 w-48 md:w-60 opacity-30" 
         style={{ transform: 'rotate(-10deg)' }}
       />
       <img 
         src={lemonImg} 
         alt="" 
-        className="absolute bottom-20 left-16 w-20 md:w-28 opacity-40" 
+        className="absolute bottom-20 left-16 w-36 md:w-44 opacity-30" 
         style={{ transform: 'rotate(20deg)' }}
       />
       <div className="max-w-6xl mx-auto px-6 relative z-10">
