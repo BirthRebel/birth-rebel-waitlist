@@ -25,7 +25,7 @@ export const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-20 bg-muted/30 px-6">
+    <section className="py-20 px-6" style={{ backgroundColor: '#E2725B' }}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
@@ -44,7 +44,7 @@ export const HowItWorks = () => {
             >
               <div className="flex gap-6">
                 <div className="flex-shrink-0">
-                  <span className="text-5xl font-display font-bold text-primary/20 group-hover:text-primary/40 transition-smooth">
+                  <span className="text-5xl font-display font-bold transition-smooth" style={{ color: '#E8C6A8' }}>
                     {step.number}
                   </span>
                 </div>
