@@ -1,37 +1,8 @@
 import { Button } from "@/components/ui/button";
-import strawberryImg from "@/assets/strawberry-illustration.png";
-import peachImg from "@/assets/peach-illustration.png";
-import orangeImg from "@/assets/orange-illustration.png";
-import lemonImg from "@/assets/lemon-illustration.png";
 
 export const HeroSection = () => {
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#9CAF88' }}>
-      {/* Decorative fruit overlays - pregnancy week comparison style */}
-      <img 
-        src={strawberryImg} 
-        alt="" 
-        className="absolute top-20 left-10 w-32 md:w-40 opacity-70 animate-float" 
-        style={{ transform: 'rotate(-15deg)' }}
-      />
-      <img 
-        src={peachImg} 
-        alt="" 
-        className="absolute top-24 right-12 w-48 md:w-64 opacity-60 animate-float-delayed" 
-        style={{ transform: 'rotate(10deg)', animationDelay: '1s' }}
-      />
-      <img 
-        src={orangeImg} 
-        alt="" 
-        className="absolute bottom-20 left-16 w-56 md:w-72 opacity-65 animate-float" 
-        style={{ transform: 'rotate(25deg)', animationDelay: '2s' }}
-      />
-      <img 
-        src={lemonImg} 
-        alt="" 
-        className="absolute bottom-28 right-20 w-36 md:w-48 opacity-70 animate-float-delayed" 
-        style={{ transform: 'rotate(-20deg)', animationDelay: '0.5s' }}
-      />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight" style={{ color: '#DED9CD' }}>
           Rebuilding Trust in{" "}
