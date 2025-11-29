@@ -11,7 +11,7 @@ export const HeroSection = () => {
           </span>
         </h1>
         
-        <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed" style={{ color: '#E8C6A8' }}>
           Birth Rebel is a fully virtual maternal care platform — connecting new and expectant mothers 
           with trusted doulas, lactation consultants, sleep consultants, and more.
         </p>
@@ -20,7 +20,7 @@ export const HeroSection = () => {
           <p className="text-2xl md:text-3xl font-semibold text-primary mb-3">
             We're in pilot
           </p>
-          <p className="text-base md:text-lg text-muted-foreground">
+          <p className="text-base md:text-lg" style={{ color: '#E8C6A8' }}>
             We're building out the full platform, but in the meantime you can use our AI-powered matching tool to connect with trusted caregivers.
           </p>
         </div>
