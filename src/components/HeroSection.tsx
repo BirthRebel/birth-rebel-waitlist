@@ -26,7 +26,7 @@ export const HeroSection = () => {
         </div>
         
         <Button 
-          variant="hero" 
+          className="bg-[#E2725B] text-white hover:bg-[#E2725B]/90 shadow-glow transform hover:scale-105"
           size="xl" 
           onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
         >
