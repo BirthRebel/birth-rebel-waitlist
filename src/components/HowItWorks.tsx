@@ -1,0 +1,64 @@
+export const HowItWorks = () => {
+  const steps = [
+    {
+      number: "01",
+      title: "Answer a set of questions",
+      description: "Get a better idea of what you are looking for. This should take about 5 minutes. All information is confidential and securely stored."
+    },
+    {
+      number: "02",
+      title: "Get paired with the right caregiver",
+      description: "Whether it's antenatal, active birth, postnatal, feeding support, sleep advice or just a general chat, we'll match you to the right caregiver based on your needs."
+    },
+    {
+      number: "03",
+      title: "Review your match",
+      description: "We will send you a voice-enabled bio of your caregiver so that you have a chance to review before you commit."
+    },
+    {
+      number: "04",
+      title: "Start your journey",
+      description: "Book in your first call with your caregiver. If at any time your circumstances change, we can work with you to find someone more suitable."
+    }
+  ];
+
+  return (
+    <section className="py-20 bg-muted/30 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
+            How It Works
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            For new and expectant parents
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+          {steps.map((step, index) => (
+            <div 
+              key={index}
+              className="group relative"
+            >
+              <div className="flex gap-6">
+                <div className="flex-shrink-0">
+                  <span className="text-5xl font-display font-bold text-primary/20 group-hover:text-primary/40 transition-smooth">
+                    {step.number}
+                  </span>
+                </div>
+                <div className="pt-2">
+                  <h3 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
