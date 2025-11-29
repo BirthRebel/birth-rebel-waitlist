@@ -13,11 +13,11 @@ const Index = () => {
         <HeroSection />
       </section>
       
-      <section className="min-h-screen snap-start">
+      <section className="snap-start">
         <QuoteSection />
       </section>
       
-      <section className="min-h-screen snap-start">
+      <section className="snap-start">
         <HowItWorks />
       </section>
       
