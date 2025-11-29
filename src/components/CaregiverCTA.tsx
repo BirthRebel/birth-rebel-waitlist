@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 
 export const CaregiverCTA = () => {
   return (
-    <section className="h-full flex items-center justify-center bg-caregiver-bg px-6">
+    <section className="flex items-center justify-center bg-caregiver-bg px-6 py-20">
       <div className="w-full max-w-4xl text-center">
         <h2 className="text-4xl md:text-6xl font-display font-bold text-caregiver-text mb-6 leading-tight">
           Join Our Caregiver Network
