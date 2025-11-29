@@ -58,6 +58,9 @@ All colors MUST be HSL.
     --caregiver-bg: 204 19% 26%;
     --caregiver-text: 42 26% 84%;
     --caregiver-cta: 10 70% 62%;
+    
+    /* Value Proposition Section */
+    --value-bg: 42 26% 84%;
 
     --radius: 1rem;
 
