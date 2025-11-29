@@ -17,7 +17,7 @@ export const HeroSection = () => {
         </p>
         
         <div className="mb-8 max-w-2xl mx-auto">
-          <p className="text-2xl md:text-3xl font-semibold mb-3" style={{ color: '#E2725B' }}>
+          <p className="text-2xl md:text-3xl font-semibold mb-3" style={{ color: '#DED9CD' }}>
             We're in pilot
           </p>
           <p className="text-lg md:text-xl" style={{ color: '#36454F' }}>
