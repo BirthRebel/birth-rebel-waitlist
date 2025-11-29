@@ -3,7 +3,7 @@ import heroImage from "@/assets/hero-image.jpg";
 
 export const HeroSection = () => {
   return (
-    <section className="relative h-full flex items-center justify-center bg-gradient-soft overflow-hidden">
+    <section className="relative h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#9CAF88' }}>
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
