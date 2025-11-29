@@ -1,11 +1,7 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-image.jpg";
 
-interface HeroSectionProps {
-  onJoinMailingList: () => void;
-}
-
-export const HeroSection = ({ onJoinMailingList }: HeroSectionProps) => {
+export const HeroSection = () => {
   return (
     <section className="relative h-full flex items-center justify-center bg-gradient-soft overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -29,25 +25,14 @@ export const HeroSection = ({ onJoinMailingList }: HeroSectionProps) => {
           with trusted doulas, lactation consultants, sleep consultants, and more.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button 
-            variant="hero" 
-            size="xl" 
-            onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
-            className="animate-pulse hover:animate-none"
-          >
-            Find Your Maternity Caregiver
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="xl" 
-            onClick={onJoinMailingList}
-            className="border-2 hover:bg-background/10"
-          >
-            Join as a Caregiver
-          </Button>
-        </div>
+        <Button 
+          variant="hero" 
+          size="xl" 
+          onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
+          className="animate-pulse hover:animate-none"
+        >
+          Find Your Maternity Caregiver
+        </Button>
       </div>
     </section>
   );
