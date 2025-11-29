@@ -71,6 +71,9 @@ export default {
 					bg: 'hsl(var(--caregiver-bg))',
 					text: 'hsl(var(--caregiver-text))',
 					cta: 'hsl(var(--caregiver-cta))'
+				},
+				value: {
+					bg: 'hsl(var(--value-bg))'
 				}
 			},
 			backgroundImage: {
