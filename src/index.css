@@ -54,6 +54,11 @@ All colors MUST be HSL.
     /* Smooth Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Caregiver Section Colors */
+    --caregiver-bg: 204 19% 26%;
+    --caregiver-text: 42 26% 84%;
+    --caregiver-cta: 10 70% 62%;
+
     --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;

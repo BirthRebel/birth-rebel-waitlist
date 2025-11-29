@@ -66,6 +66,11 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				caregiver: {
+					bg: 'hsl(var(--caregiver-bg))',
+					text: 'hsl(var(--caregiver-text))',
+					cta: 'hsl(var(--caregiver-cta))'
 				}
 			},
 			backgroundImage: {
