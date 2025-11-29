@@ -8,13 +8,13 @@ export const QuoteSection = () => {
       <img 
         src={strawberryImg} 
         alt="" 
-        className="absolute top-8 left-8 w-16 md:w-20 opacity-60" 
+        className="absolute top-8 left-8 w-24 md:w-32 opacity-50" 
         style={{ transform: 'rotate(15deg)' }}
       />
       <img 
         src={orangeImg} 
         alt="" 
-        className="absolute bottom-8 right-8 w-20 md:w-24 opacity-60" 
+        className="absolute bottom-8 right-8 w-40 md:w-48 opacity-50" 
         style={{ transform: 'rotate(-15deg)' }}
       />
       <div className="max-w-4xl mx-auto text-center">
