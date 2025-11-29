@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/HeroSection";
+import { CaregiverCTA } from "@/components/CaregiverCTA";
 import { ProblemStats } from "@/components/ProblemStats";
 import { SolutionStats } from "@/components/SolutionStats";
 import { ValueProposition } from "@/components/ValueProposition";
@@ -9,6 +10,10 @@ const Index = () => {
     <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
       <section className="h-screen snap-start">
         <HeroSection />
+      </section>
+      
+      <section className="h-screen snap-start">
+        <CaregiverCTA />
       </section>
       
       <section className="min-h-screen snap-start">
