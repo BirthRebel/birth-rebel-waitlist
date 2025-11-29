@@ -4,9 +4,9 @@ export const HeroSection = () => {
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#9CAF88' }}>
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight" style={{ color: '#E2725B' }}>
+        <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight" style={{ color: '#DED9CD' }}>
           Rebuilding Trust in{" "}
-          <span style={{ color: '#E2725B' }}>
+          <span style={{ color: '#DED9CD' }}>
             Maternal Care
           </span>
         </h1>
