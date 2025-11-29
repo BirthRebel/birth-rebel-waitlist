@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { HeroSection } from "@/components/HeroSection";
-import { FormlessSection } from "@/components/FormlessSection";
 import { ProblemStats } from "@/components/ProblemStats";
 import { SolutionStats } from "@/components/SolutionStats";
 import { ValueProposition } from "@/components/ValueProposition";
@@ -18,10 +17,6 @@ const Index = () => {
     <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
       <section className="h-screen snap-start">
         <HeroSection onJoinMailingList={scrollToMailingList} />
-      </section>
-      
-      <section className="h-screen snap-start">
-        <FormlessSection />
       </section>
       
       <section className="min-h-screen snap-start" ref={mailingListRef}>
