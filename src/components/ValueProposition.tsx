@@ -52,8 +52,7 @@ export const ValueProposition = () => {
             What's Coming soon.
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            We're building a platform that addresses these challenges head-on, 
-            making quality maternal care accessible, affordable, and available to every mother.
+            We're building a fully virtual end-to-end maternity care platform, making quality maternal care accessible, affordable, and available to every mother.
           </p>
         </div>
 
