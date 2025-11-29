@@ -1,4 +1,6 @@
 import { DollarSign, Video, Globe, Users, Calendar, Shield, MessageCircle, Clock } from "lucide-react";
+import peachImg from "@/assets/peach-illustration.png";
+import lemonImg from "@/assets/lemon-illustration.png";
 
 export const ValueProposition = () => {
   const features = [
@@ -45,8 +47,21 @@ export const ValueProposition = () => {
   ];
 
   return (
-    <section className="py-20 bg-value-bg">
-      <div className="max-w-6xl mx-auto px-6">
+    <section className="relative py-20 bg-value-bg overflow-hidden">
+      {/* Decorative fruit overlays */}
+      <img 
+        src={peachImg} 
+        alt="" 
+        className="absolute top-16 right-12 w-24 md:w-32 opacity-40" 
+        style={{ transform: 'rotate(-10deg)' }}
+      />
+      <img 
+        src={lemonImg} 
+        alt="" 
+        className="absolute bottom-20 left-16 w-20 md:w-28 opacity-40" 
+        style={{ transform: 'rotate(20deg)' }}
+      />
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             What's Coming soon.

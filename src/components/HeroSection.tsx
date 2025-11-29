@@ -1,8 +1,37 @@
 import { Button } from "@/components/ui/button";
+import strawberryImg from "@/assets/strawberry-illustration.png";
+import peachImg from "@/assets/peach-illustration.png";
+import orangeImg from "@/assets/orange-illustration.png";
+import lemonImg from "@/assets/lemon-illustration.png";
 
 export const HeroSection = () => {
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#9CAF88' }}>
+      {/* Decorative fruit overlays */}
+      <img 
+        src={strawberryImg} 
+        alt="" 
+        className="absolute top-20 left-10 w-24 md:w-32 opacity-80 animate-float" 
+        style={{ transform: 'rotate(-15deg)' }}
+      />
+      <img 
+        src={peachImg} 
+        alt="" 
+        className="absolute top-32 right-16 w-28 md:w-36 opacity-70 animate-float-delayed" 
+        style={{ transform: 'rotate(10deg)', animationDelay: '1s' }}
+      />
+      <img 
+        src={orangeImg} 
+        alt="" 
+        className="absolute bottom-24 left-20 w-32 md:w-40 opacity-75 animate-float" 
+        style={{ transform: 'rotate(25deg)', animationDelay: '2s' }}
+      />
+      <img 
+        src={lemonImg} 
+        alt="" 
+        className="absolute bottom-32 right-24 w-20 md:w-28 opacity-80 animate-float-delayed" 
+        style={{ transform: 'rotate(-20deg)', animationDelay: '0.5s' }}
+      />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight" style={{ color: '#DED9CD' }}>
           Rebuilding Trust in{" "}
