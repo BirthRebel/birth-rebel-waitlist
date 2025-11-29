@@ -103,14 +103,17 @@ export const WaitlistForm = () => {
     <section className="py-20 bg-muted/50">
       <div className="max-w-2xl mx-auto px-6">
         <div className="text-center mb-12">
-          <p className="text-lg text-foreground bg-gradient-accent bg-clip-text text-transparent font-semibold">
-            Join the mailing list to register your interest and be the first to know when we launch.
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Are You a Caregiver?
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Join our mailing list to connect with mothers seeking your support
           </p>
         </div>
 
         <Card className="shadow-glow border-primary/20">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl text-primary">Join the Mailing List</CardTitle>
+            <CardTitle className="text-2xl text-primary">Register Your Interest</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
