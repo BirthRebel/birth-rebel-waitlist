@@ -19,9 +19,9 @@ All colors MUST be HSL.
     --popover-foreground: 220 20% 15%;
 
     /* Primary: Soft Coral/Peachy */
-    --primary: 15 85% 60%;
+    --primary: 10 70% 62%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 15 75% 70%;
+    --primary-glow: 10 65% 72%;
 
     /* Secondary: Soft Periwinkle Blue */
     --secondary: 230 60% 70%;
@@ -40,16 +40,16 @@ All colors MUST be HSL.
 
     --border: 220 15% 92%;
     --input: 220 15% 96%;
-    --ring: 15 85% 60%;
+    --ring: 10 70% 62%;
 
     /* Modern Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(15 85% 60%), hsl(340 70% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(10 70% 62%), hsl(340 70% 75%));
     --gradient-accent: linear-gradient(135deg, hsl(230 60% 70%), hsl(340 70% 85%));
     --gradient-soft: linear-gradient(180deg, hsl(0 0% 99%), hsl(220 20% 97%));
 
     /* Soft, Modern Shadows */
     --shadow-soft: 0 2px 20px -5px hsl(220 20% 15% / 0.08);
-    --shadow-glow: 0 8px 30px -10px hsl(15 85% 60% / 0.2);
+    --shadow-glow: 0 8px 30px -10px hsl(10 70% 62% / 0.2);
 
     /* Smooth Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
