@@ -2,7 +2,6 @@ import { HeroSection } from "@/components/HeroSection";
 import { QuoteSection } from "@/components/QuoteSection";
 import { HowItWorks } from "@/components/HowItWorks";
 import { CaregiverCTA } from "@/components/CaregiverCTA";
-import { ProblemStats } from "@/components/ProblemStats";
 import { SolutionStats } from "@/components/SolutionStats";
 import { ValueProposition } from "@/components/ValueProposition";
 import { Footer } from "@/components/Footer";
@@ -24,10 +23,6 @@ const Index = () => {
       
       <section className="h-screen snap-start">
         <CaregiverCTA />
-      </section>
-      
-      <section className="min-h-screen snap-start">
-        <ProblemStats />
       </section>
       
       <section className="min-h-screen snap-start">
