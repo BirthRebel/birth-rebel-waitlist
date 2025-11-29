@@ -7,28 +7,28 @@ import { Footer } from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
-      <section className="h-screen snap-start">
+    <div className="h-screen overflow-y-scroll">
+      <section className="h-screen">
         <HeroSection />
       </section>
       
-      <section className="snap-start">
+      <section>
         <QuoteSection />
       </section>
       
-      <section className="snap-start">
+      <section>
         <HowItWorks />
       </section>
       
-      <section className="snap-start">
+      <section>
         <CaregiverCTA />
       </section>
       
-      <section className="min-h-screen snap-start">
+      <section className="min-h-screen">
         <ValueProposition />
       </section>
       
-      <footer className="snap-start">
+      <footer>
         <Footer />
       </footer>
     </div>
