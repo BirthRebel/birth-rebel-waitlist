@@ -1,17 +1,8 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-image.jpg";
 
 export const HeroSection = () => {
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#9CAF88' }}>
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={heroImage} 
-          alt="Birth Rebel maternal care platform" 
-          className="w-full h-full object-cover opacity-10"
-        />
-      </div>
-      
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h1 className="text-5xl md:text-7xl font-display font-bold text-foreground mb-6 leading-tight">
           Rebuilding Trust in{" "}
