@@ -25,6 +25,15 @@ export const HeroSection = () => {
           with trusted doulas, lactation consultants, sleep consultants, and more.
         </p>
         
+        <div className="mb-8 max-w-2xl mx-auto">
+          <p className="text-2xl md:text-3xl font-semibold text-primary mb-3">
+            We're in pilot
+          </p>
+          <p className="text-base md:text-lg text-muted-foreground">
+            We're building out the full platform, but in the meantime mothers can use our AI-powered matching tool to connect with trusted caregivers.
+          </p>
+        </div>
+        
         <Button 
           variant="hero" 
           size="xl" 
