@@ -14,14 +14,30 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <HeroSection onJoinMailingList={scrollToMailingList} />
-...
-      <ValueProposition />
-      <div ref={mailingListRef}>
+    <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
+      <section className="h-screen snap-start">
+        <HeroSection onJoinMailingList={scrollToMailingList} />
+      </section>
+      
+      <section className="min-h-screen snap-start">
+        <ProblemStats />
+      </section>
+      
+      <section className="min-h-screen snap-start">
+        <SolutionStats />
+      </section>
+      
+      <section className="min-h-screen snap-start">
+        <ValueProposition />
+      </section>
+      
+      <section className="min-h-screen snap-start" ref={mailingListRef}>
         <WaitlistForm />
-      </div>
-      <Footer />
+      </section>
+      
+      <footer className="snap-start">
+        <Footer />
+      </footer>
     </div>
   );
 };
