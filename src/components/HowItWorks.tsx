@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export const HowItWorks = () => {
   const steps = [
     {
@@ -57,6 +59,16 @@ export const HowItWorks = () => {
               </div>
             </div>
           ))}
+        </div>
+        
+        <div className="text-center mt-12">
+          <Button 
+            variant="hero" 
+            size="xl" 
+            onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
+          >
+            Find Your Maternity Caregiver
+          </Button>
         </div>
       </div>
     </section>
