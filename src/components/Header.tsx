@@ -7,7 +7,7 @@ export const Header = () => {
         <img 
           src={logo} 
           alt="Birth Rebel" 
-          className="h-24 md:h-32 lg:h-40"
+          className="h-32 md:h-40 lg:h-48"
         />
       </div>
     </header>
