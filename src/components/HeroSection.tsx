@@ -20,7 +20,7 @@ export const HeroSection = () => {
           <p className="text-2xl md:text-3xl font-semibold text-foreground mb-3">
             We're in pilot
           </p>
-          <p className="text-base md:text-lg" style={{ color: '#E2725B' }}>
+          <p className="text-lg md:text-xl" style={{ color: '#E2725B' }}>
             We're building out the full platform, but in the meantime you can use our AI-powered matching tool to connect with trusted caregivers.
           </p>
         </div>
