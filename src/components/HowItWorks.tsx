@@ -44,7 +44,7 @@ export const HowItWorks = () => {
             >
               <div className="flex gap-6">
                 <div className="flex-shrink-0">
-                  <span className="text-5xl font-display font-bold transition-smooth" style={{ color: '#E8C6A8' }}>
+                  <span className="text-5xl font-display font-bold transition-smooth" style={{ color: '#36454F' }}>
                     {step.number}
                   </span>
                 </div>
