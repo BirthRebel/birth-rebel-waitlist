@@ -28,10 +28,10 @@ export const HowItWorks = () => {
     <section className="py-20 px-6" style={{ backgroundColor: '#E2725B' }}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
+          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4" style={{ color: '#E8C6A8' }}>
             How It Works
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg" style={{ color: '#E8C6A8' }}>
             For new and expectant parents
           </p>
         </div>
@@ -49,10 +49,10 @@ export const HowItWorks = () => {
                   </span>
                 </div>
                 <div className="pt-2">
-                  <h3 className="text-xl md:text-2xl font-semibold text-foreground mb-3">
+                  <h3 className="text-xl md:text-2xl font-semibold mb-3" style={{ color: '#E8C6A8' }}>
                     {step.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="leading-relaxed" style={{ color: '#E8C6A8' }}>
                     {step.description}
                   </p>
                 </div>
