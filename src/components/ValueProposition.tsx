@@ -4,7 +4,7 @@ export const ValueProposition = () => {
   const features = [
     {
       icon: DollarSign,
-      title: "One-third the cost",
+      title: "More affordable",
       description: "Affordable, continuous care at a fraction of in-person support prices"
     },
     {
