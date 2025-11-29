@@ -7,7 +7,7 @@ interface HeroSectionProps {
 
 export const HeroSection = ({ onJoinMailingList }: HeroSectionProps) => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-gradient-soft overflow-hidden">
+    <section className="relative min-h-[70vh] flex items-center justify-center bg-gradient-soft overflow-hidden py-20">
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
