@@ -13,9 +13,9 @@ export const HeroSection = () => {
       </div>
       
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-tight">
+        <h1 className="text-5xl md:text-7xl font-display font-bold text-foreground mb-6 leading-tight">
           Rebuilding Trust in{" "}
-          <span className="bg-gradient-hero bg-clip-text text-transparent">
+          <span className="text-primary">
             Maternal Care
           </span>
         </h1>
@@ -29,7 +29,6 @@ export const HeroSection = () => {
           variant="hero" 
           size="xl" 
           onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
-          className="animate-pulse hover:animate-none"
         >
           Find Your Maternity Caregiver
         </Button>
