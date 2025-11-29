@@ -20,7 +20,7 @@ const Index = () => {
         <HowItWorks />
       </section>
       
-      <section className="min-h-[90vh] snap-start">
+      <section className="snap-start">
         <CaregiverCTA />
       </section>
       
