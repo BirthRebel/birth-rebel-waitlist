@@ -30,7 +30,7 @@ export const HeroSection = () => {
             We're in pilot
           </p>
           <p className="text-base md:text-lg text-muted-foreground">
-            We're building out the full platform, but in the meantime mothers can use our AI-powered matching tool to connect with trusted caregivers.
+            We're building out the full platform, but in the meantime you can use our AI-powered matching tool to connect with trusted caregivers.
           </p>
         </div>
         
