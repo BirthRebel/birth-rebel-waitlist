@@ -28,7 +28,7 @@ export const HowItWorks = () => {
     <section className="py-20 px-6" style={{ backgroundColor: '#E2725B' }}>
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4" style={{ color: '#E8C6A8' }}>
+          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4" style={{ color: '#36454F' }}>
             How It Works
           </h2>
           <p className="text-lg" style={{ color: '#E8C6A8' }}>
