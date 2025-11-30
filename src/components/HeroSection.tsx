@@ -21,7 +21,7 @@ export const HeroSection = () => {
             We're in pilot
           </p>
           <p className="text-lg md:text-xl" style={{ color: '#36454F' }}>
-            We're building out the full platform, but in the meantime you can use our AI-powered matching tool to connect with trusted caregivers.
+            We're building out the full platform, but in the meantime, use our matching tool, to find and connect with a caregiver. We'll ask you a few questions which will take about 5 minutes. This will help us to understand what you are looking for. Our current roster includes doulas, lactation consultants, hypnobirthing teachers and sleep experts.
           </p>
         </div>
         
