@@ -85,18 +85,6 @@ const About = () => {
           </div>
         </div>
 
-        {/* Our Caregivers Section */}
-        <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
-          <div className="max-w-4xl mx-auto px-6">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#E2725B' }}>
-              Our caregivers
-            </h2>
-            <p className="text-lg leading-relaxed" style={{ color: '#36454F' }}>
-              All caregivers have a relevant qualification in their field and have completed full onboarding including safeguarding and code of conduct. All doulas and private midwives have necessary insurance documents.
-            </p>
-          </div>
-        </div>
-
         {/* FAQ Section */}
         <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
           <div className="max-w-4xl mx-auto px-6">
