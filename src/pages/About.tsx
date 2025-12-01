@@ -19,14 +19,6 @@ const About = () => {
     {
       question: "How do you ensure the quality and safety of your caregivers?",
       answer: "Before being matched, caregivers are verified, ensuring accreditations, qualifications, and insurances are in place."
-    },
-    {
-      question: "Can I choose my own caregiver?",
-      answer: "Absolutely. Our matching system allows you to browse profiles, read reviews, and select the caregiver who best fits your needs, preferences, and values. You're in complete control of your care choices."
-    },
-    {
-      question: "How does pricing work on Birth Rebel?",
-      answer: "Our virtual platform model helps reduce costs compared to traditional maternal care services. Each caregiver sets their own rates, and you can view pricing upfront before booking. We're committed to making quality maternal care more affordable and accessible."
     }
   ];
 
