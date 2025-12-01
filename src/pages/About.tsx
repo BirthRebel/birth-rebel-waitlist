@@ -18,7 +18,7 @@ const About = () => {
     },
     {
       question: "How do you ensure the quality and safety of your caregivers?",
-      answer: "All caregivers undergo thorough vetting including qualification verification, full onboarding, safeguarding training, and code of conduct agreement. Doulas and private midwives must provide necessary insurance documentation before joining our platform."
+      answer: "Before being matched, caregivers will be verified, ensuring accreditations, qualifications, and insurances are in place."
     },
     {
       question: "Can I choose my own caregiver?",
