@@ -1,6 +1,6 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import leahFamily from "@/assets/leah-family.png";
+import myStorySection from "@/assets/my-story-section.png";
 
 const About = () => {
   const faqs = [
@@ -56,32 +56,12 @@ const About = () => {
 
         {/* My Story Section */}
         <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-12 items-start">
-              <div className="rounded-lg overflow-hidden">
-                <img 
-                  src={leahFamily} 
-                  alt="Leah and family" 
-                  className="w-full h-auto"
-                />
-              </div>
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#E2725B' }}>
-                  My Story
-                </h2>
-                <div className="space-y-4 text-lg leading-relaxed" style={{ color: '#36454F' }}>
-                  <p>
-                    I'm Leah, founder of Birth Rebel. When I was pregnant with my second child, I trained as a doula and hypnobirthing consultant, passionate about supporting other women through their birthing journey. However, I soon discovered a fundamental flaw in the traditional doula system – the requirement to be on-call for up to a month (two weeks either side of due dates) made it impossible for me to practice while caring for two small children at home.
-                  </p>
-                  <p>
-                    This experience revealed something profoundly wrong with the system: women who desperately want to help other women during this vulnerable yet powerful journey are often unable to do so because of inflexible traditional structures. That's when the first seed of Birth Rebel was planted.
-                  </p>
-                  <p>
-                    As I delved deeper into the challenges facing maternal care – from the pressures on NHS services and the rapidly growing rates of medical interventions to the increasing levels of post-birth trauma and rising interest in doula support – I realized there had to be a better way. Birth Rebel represents that better way: a platform that breaks down barriers and creates flexible, accessible paths for both caregivers and mothers.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="max-w-7xl mx-auto px-6">
+            <img 
+              src={myStorySection} 
+              alt="My Story - Leah's journey founding Birth Rebel" 
+              className="w-full h-auto"
+            />
           </div>
         </div>
 
