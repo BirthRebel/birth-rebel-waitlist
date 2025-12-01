@@ -14,7 +14,7 @@ const About = () => {
     },
     {
       question: "Is Birth Rebel available throughout pregnancy and after birth?",
-      answer: "Yes, our platform supports you through antenatal care during pregnancy and postnatal care after birth. You can access continuous, personalized maternal care whenever you need it. Live birth support will be added after our pilot phase as we continue to expand our services."
+      answer: "Yes, our platform supports connecting with caregivers for antenatal, active labour, and postnatal support."
     },
     {
       question: "How do you ensure the quality and safety of your caregivers?",
