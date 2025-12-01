@@ -5,8 +5,8 @@ import leahFamily from "@/assets/leah-family.png";
 const About = () => {
   const faqs = [
     {
-      question: "How does Birth Rebel differ from traditional doula services?",
-      answer: "Birth Rebel is an end-to-end service with everything under one roof. Not only can you find and match with the perfect caregiver for your needs, but you can also handle all your messaging, video consultations, and session bookings right here on the platform. No juggling multiple apps or platforms – everything you need to support your motherhood journey is in one place, making your care experience seamless and stress-free. Importantly, it's all virtual, making it easy, flexible, and fit for all birthing experiences. You get the same quality support no matter where you're based."
+      question: "How much does this service cost?",
+      answer: "Our matching service is totally free. We know finding a maternal caregiver can be a daunting task so we wanted to make sure you weren't out of pocket until you have found your ideal caregiver. You will be charged by your caregiver when you start to connect with them."
     },
     {
       question: "What types of maternal care professionals can I find on Birth Rebel?",
