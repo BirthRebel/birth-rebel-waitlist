@@ -19,6 +19,10 @@ const About = () => {
     {
       question: "How do you ensure the quality and safety of your caregivers?",
       answer: "Before being matched, caregivers are verified, ensuring accreditations, qualifications, and insurances are in place."
+    },
+    {
+      question: "Do I need to follow through with any of the pairings shown to me?",
+      answer: "There is never any pressure to follow through with the matching. Your data will not be shown to the caregiver so it's your choice if you go ahead with sessions."
     }
   ];
 
