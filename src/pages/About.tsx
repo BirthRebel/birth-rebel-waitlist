@@ -1,35 +1,124 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import leahFamily from "@/assets/leah-family.png";
 
 const About = () => {
+  const faqs = [
+    {
+      question: "How does Birth Rebel differ from traditional doula services?",
+      answer: "Birth Rebel is an end-to-end service with everything under one roof. Not only can you find and match with the perfect caregiver for your needs, but you can also handle all your messaging, video consultations, and session bookings right here on the platform. No juggling multiple apps or platforms – everything you need to support your motherhood journey is in one place, making your care experience seamless and stress-free. Importantly, it's all virtual, making it easy, flexible, and fit for all birthing experiences. You get the same quality support no matter where you're based."
+    },
+    {
+      question: "What types of maternal care professionals can I find on Birth Rebel?",
+      answer: "Our pilot phase focuses on connecting you with qualified doulas, sleep consultants, and feeding experts. However, we're actively growing our caregiver community to include hypnobirthing experts, lactation consultants, private midwives, and other maternal care specialists. All professionals are verified and hold relevant qualifications in their field."
+    },
+    {
+      question: "Is Birth Rebel available throughout pregnancy and after birth?",
+      answer: "Yes, our platform supports you through antenatal care during pregnancy and postnatal care after birth. You can access continuous, personalized maternal care whenever you need it. Live birth support will be added after our pilot phase as we continue to expand our services."
+    },
+    {
+      question: "How do you ensure the quality and safety of your caregivers?",
+      answer: "All caregivers undergo thorough vetting including qualification verification, full onboarding, safeguarding training, and code of conduct agreement. Doulas and private midwives must provide necessary insurance documentation before joining our platform."
+    },
+    {
+      question: "Can I choose my own caregiver?",
+      answer: "Absolutely. Our matching system allows you to browse profiles, read reviews, and select the caregiver who best fits your needs, preferences, and values. You're in complete control of your care choices."
+    },
+    {
+      question: "How does pricing work on Birth Rebel?",
+      answer: "Our virtual platform model helps reduce costs compared to traditional maternal care services. Each caregiver sets their own rates, and you can view pricing upfront before booking. We're committed to making quality maternal care more affordable and accessible."
+    }
+  ];
+
   return (
     <div className="min-h-screen">
       <Header />
       
       <main className="pt-48 pb-16">
-        <div className="max-w-4xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold mb-8" style={{ color: '#36454F' }}>
-            About Birth Rebel
-          </h1>
-          
-          <div className="space-y-6 text-lg" style={{ color: '#36454F' }}>
-            <p>
-              Birth Rebel is on a mission to rebuild trust in maternal care by connecting 
-              expectant and new mothers with qualified, compassionate caregivers.
+        {/* Hero Section */}
+        <div className="py-16" style={{ backgroundColor: '#36454F' }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center" style={{ color: '#DED9CD' }}>
+              About Birth Rebel
+            </h1>
+          </div>
+        </div>
+
+        {/* Own Your Journey Section */}
+        <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#E2725B' }}>
+              Own your journey into motherhood
+            </h2>
+            <div className="space-y-4 text-lg leading-relaxed" style={{ color: '#36454F' }}>
+              <p>
+                Birth Rebel was founded in 2025 to remove the traditional barriers to maternal care and make personalised maternal care more accessible and more affordable. As a fully virtual platform, we match and connect expectant and new mothers during antenatal, live birth, and post natal phases of their motherhood journey. 1-2-1 care is completely tailored to your specific needs and experiences so that you can take control of your birthing decisions and be educated about your rights. Our caregivers provide informative guidance, emotional support, and practical guidance. Using the matching platform you will be able to find qualified doulas, private midwives, hypnobirthing instructors, lactation consultants, sleep consultants and more. As the unmet need for maternal health services continues to grow, Birth Rebel is committed to expanding access to continuous and personalised maternal care globally.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* My Story Section */}
+        <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12 items-start">
+              <div className="rounded-lg overflow-hidden">
+                <img 
+                  src={leahFamily} 
+                  alt="Leah and family" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#E2725B' }}>
+                  My Story
+                </h2>
+                <div className="space-y-4 text-lg leading-relaxed" style={{ color: '#36454F' }}>
+                  <p>
+                    I'm Leah, founder of Birth Rebel. When I was pregnant with my second child, I trained as a doula and hypnobirthing consultant, passionate about supporting other women through their birthing journey. However, I soon discovered a fundamental flaw in the traditional doula system – the requirement to be on-call for up to a month (two weeks either side of due dates) made it impossible for me to practice while caring for two small children at home.
+                  </p>
+                  <p>
+                    This experience revealed something profoundly wrong with the system: women who desperately want to help other women during this vulnerable yet powerful journey are often unable to do so because of inflexible traditional structures. That's when the first seed of Birth Rebel was planted.
+                  </p>
+                  <p>
+                    As I delved deeper into the challenges facing maternal care – from the pressures on NHS services and the rapidly growing rates of medical interventions to the increasing levels of post-birth trauma and rising interest in doula support – I realized there had to be a better way. Birth Rebel represents that better way: a platform that breaks down barriers and creates flexible, accessible paths for both caregivers and mothers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Our Caregivers Section */}
+        <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: '#E2725B' }}>
+              Our caregivers
+            </h2>
+            <p className="text-lg leading-relaxed" style={{ color: '#36454F' }}>
+              All caregivers have a relevant qualification in their field and have completed full onboarding including safeguarding and code of conduct. All doulas and private midwives have necessary insurance documents.
             </p>
-            
-            <p>
-              We believe that every mother deserves access to quality, affordable care 
-              throughout their pregnancy journey and into motherhood. Our platform makes 
-              it easy to find the right support, whether you're looking for a doula, 
-              lactation consultant, hypnobirthing teacher, or sleep expert.
-            </p>
-            
-            <p>
-              Founded on the principle that maternal care should be accessible to all, 
-              we're building a community where mothers feel supported, informed, and 
-              empowered to make the best decisions for themselves and their families.
-            </p>
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="py-16" style={{ backgroundColor: '#DED9CD' }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <h2 className="text-3xl md:text-4xl font-bold mb-12" style={{ color: '#E2725B' }}>
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-8">
+              {faqs.map((faq, index) => (
+                <div key={index} className="space-y-3">
+                  <h3 className="text-xl md:text-2xl font-semibold" style={{ color: '#36454F' }}>
+                    {faq.question}
+                  </h3>
+                  <p className="text-lg leading-relaxed" style={{ color: '#36454F' }}>
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </main>
