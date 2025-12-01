@@ -9,8 +9,8 @@ const About = () => {
       answer: "Our matching service is totally free. We know finding a maternal caregiver can be a daunting task so we wanted to make sure you weren't out of pocket until you have found your ideal caregiver. You will be charged by your caregiver when you start to connect with them."
     },
     {
-      question: "What types of maternal care professionals can I find on Birth Rebel?",
-      answer: "Our pilot phase focuses on connecting you with qualified doulas, sleep consultants, and feeding experts. However, we're actively growing our caregiver community to include hypnobirthing experts, lactation consultants, private midwives, and other maternal care specialists. All professionals are verified and hold relevant qualifications in their field."
+      question: "Does Birth Rebel offer online or face to face support?",
+      answer: "All support via Birth Rebel is virtual only."
     },
     {
       question: "Is Birth Rebel available throughout pregnancy and after birth?",
