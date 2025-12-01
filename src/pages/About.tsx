@@ -6,7 +6,7 @@ const About = () => {
   const faqs = [
     {
       question: "How much does this service cost?",
-      answer: "Our matching service is totally free. We know finding a maternal caregiver can be a daunting task so we wanted to make sure you weren't out of pocket until you have found your ideal caregiver. You will be charged by your caregiver when you start to connect with them."
+      answer: "Our matching service is totally free. We know finding a maternal caregiver can be a daunting task so we wanted to make sure you weren't out of pocket until you have found your ideal caregiver. You will be charged by your caregiver when you start to connect with them and pricing will be set by them. When you start the matching process you will be asked about your budget."
     },
     {
       question: "Does Birth Rebel offer online or face to face support?",
