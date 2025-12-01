@@ -18,7 +18,7 @@ const About = () => {
     },
     {
       question: "How do you ensure the quality and safety of your caregivers?",
-      answer: "Before being matched, caregivers will be verified, ensuring accreditations, qualifications, and insurances are in place."
+      answer: "Before being matched, caregivers are verified, ensuring accreditations, qualifications, and insurances are in place."
     },
     {
       question: "Can I choose my own caregiver?",
