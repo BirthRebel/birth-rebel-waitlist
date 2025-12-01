@@ -14,7 +14,7 @@ const About = () => {
     },
     {
       question: "Is Birth Rebel available throughout pregnancy and after birth?",
-      answer: "Yes, our platform supports connecting with caregivers for antenatal, active labour, and postnatal support."
+      answer: "Yes, our platform supports connecting with caregivers for antenatal, active labour, and postnatal support, including doulas, feeding consultants, hypnobirthing teachers, and newborn sleep experts."
     },
     {
       question: "How do you ensure the quality and safety of your caregivers?",
