@@ -44,7 +44,7 @@ export type Database = {
           type_of_support: Database["public"]["Enums"]["support_type"]
           typeform_response_id: string | null
           typical_availability: string | null
-          user_id: string
+          user_id: string | null
           years_practicing: number | null
         }
         Insert: {
@@ -76,7 +76,7 @@ export type Database = {
           type_of_support: Database["public"]["Enums"]["support_type"]
           typeform_response_id?: string | null
           typical_availability?: string | null
-          user_id: string
+          user_id?: string | null
           years_practicing?: number | null
         }
         Update: {
@@ -108,7 +108,7 @@ export type Database = {
           type_of_support?: Database["public"]["Enums"]["support_type"]
           typeform_response_id?: string | null
           typical_availability?: string | null
-          user_id?: string
+          user_id?: string | null
           years_practicing?: number | null
         }
         Relationships: []
