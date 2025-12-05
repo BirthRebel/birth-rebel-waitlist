@@ -325,7 +325,7 @@ export type Database = {
           {
             foreignKeyName: "commissions_match_id_fkey"
             columns: ["match_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "matches"
             referencedColumns: ["id"]
           },
@@ -338,7 +338,7 @@ export type Database = {
           id: string
           parent_email: string
           parent_first_name: string
-          status: Database["public"]["Enums"]["match_status"]
+          status: string
           support_type: string
         }
         Insert: {
@@ -347,7 +347,7 @@ export type Database = {
           id?: string
           parent_email: string
           parent_first_name: string
-          status?: Database["public"]["Enums"]["match_status"]
+          status?: string
           support_type: string
         }
         Update: {
@@ -356,10 +356,18 @@ export type Database = {
           id?: string
           parent_email?: string
           parent_first_name?: string
-          status?: Database["public"]["Enums"]["match_status"]
+          status?: string
           support_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "matches_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waitlist_signups: {
         Row: {
