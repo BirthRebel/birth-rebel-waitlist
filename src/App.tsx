@@ -10,6 +10,7 @@ import CaregiverAuth from "./pages/CaregiverAuth";
 import CaregiverOnboarding from "./pages/CaregiverOnboarding";
 import CaregiverMatches from "./pages/CaregiverMatches";
 import AdminImport from "./pages/AdminImport";
+import AdminCaregivers from "./pages/AdminCaregivers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/caregiver/onboarding" element={<CaregiverOnboarding />} />
           <Route path="/caregiver/matches" element={<CaregiverMatches />} />
           <Route path="/admin/import" element={<AdminImport />} />
+          <Route path="/admin/caregivers" element={<AdminCaregivers />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
