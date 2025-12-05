@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.get-all-caregivers]
 verify_jwt = false
+
+[functions.invite-caregivers]
+verify_jwt = false
