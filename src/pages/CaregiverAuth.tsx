@@ -28,17 +28,25 @@ const CaregiverAuth = () => {
         });
         if (error) throw error;
         
+        // Check if user has a caregiver profile
+        const { data: caregiver } = await supabase
+          .from("caregivers")
+          .select("id")
+          .maybeSingle();
+        
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
-        navigate("/caregiver/matches");
+        
+        // Redirect based on whether they have a caregiver profile
+        navigate(caregiver ? "/caregiver/matches" : "/caregiver/onboarding");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/caregiver/matches`,
+            emailRedirectTo: `${window.location.origin}/caregiver/onboarding`,
           },
         });
         if (error) throw error;
