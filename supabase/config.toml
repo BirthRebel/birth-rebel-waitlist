@@ -1,1 +1,7 @@
 project_id = "zjbzjtljoxwreyhlrjbq"
+
+[functions.create-commission-checkout]
+verify_jwt = false
+
+[functions.stripe-commission-webhook]
+verify_jwt = false
