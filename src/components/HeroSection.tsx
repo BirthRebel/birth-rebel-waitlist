@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 export const HeroSection = () => {
-  const navigate = useNavigate();
   
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#9CAF88' }}>
@@ -31,7 +29,7 @@ export const HeroSection = () => {
         <Button 
           className="bg-[#E2725B] text-white hover:bg-[#E2725B]/90 shadow-glow transform hover:scale-105"
           size="xl" 
-          onClick={() => navigate('/find-caregiver')}
+          onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
         >
           Find Your Maternity Caregiver
         </Button>
