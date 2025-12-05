@@ -39,8 +39,45 @@ const columnMapping: Record<string, string> = {
   'births supported': 'births_supported',
   'describe your care style': 'care_style',
   'care style': 'care_style',
+  'how would you describe your care style?': 'care_style',
   'certifications and training': 'certifications_training',
   'certifications': 'certifications_training',
+  
+  // Individual boolean columns from Typeform expanded format
+  'solo parents': 'supports_solo_parents',
+  'multiples (e.g. twins)': 'supports_multiples',
+  'families of colour': 'supports_families_of_colour',
+  'queer and/or trans families': 'supports_queer_trans',
+  'disabled parents': 'supports_disabled_parents',
+  'neurodivergent clients': 'supports_neurodivergent',
+  'survivors of trauma/ trauma informed birth': 'supports_trauma_survivors',
+  'bereavement from previous births and/or pregnancies': 'supports_bereavement',
+  'immigrant or refugee families': 'supports_immigrant_refugee',
+  'clients with complex health needs': 'supports_complex_health',
+  'home births': 'supports_home_births',
+  'water births': 'supports_water_births',
+  'caesareans': 'supports_caesareans',
+  'rebozo': 'supports_rebozo',
+  
+  // Care types
+  'antenatal planning, signposting & information': 'care_antenatal_planning',
+  'postnatal support': 'care_postnatal_support',
+  'grief & loss care': 'care_grief_loss',
+  'full-spectrum reproductive support': 'care_full_spectrum',
+  'fertility & conception support': 'care_fertility_conception',
+  'feeding and lactation support': 'care_feeding_lactation',
+  'cultural, ritual or spiritual practices': 'care_cultural_spiritual',
+  
+  // Availability
+  'weekdays: mornings': 'avail_weekdays_mornings',
+  'weekdays: afternoons': 'avail_weekdays_afternoons',
+  'weekdays: evenings': 'avail_weekdays_evenings',
+  'weekdays: overnight': 'avail_weekdays_overnight',
+  'weekends: mornings': 'avail_weekends_mornings',
+  'weekends: afternoons': 'avail_weekends_afternoons',
+  'weekends: evenings': 'avail_weekends_evenings',
+  'weekends: overnight': 'avail_weekends_overnight',
+  'i am generally not available during school holidays': 'unavailable_school_holidays',
 }
 
 // Multi-choice columns that need special parsing
@@ -267,7 +304,29 @@ Deno.serve(async (req) => {
         if (!value) continue
 
         if (mapping.dbColumn) {
-          caregiverData[mapping.dbColumn] = value
+          // Check if this is a boolean column (starts with supports_, avail_, care_, is_, speaks_, offers_, or specific flags)
+          const isBooleanColumn = mapping.dbColumn.startsWith('supports_') || 
+                                   mapping.dbColumn.startsWith('avail_') || 
+                                   mapping.dbColumn.startsWith('care_') ||
+                                   mapping.dbColumn.startsWith('is_') ||
+                                   mapping.dbColumn.startsWith('speaks_') ||
+                                   mapping.dbColumn.startsWith('offers_') ||
+                                   mapping.dbColumn === 'unavailable_school_holidays' ||
+                                   mapping.dbColumn === 'gdpr_consent'
+          
+          if (isBooleanColumn) {
+            // Convert various truthy values to boolean
+            const lowerValue = value.toLowerCase()
+            caregiverData[mapping.dbColumn] = lowerValue === '1' || 
+                                               lowerValue === 'yes' || 
+                                               lowerValue === 'true' ||
+                                               lowerValue === 'x' ||
+                                               lowerValue === '✓' ||
+                                               lowerValue === '✔' ||
+                                               value.length > 0 // Any non-empty value counts as true for checkboxes
+          } else {
+            caregiverData[mapping.dbColumn] = value
+          }
         }
         
         if (mapping.multiChoiceCategory) {
