@@ -156,29 +156,58 @@ const multiChoiceMapping: Record<string, Record<string, string>> = {
   },
 }
 
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
+// Parse entire CSV content into rows, handling quoted fields with newlines
+function parseCSVContent(content: string): string[][] {
+  const rows: string[][] = []
+  let currentRow: string[] = []
+  let currentField = ''
   let inQuotes = false
   
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i]
+    
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"'
+      if (inQuotes && content[i + 1] === '"') {
+        // Escaped quote
+        currentField += '"'
         i++
       } else {
+        // Toggle quote mode
         inQuotes = !inQuotes
       }
     } else if (char === ',' && !inQuotes) {
-      result.push(current.trim())
-      current = ''
+      // End of field
+      currentRow.push(currentField.trim())
+      currentField = ''
+    } else if ((char === '\n' || (char === '\r' && content[i + 1] === '\n')) && !inQuotes) {
+      // End of row (handle both \n and \r\n)
+      if (char === '\r') i++ // Skip \n in \r\n
+      currentRow.push(currentField.trim())
+      if (currentRow.some(f => f)) { // Only add non-empty rows
+        rows.push(currentRow)
+      }
+      currentRow = []
+      currentField = ''
+    } else if (char === '\r' && !inQuotes) {
+      // Handle standalone \r as newline
+      currentRow.push(currentField.trim())
+      if (currentRow.some(f => f)) {
+        rows.push(currentRow)
+      }
+      currentRow = []
+      currentField = ''
     } else {
-      current += char
+      currentField += char
     }
   }
-  result.push(current.trim())
-  return result
+  
+  // Don't forget the last field/row
+  currentRow.push(currentField.trim())
+  if (currentRow.some(f => f)) {
+    rows.push(currentRow)
+  }
+  
+  return rows
 }
 
 function findMatchingColumn(header: string): string | null {
@@ -254,16 +283,19 @@ Deno.serve(async (req) => {
 
     console.log('Received CSV import request')
     
-    const lines = csvContent.split('\n').filter((line: string) => line.trim())
-    if (lines.length < 2) {
+    // Parse CSV properly handling quoted fields with newlines
+    const rows = parseCSVContent(csvContent)
+    
+    if (rows.length < 2) {
       return new Response(JSON.stringify({ error: 'CSV must have header row and at least one data row' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const headers = parseCSVLine(lines[0])
-    console.log('CSV headers:', headers)
+    const headers = rows[0]
+    console.log('CSV headers count:', headers.length)
+    console.log('Total data rows:', rows.length - 1)
 
     // Build column mapping for this CSV
     const csvColumnMap: { index: number; dbColumn: string | null; multiChoiceCategory: string | null }[] = []
@@ -294,8 +326,8 @@ Deno.serve(async (req) => {
     }
 
     // Process each data row
-    for (let rowIndex = 1; rowIndex < lines.length; rowIndex++) {
-      const values = parseCSVLine(lines[rowIndex])
+    for (let rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+      const values = rows[rowIndex]
       const caregiverData: Record<string, any> = {}
 
       // Map CSV values to database columns
