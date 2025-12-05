@@ -68,17 +68,16 @@ const CaregiverMatches = () => {
       const { data: caregiver, error: caregiverError } = await supabase
         .from("caregivers")
         .select("id")
-        .single();
+        .maybeSingle();
 
       if (caregiverError) {
-        if (caregiverError.code === "PGRST116") {
-          toast({
-            title: "Not a caregiver",
-            description: "Your account is not registered as a caregiver.",
-            variant: "destructive",
-          });
-        }
         throw caregiverError;
+      }
+
+      // Redirect to onboarding if no caregiver profile exists
+      if (!caregiver) {
+        navigate("/caregiver/onboarding");
+        return;
       }
 
       setCaregiverId(caregiver.id);

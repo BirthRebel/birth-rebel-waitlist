@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import ParentIntake from "./pages/ParentIntake";
 import CaregiverAuth from "./pages/CaregiverAuth";
+import CaregiverOnboarding from "./pages/CaregiverOnboarding";
 import CaregiverMatches from "./pages/CaregiverMatches";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/find-caregiver" element={<ParentIntake />} />
           <Route path="/caregiver/auth" element={<CaregiverAuth />} />
+          <Route path="/caregiver/onboarding" element={<CaregiverOnboarding />} />
           <Route path="/caregiver/matches" element={<CaregiverMatches />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
