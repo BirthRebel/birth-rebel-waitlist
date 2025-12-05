@@ -14,6 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
+      caregivers: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+          id: string
+          name: string
+          type_of_support: Database["public"]["Enums"]["support_type"]
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          type_of_support: Database["public"]["Enums"]["support_type"]
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          type_of_support?: Database["public"]["Enums"]["support_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      commissions: {
+        Row: {
+          booking_value: number
+          caregiver_id: string
+          commission_amount: number
+          commission_paid: boolean
+          commission_rate: number
+          created_at: string
+          id: string
+          match_id: string
+          paid_at: string | null
+        }
+        Insert: {
+          booking_value: number
+          caregiver_id: string
+          commission_amount: number
+          commission_paid?: boolean
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          match_id: string
+          paid_at?: string | null
+        }
+        Update: {
+          booking_value?: number
+          caregiver_id?: string
+          commission_amount?: number
+          commission_paid?: boolean
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          match_id?: string
+          paid_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          caregiver_id: string
+          created_at: string
+          id: string
+          parent_email: string
+          parent_first_name: string
+          status: Database["public"]["Enums"]["match_status"]
+          support_type: string
+        }
+        Insert: {
+          caregiver_id: string
+          created_at?: string
+          id?: string
+          parent_email: string
+          parent_first_name: string
+          status?: Database["public"]["Enums"]["match_status"]
+          support_type: string
+        }
+        Update: {
+          caregiver_id?: string
+          created_at?: string
+          id?: string
+          parent_email?: string
+          parent_first_name?: string
+          status?: Database["public"]["Enums"]["match_status"]
+          support_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waitlist_signups: {
         Row: {
           created_at: string
@@ -52,9 +171,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_caregiver_id: { Args: never; Returns: string }
     }
     Enums: {
+      match_status: "matched" | "booked" | "closed"
+      support_type: "doula" | "lactation" | "sleep" | "hypnobirthing"
       waitlist_user_type: "caregiver" | "mother" | "interested"
     }
     CompositeTypes: {
@@ -183,6 +304,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      match_status: ["matched", "booked", "closed"],
+      support_type: ["doula", "lactation", "sleep", "hypnobirthing"],
       waitlist_user_type: ["caregiver", "mother", "interested"],
     },
   },
