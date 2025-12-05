@@ -42,18 +42,36 @@ const CaregiverAuth = () => {
         // Redirect based on whether they have a caregiver profile
         navigate(caregiver ? "/caregiver/matches" : "/caregiver/onboarding");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/caregiver/onboarding`,
+            emailRedirectTo: `${window.location.origin}/caregiver/matches`,
           },
         });
         if (error) throw error;
         
+        // Check if there's an existing caregiver record to link
+        if (signUpData.user) {
+          const { data: existingCaregiver } = await supabase
+            .from("caregivers")
+            .select("id")
+            .eq("email", email)
+            .is("user_id", null)
+            .maybeSingle();
+          
+          if (existingCaregiver) {
+            // Link existing caregiver to new auth user
+            await supabase
+              .from("caregivers")
+              .update({ user_id: signUpData.user.id })
+              .eq("id", existingCaregiver.id);
+          }
+        }
+        
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link.",
+          description: "We've sent you a confirmation link to verify your account.",
         });
       }
     } catch (error: any) {
