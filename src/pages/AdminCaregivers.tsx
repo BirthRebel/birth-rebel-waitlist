@@ -3,10 +3,13 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X } from "lucide-react";
 
 interface Caregiver {
   id: string;
@@ -195,11 +198,63 @@ const getTrueValues = (caregiver: Caregiver, fields: Record<string, string>): st
     .map(([, label]) => label);
 };
 
+type FilterState = Record<string, string[]>;
+
+const FilterPopover = ({
+  groupKey,
+  group,
+  filters,
+  onFilterChange,
+}: {
+  groupKey: string;
+  group: { label: string; icon: React.ElementType; fields: Record<string, string> };
+  filters: FilterState;
+  onFilterChange: (groupKey: string, fieldKey: string, checked: boolean) => void;
+}) => {
+  const Icon = group.icon;
+  const activeCount = filters[groupKey]?.length || 0;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-9 gap-2">
+          <Icon className="h-4 w-4" />
+          {group.label}
+          {activeCount > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+              {activeCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3" align="start">
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {Object.entries(group.fields).map(([fieldKey, label]) => (
+            <label
+              key={fieldKey}
+              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded"
+            >
+              <Checkbox
+                checked={filters[groupKey]?.includes(fieldKey) || false}
+                onCheckedChange={(checked) =>
+                  onFilterChange(groupKey, fieldKey, checked as boolean)
+                }
+              />
+              <span className="text-sm">{label}</span>
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const AdminCaregivers = () => {
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterState>({});
 
   useEffect(() => {
     fetchCaregivers();
@@ -221,14 +276,48 @@ const AdminCaregivers = () => {
     setIsLoading(false);
   };
 
+  const handleFilterChange = (groupKey: string, fieldKey: string, checked: boolean) => {
+    setFilters((prev) => {
+      const current = prev[groupKey] || [];
+      if (checked) {
+        return { ...prev, [groupKey]: [...current, fieldKey] };
+      } else {
+        return { ...prev, [groupKey]: current.filter((k) => k !== fieldKey) };
+      }
+    });
+  };
+
+  const clearAllFilters = () => {
+    setFilters({});
+    setSearchQuery("");
+  };
+
+  const activeFilterCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+
   const filteredCaregivers = caregivers.filter((c) => {
+    // Text search
     const search = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
+      !search ||
       c.email.toLowerCase().includes(search) ||
       c.first_name?.toLowerCase().includes(search) ||
       c.last_name?.toLowerCase().includes(search) ||
-      c.city_town?.toLowerCase().includes(search)
-    );
+      c.city_town?.toLowerCase().includes(search);
+
+    if (!matchesSearch) return false;
+
+    // Apply filters - caregiver must match ALL selected filters within each group
+    for (const [groupKey, selectedFields] of Object.entries(filters)) {
+      if (selectedFields.length === 0) continue;
+      
+      // Check if caregiver has at least one of the selected fields in this group
+      const hasMatch = selectedFields.some(
+        (fieldKey) => c[fieldKey as keyof Caregiver] === true
+      );
+      if (!hasMatch) return false;
+    }
+
+    return true;
   });
 
   return (
@@ -241,13 +330,13 @@ const AdminCaregivers = () => {
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2">Caregivers</h1>
               <p className="text-muted-foreground">
-                {caregivers.length} caregivers in database
+                {filteredCaregivers.length} of {caregivers.length} caregivers
               </p>
             </div>
           </div>
 
           {/* Search */}
-          <div className="relative mb-6">
+          <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name, email, or location..."
@@ -255,6 +344,33 @@ const AdminCaregivers = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
+          </div>
+
+          {/* Filters */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              {Object.entries(fieldGroups).map(([key, group]) => (
+                <FilterPopover
+                  key={key}
+                  groupKey={key}
+                  group={group}
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                />
+              ))}
+              {(activeFilterCount > 0 || searchQuery) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="h-9 gap-1 text-muted-foreground"
+                >
+                  <X className="h-4 w-4" />
+                  Clear all
+                </Button>
+              )}
+            </div>
           </div>
 
           {isLoading ? (
