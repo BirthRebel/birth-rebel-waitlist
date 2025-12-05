@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.typeform-webhook]
 verify_jwt = false
+
+[functions.import-caregivers-csv]
+verify_jwt = false
