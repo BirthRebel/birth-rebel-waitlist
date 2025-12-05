@@ -331,6 +331,54 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          caregiver_id: string | null
+          created_at: string
+          id: string
+          parent_email: string
+          parent_request_id: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          caregiver_id?: string | null
+          created_at?: string
+          id?: string
+          parent_email: string
+          parent_request_id?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caregiver_id?: string | null
+          created_at?: string
+          id?: string
+          parent_email?: string
+          parent_request_id?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_parent_request_id_fkey"
+            columns: ["parent_request_id"]
+            isOneToOne: false
+            referencedRelation: "parent_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           caregiver_id: string
@@ -368,6 +416,121 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string | null
+          sender_type: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string | null
+          sender_type: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_requests: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string | null
+          location: string | null
+          matched_caregiver_id: string | null
+          phone: string | null
+          special_requirements: string | null
+          status: string
+          support_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name?: string | null
+          location?: string | null
+          matched_caregiver_id?: string | null
+          phone?: string | null
+          special_requirements?: string | null
+          status?: string
+          support_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string | null
+          location?: string | null
+          matched_caregiver_id?: string | null
+          phone?: string | null
+          special_requirements?: string | null
+          status?: string
+          support_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_requests_matched_caregiver_id_fkey"
+            columns: ["matched_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
       waitlist_signups: {
         Row: {
@@ -408,8 +571,16 @@ export type Database = {
     }
     Functions: {
       get_current_caregiver_id: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
       match_status: "matched" | "booked" | "closed"
       support_type: "doula" | "lactation" | "sleep" | "hypnobirthing"
       waitlist_user_type: "caregiver" | "mother" | "interested"
@@ -540,6 +711,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       match_status: ["matched", "booked", "closed"],
       support_type: ["doula", "lactation", "sleep", "hypnobirthing"],
       waitlist_user_type: ["caregiver", "mother", "interested"],
