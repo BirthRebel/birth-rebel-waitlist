@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.invite-caregivers]
 verify_jwt = false
+
+[functions.send-message-notification]
+verify_jwt = false
