@@ -33,12 +33,25 @@ const CaregiverAuth = () => {
           description: "We've sent you a password reset link.",
         });
         setIsReset(false);
-      } else if (isLogin) {
+        setLoading(false);
+        return;
+      }
+      
+      if (isLogin) {
         const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
+        
+        if (error) {
+          setLoading(false);
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Check if user has a linked caregiver profile
         const { data: caregiver } = await supabase
@@ -47,30 +60,29 @@ const CaregiverAuth = () => {
           .eq("user_id", signInData.user.id)
           .maybeSingle();
         
-        // If no linked profile, try to link by email (RLS allows this via the new policy)
+        // If no linked profile, try to link by email
         if (!caregiver) {
-          const { error: updateError } = await supabase
+          await supabase
             .from("caregivers")
             .update({ user_id: signInData.user.id })
             .eq("email", email)
             .is("user_id", null);
           
-          if (!updateError) {
-            // Re-check for caregiver after linking
-            const { data: linkedCaregiver } = await supabase
-              .from("caregivers")
-              .select("id")
-              .eq("user_id", signInData.user.id)
-              .maybeSingle();
-            
-            toast({
-              title: "Welcome!",
-              description: linkedCaregiver ? "Your account has been linked." : "You have successfully logged in.",
-            });
-            
-            navigate(linkedCaregiver ? "/caregiver/matches" : "/caregiver/onboarding");
-            return;
-          }
+          // Re-check for caregiver after linking
+          const { data: linkedCaregiver } = await supabase
+            .from("caregivers")
+            .select("id")
+            .eq("user_id", signInData.user.id)
+            .maybeSingle();
+          
+          toast({
+            title: "Welcome!",
+            description: linkedCaregiver ? "Your account has been linked." : "You have successfully logged in.",
+          });
+          
+          setLoading(false);
+          navigate(linkedCaregiver ? "/caregiver/matches" : "/caregiver/onboarding");
+          return;
         }
         
         toast({
@@ -78,29 +90,42 @@ const CaregiverAuth = () => {
           description: "You have successfully logged in.",
         });
         
+        setLoading(false);
         navigate(caregiver ? "/caregiver/matches" : "/caregiver/onboarding");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/caregiver/auth`,
-          },
-        });
-        if (error) throw error;
-        
-        toast({
-          title: "Check your email",
-          description: "Click the confirmation link, then come back here to log in.",
-        });
+        return;
       }
+      
+      // Sign up
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/caregiver/auth`,
+        },
+      });
+      
+      if (error) {
+        setLoading(false);
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "Check your email",
+        description: "Click the confirmation link, then come back here to log in.",
+      });
+      setLoading(false);
     } catch (error: any) {
+      console.error("Auth error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
