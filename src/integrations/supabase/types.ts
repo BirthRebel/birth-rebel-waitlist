@@ -17,99 +17,273 @@ export type Database = {
       caregivers: {
         Row: {
           active: boolean
-          address_line_1: string | null
+          additional_certificate_1_url: string | null
+          additional_certificate_2_url: string | null
+          address: string | null
           address_line_2: string | null
-          births_supported: number | null
+          avail_weekdays_afternoons: boolean | null
+          avail_weekdays_evenings: boolean | null
+          avail_weekdays_mornings: boolean | null
+          avail_weekdays_overnight: boolean | null
+          avail_weekends_afternoons: boolean | null
+          avail_weekends_evenings: boolean | null
+          avail_weekends_mornings: boolean | null
+          avail_weekends_overnight: boolean | null
+          births_supported: string | null
+          care_antenatal_planning: boolean | null
+          care_birth_support: boolean | null
+          care_cultural_spiritual: boolean | null
+          care_feeding_lactation: boolean | null
+          care_fertility_conception: boolean | null
+          care_full_spectrum: boolean | null
+          care_grief_loss: boolean | null
+          care_postnatal_support: boolean | null
           care_style: string | null
-          care_types_supported: string[] | null
-          city: string | null
+          certifications_training: string | null
+          city_town: string | null
           country: string | null
           created_at: string
-          document_url: string | null
+          dbs_certificate_url: string | null
           email: string
           first_name: string | null
           gdpr_consent: boolean | null
           id: string
+          insurance_certificate_url: string | null
           intake_completed_at: string | null
-          language_spoken: string[] | null
+          is_bereavement_councillor: boolean | null
+          is_doula: boolean | null
+          is_hypnobirthing_coach: boolean | null
+          is_lactation_consultant: boolean | null
+          is_private_midwife: boolean | null
+          is_sleep_consultant: boolean | null
+          language_other: string | null
           last_name: string | null
-          name: string
+          offers_active_labour_support: boolean | null
+          offers_birth_planning: boolean | null
+          offers_fertility_conception: boolean | null
+          offers_hypnobirthing: boolean | null
+          offers_lactation_support: boolean | null
+          offers_loss_bereavement_care: boolean | null
+          offers_newborn_sleep_support: boolean | null
+          offers_nutrition_support: boolean | null
+          offers_postnatal_support: boolean | null
           phone: string | null
-          post_code: string | null
           pronouns: string | null
-          services_offered: string[] | null
-          specific_support_experience: string | null
-          state: string | null
-          training_certifications: string[] | null
-          type_of_support: Database["public"]["Enums"]["support_type"]
+          services_other: string | null
+          speaks_arabic: boolean | null
+          speaks_bengali: boolean | null
+          speaks_english: boolean | null
+          speaks_french: boolean | null
+          speaks_german: boolean | null
+          speaks_gujrati: boolean | null
+          speaks_italian: boolean | null
+          speaks_mandarin: boolean | null
+          speaks_portuguese: boolean | null
+          speaks_punjabi: boolean | null
+          speaks_spanish: boolean | null
+          speaks_urdu: boolean | null
+          state_region_province: string | null
+          support_type_other: string | null
+          supports_bereavement: boolean | null
+          supports_caesareans: boolean | null
+          supports_complex_health: boolean | null
+          supports_disabled_parents: boolean | null
+          supports_families_of_colour: boolean | null
+          supports_home_births: boolean | null
+          supports_immigrant_refugee: boolean | null
+          supports_multiples: boolean | null
+          supports_neurodivergent: boolean | null
+          supports_queer_trans: boolean | null
+          supports_rebozo: boolean | null
+          supports_solo_parents: boolean | null
+          supports_trauma_survivors: boolean | null
+          supports_water_births: boolean | null
+          training_certificate_url: string | null
           typeform_response_id: string | null
-          typical_availability: string | null
+          unavailable_school_holidays: boolean | null
           user_id: string | null
-          years_practicing: number | null
+          years_practicing: string | null
+          zip_post_code: string | null
         }
         Insert: {
           active?: boolean
-          address_line_1?: string | null
+          additional_certificate_1_url?: string | null
+          additional_certificate_2_url?: string | null
+          address?: string | null
           address_line_2?: string | null
-          births_supported?: number | null
+          avail_weekdays_afternoons?: boolean | null
+          avail_weekdays_evenings?: boolean | null
+          avail_weekdays_mornings?: boolean | null
+          avail_weekdays_overnight?: boolean | null
+          avail_weekends_afternoons?: boolean | null
+          avail_weekends_evenings?: boolean | null
+          avail_weekends_mornings?: boolean | null
+          avail_weekends_overnight?: boolean | null
+          births_supported?: string | null
+          care_antenatal_planning?: boolean | null
+          care_birth_support?: boolean | null
+          care_cultural_spiritual?: boolean | null
+          care_feeding_lactation?: boolean | null
+          care_fertility_conception?: boolean | null
+          care_full_spectrum?: boolean | null
+          care_grief_loss?: boolean | null
+          care_postnatal_support?: boolean | null
           care_style?: string | null
-          care_types_supported?: string[] | null
-          city?: string | null
+          certifications_training?: string | null
+          city_town?: string | null
           country?: string | null
           created_at?: string
-          document_url?: string | null
+          dbs_certificate_url?: string | null
           email: string
           first_name?: string | null
           gdpr_consent?: boolean | null
           id?: string
+          insurance_certificate_url?: string | null
           intake_completed_at?: string | null
-          language_spoken?: string[] | null
+          is_bereavement_councillor?: boolean | null
+          is_doula?: boolean | null
+          is_hypnobirthing_coach?: boolean | null
+          is_lactation_consultant?: boolean | null
+          is_private_midwife?: boolean | null
+          is_sleep_consultant?: boolean | null
+          language_other?: string | null
           last_name?: string | null
-          name: string
+          offers_active_labour_support?: boolean | null
+          offers_birth_planning?: boolean | null
+          offers_fertility_conception?: boolean | null
+          offers_hypnobirthing?: boolean | null
+          offers_lactation_support?: boolean | null
+          offers_loss_bereavement_care?: boolean | null
+          offers_newborn_sleep_support?: boolean | null
+          offers_nutrition_support?: boolean | null
+          offers_postnatal_support?: boolean | null
           phone?: string | null
-          post_code?: string | null
           pronouns?: string | null
-          services_offered?: string[] | null
-          specific_support_experience?: string | null
-          state?: string | null
-          training_certifications?: string[] | null
-          type_of_support: Database["public"]["Enums"]["support_type"]
+          services_other?: string | null
+          speaks_arabic?: boolean | null
+          speaks_bengali?: boolean | null
+          speaks_english?: boolean | null
+          speaks_french?: boolean | null
+          speaks_german?: boolean | null
+          speaks_gujrati?: boolean | null
+          speaks_italian?: boolean | null
+          speaks_mandarin?: boolean | null
+          speaks_portuguese?: boolean | null
+          speaks_punjabi?: boolean | null
+          speaks_spanish?: boolean | null
+          speaks_urdu?: boolean | null
+          state_region_province?: string | null
+          support_type_other?: string | null
+          supports_bereavement?: boolean | null
+          supports_caesareans?: boolean | null
+          supports_complex_health?: boolean | null
+          supports_disabled_parents?: boolean | null
+          supports_families_of_colour?: boolean | null
+          supports_home_births?: boolean | null
+          supports_immigrant_refugee?: boolean | null
+          supports_multiples?: boolean | null
+          supports_neurodivergent?: boolean | null
+          supports_queer_trans?: boolean | null
+          supports_rebozo?: boolean | null
+          supports_solo_parents?: boolean | null
+          supports_trauma_survivors?: boolean | null
+          supports_water_births?: boolean | null
+          training_certificate_url?: string | null
           typeform_response_id?: string | null
-          typical_availability?: string | null
+          unavailable_school_holidays?: boolean | null
           user_id?: string | null
-          years_practicing?: number | null
+          years_practicing?: string | null
+          zip_post_code?: string | null
         }
         Update: {
           active?: boolean
-          address_line_1?: string | null
+          additional_certificate_1_url?: string | null
+          additional_certificate_2_url?: string | null
+          address?: string | null
           address_line_2?: string | null
-          births_supported?: number | null
+          avail_weekdays_afternoons?: boolean | null
+          avail_weekdays_evenings?: boolean | null
+          avail_weekdays_mornings?: boolean | null
+          avail_weekdays_overnight?: boolean | null
+          avail_weekends_afternoons?: boolean | null
+          avail_weekends_evenings?: boolean | null
+          avail_weekends_mornings?: boolean | null
+          avail_weekends_overnight?: boolean | null
+          births_supported?: string | null
+          care_antenatal_planning?: boolean | null
+          care_birth_support?: boolean | null
+          care_cultural_spiritual?: boolean | null
+          care_feeding_lactation?: boolean | null
+          care_fertility_conception?: boolean | null
+          care_full_spectrum?: boolean | null
+          care_grief_loss?: boolean | null
+          care_postnatal_support?: boolean | null
           care_style?: string | null
-          care_types_supported?: string[] | null
-          city?: string | null
+          certifications_training?: string | null
+          city_town?: string | null
           country?: string | null
           created_at?: string
-          document_url?: string | null
+          dbs_certificate_url?: string | null
           email?: string
           first_name?: string | null
           gdpr_consent?: boolean | null
           id?: string
+          insurance_certificate_url?: string | null
           intake_completed_at?: string | null
-          language_spoken?: string[] | null
+          is_bereavement_councillor?: boolean | null
+          is_doula?: boolean | null
+          is_hypnobirthing_coach?: boolean | null
+          is_lactation_consultant?: boolean | null
+          is_private_midwife?: boolean | null
+          is_sleep_consultant?: boolean | null
+          language_other?: string | null
           last_name?: string | null
-          name?: string
+          offers_active_labour_support?: boolean | null
+          offers_birth_planning?: boolean | null
+          offers_fertility_conception?: boolean | null
+          offers_hypnobirthing?: boolean | null
+          offers_lactation_support?: boolean | null
+          offers_loss_bereavement_care?: boolean | null
+          offers_newborn_sleep_support?: boolean | null
+          offers_nutrition_support?: boolean | null
+          offers_postnatal_support?: boolean | null
           phone?: string | null
-          post_code?: string | null
           pronouns?: string | null
-          services_offered?: string[] | null
-          specific_support_experience?: string | null
-          state?: string | null
-          training_certifications?: string[] | null
-          type_of_support?: Database["public"]["Enums"]["support_type"]
+          services_other?: string | null
+          speaks_arabic?: boolean | null
+          speaks_bengali?: boolean | null
+          speaks_english?: boolean | null
+          speaks_french?: boolean | null
+          speaks_german?: boolean | null
+          speaks_gujrati?: boolean | null
+          speaks_italian?: boolean | null
+          speaks_mandarin?: boolean | null
+          speaks_portuguese?: boolean | null
+          speaks_punjabi?: boolean | null
+          speaks_spanish?: boolean | null
+          speaks_urdu?: boolean | null
+          state_region_province?: string | null
+          support_type_other?: string | null
+          supports_bereavement?: boolean | null
+          supports_caesareans?: boolean | null
+          supports_complex_health?: boolean | null
+          supports_disabled_parents?: boolean | null
+          supports_families_of_colour?: boolean | null
+          supports_home_births?: boolean | null
+          supports_immigrant_refugee?: boolean | null
+          supports_multiples?: boolean | null
+          supports_neurodivergent?: boolean | null
+          supports_queer_trans?: boolean | null
+          supports_rebozo?: boolean | null
+          supports_solo_parents?: boolean | null
+          supports_trauma_survivors?: boolean | null
+          supports_water_births?: boolean | null
+          training_certificate_url?: string | null
           typeform_response_id?: string | null
-          typical_availability?: string | null
+          unavailable_school_holidays?: boolean | null
           user_id?: string | null
-          years_practicing?: number | null
+          years_practicing?: string | null
+          zip_post_code?: string | null
         }
         Relationships: []
       }
@@ -149,13 +323,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "commissions_caregiver_id_fkey"
-            columns: ["caregiver_id"]
-            isOneToOne: false
-            referencedRelation: "caregivers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "commissions_match_id_fkey"
             columns: ["match_id"]
             isOneToOne: true
@@ -192,15 +359,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"]
           support_type?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "matches_caregiver_id_fkey"
-            columns: ["caregiver_id"]
-            isOneToOne: false
-            referencedRelation: "caregivers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       waitlist_signups: {
         Row: {
