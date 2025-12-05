@@ -41,13 +41,13 @@ export const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/">
             <img 
               src={logo} 
               alt="Birth Rebel" 
-              className="h-32 md:h-40 lg:h-48"
+              className="h-12 md:h-14 lg:h-16"
             />
           </Link>
           
