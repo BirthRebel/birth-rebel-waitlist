@@ -207,13 +207,16 @@ const AdminCaregivers = () => {
 
   const fetchCaregivers = async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from("caregivers")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) {
-      setCaregivers(data as Caregiver[]);
+    try {
+      const { data, error } = await supabase.functions.invoke("get-all-caregivers");
+      
+      if (error) throw error;
+      
+      if (data?.caregivers) {
+        setCaregivers(data.caregivers as Caregiver[]);
+      }
+    } catch (error) {
+      console.error("Error fetching caregivers:", error);
     }
     setIsLoading(false);
   };
