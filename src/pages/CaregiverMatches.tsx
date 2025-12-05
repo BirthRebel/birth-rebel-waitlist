@@ -89,7 +89,7 @@ const CaregiverMatches = () => {
         .order("created_at", { ascending: false });
 
       if (matchesError) throw matchesError;
-      setMatches(matchesData || []);
+      setMatches((matchesData || []) as Match[]);
 
       // Fetch commissions
       const { data: commissionsData, error: commissionsError } = await supabase
