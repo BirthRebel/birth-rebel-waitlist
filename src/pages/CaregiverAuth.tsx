@@ -22,11 +22,27 @@ const CaregiverAuth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+        
+        // Try to link existing caregiver record if not already linked
+        if (signInData.user) {
+          const { data: existingCaregiver } = await supabase
+            .from("caregivers")
+            .select("id, user_id")
+            .eq("email", email)
+            .maybeSingle();
+          
+          if (existingCaregiver && !existingCaregiver.user_id) {
+            await supabase
+              .from("caregivers")
+              .update({ user_id: signInData.user.id })
+              .eq("id", existingCaregiver.id);
+          }
+        }
         
         // Check if user has a caregiver profile
         const { data: caregiver } = await supabase
@@ -39,39 +55,20 @@ const CaregiverAuth = () => {
           description: "You have successfully logged in.",
         });
         
-        // Redirect based on whether they have a caregiver profile
         navigate(caregiver ? "/caregiver/matches" : "/caregiver/onboarding");
       } else {
-        const { data: signUpData, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/caregiver/matches`,
+            emailRedirectTo: `${window.location.origin}/caregiver/auth`,
           },
         });
         if (error) throw error;
         
-        // Check if there's an existing caregiver record to link
-        if (signUpData.user) {
-          const { data: existingCaregiver } = await supabase
-            .from("caregivers")
-            .select("id")
-            .eq("email", email)
-            .is("user_id", null)
-            .maybeSingle();
-          
-          if (existingCaregiver) {
-            // Link existing caregiver to new auth user
-            await supabase
-              .from("caregivers")
-              .update({ user_id: signUpData.user.id })
-              .eq("id", existingCaregiver.id);
-          }
-        }
-        
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link to verify your account.",
+          description: "Click the confirmation link, then come back here to log in.",
         });
       }
     } catch (error: any) {
