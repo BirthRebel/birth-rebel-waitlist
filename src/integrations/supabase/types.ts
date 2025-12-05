@@ -17,30 +17,99 @@ export type Database = {
       caregivers: {
         Row: {
           active: boolean
+          address_line_1: string | null
+          address_line_2: string | null
+          births_supported: number | null
+          care_style: string | null
+          care_types_supported: string[] | null
+          city: string | null
+          country: string | null
           created_at: string
+          document_url: string | null
           email: string
+          first_name: string | null
+          gdpr_consent: boolean | null
           id: string
+          intake_completed_at: string | null
+          language_spoken: string[] | null
+          last_name: string | null
           name: string
+          phone: string | null
+          post_code: string | null
+          pronouns: string | null
+          services_offered: string[] | null
+          specific_support_experience: string | null
+          state: string | null
+          training_certifications: string[] | null
           type_of_support: Database["public"]["Enums"]["support_type"]
+          typeform_response_id: string | null
+          typical_availability: string | null
           user_id: string
+          years_practicing: number | null
         }
         Insert: {
           active?: boolean
+          address_line_1?: string | null
+          address_line_2?: string | null
+          births_supported?: number | null
+          care_style?: string | null
+          care_types_supported?: string[] | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          document_url?: string | null
           email: string
+          first_name?: string | null
+          gdpr_consent?: boolean | null
           id?: string
+          intake_completed_at?: string | null
+          language_spoken?: string[] | null
+          last_name?: string | null
           name: string
+          phone?: string | null
+          post_code?: string | null
+          pronouns?: string | null
+          services_offered?: string[] | null
+          specific_support_experience?: string | null
+          state?: string | null
+          training_certifications?: string[] | null
           type_of_support: Database["public"]["Enums"]["support_type"]
+          typeform_response_id?: string | null
+          typical_availability?: string | null
           user_id: string
+          years_practicing?: number | null
         }
         Update: {
           active?: boolean
+          address_line_1?: string | null
+          address_line_2?: string | null
+          births_supported?: number | null
+          care_style?: string | null
+          care_types_supported?: string[] | null
+          city?: string | null
+          country?: string | null
           created_at?: string
+          document_url?: string | null
           email?: string
+          first_name?: string | null
+          gdpr_consent?: boolean | null
           id?: string
+          intake_completed_at?: string | null
+          language_spoken?: string[] | null
+          last_name?: string | null
           name?: string
+          phone?: string | null
+          post_code?: string | null
+          pronouns?: string | null
+          services_offered?: string[] | null
+          specific_support_experience?: string | null
+          state?: string | null
+          training_certifications?: string[] | null
           type_of_support?: Database["public"]["Enums"]["support_type"]
+          typeform_response_id?: string | null
+          typical_availability?: string | null
           user_id?: string
+          years_practicing?: number | null
         }
         Relationships: []
       }
