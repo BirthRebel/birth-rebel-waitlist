@@ -87,6 +87,20 @@ export const CaregiverMessagesPanel = () => {
       if (error) throw error;
 
       fetchMessages(selectedConversation.id);
+
+      // Send email notification to admin/parent
+      supabase.functions.invoke("send-message-notification", {
+        body: {
+          conversationId: selectedConversation.id,
+          messageContent: content,
+          senderType: "caregiver",
+        },
+      }).then(({ error: notifError }) => {
+        if (notifError) {
+          console.error("Failed to send notification:", notifError);
+        }
+      });
+
       toast({
         title: "Message sent",
         description: "Birth Rebel will respond soon.",

@@ -189,10 +189,25 @@ const AdminMessages = () => {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", selectedConversation.id);
 
+      // Send email notification to caregiver (if conversation has one)
+      if (selectedConversation.caregiver_id) {
+        supabase.functions.invoke("send-message-notification", {
+          body: {
+            conversationId: selectedConversation.id,
+            messageContent: content,
+            senderType: "admin",
+          },
+        }).then(({ error: notifError }) => {
+          if (notifError) {
+            console.error("Failed to send notification:", notifError);
+          }
+        });
+      }
+
       toast({
         title: "Message sent",
         description: selectedConversation.caregiver_id
-          ? "The caregiver will see this in their dashboard."
+          ? "The caregiver has been notified by email."
           : "Message saved. Consider sending an email to the parent.",
       });
     } catch (error: any) {
