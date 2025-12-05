@@ -26,12 +26,18 @@ Deno.serve(async (req) => {
     }
 
     const answers = formResponse.answers || []
+    const definition = formResponse.definition || {}
+    const fields = definition.fields || []
     const responseId = formResponse.token
 
-    // Helper to find answer by field ref
-    const findAnswer = (ref: string) => {
-      return answers.find((a: any) => a.field?.ref === ref)
+    // Build a map of field ref -> field title for easier matching
+    const fieldTitleMap: Record<string, string> = {}
+    for (const field of fields) {
+      if (field.ref && field.title) {
+        fieldTitleMap[field.ref] = field.title.toLowerCase()
+      }
     }
+    console.log('Field title map:', JSON.stringify(fieldTitleMap, null, 2))
 
     // Map Typeform answers to caregiver fields - matching actual DB columns
     const caregiverData: Record<string, any> = {
@@ -39,86 +45,91 @@ Deno.serve(async (req) => {
       intake_completed_at: new Date().toISOString(),
     }
 
-    // Process each answer based on field type and ref
+    // Process each answer based on field title (more reliable than ref)
     for (const answer of answers) {
       const ref = answer.field?.ref || ''
       const type = answer.type
+      const fieldTitle = fieldTitleMap[ref] || ''
 
-      console.log(`Processing answer - ref: ${ref}, type: ${type}`)
+      console.log(`Processing answer - ref: ${ref}, type: ${type}, title: ${fieldTitle}`)
 
-      // Basic info
-      if (ref.includes('first_name')) {
+      // Basic info - match by field title
+      if (fieldTitle.includes('first name')) {
         caregiverData.first_name = answer.text
+        console.log('Matched first_name:', answer.text)
       }
-      if (ref.includes('last_name')) {
+      if (fieldTitle.includes('last name')) {
         caregiverData.last_name = answer.text
+        console.log('Matched last_name:', answer.text)
       }
-      if (ref.includes('email')) {
+      if (fieldTitle.includes('email') || type === 'email') {
         caregiverData.email = answer.email || answer.text
+        console.log('Matched email:', caregiverData.email)
       }
-      if (ref.includes('phone')) {
+      if (fieldTitle.includes('phone') || type === 'phone_number') {
         caregiverData.phone = answer.phone_number || answer.text
+        console.log('Matched phone:', caregiverData.phone)
       }
-      if (ref.includes('pronouns')) {
+      if (fieldTitle.includes('pronoun')) {
         caregiverData.pronouns = answer.text || answer.choice?.label
+        console.log('Matched pronouns:', caregiverData.pronouns)
       }
 
-      // Address fields - matching actual DB columns
-      if (ref.includes('address') && !ref.includes('line_2')) {
+      // Address fields
+      if ((fieldTitle.includes('address') && !fieldTitle.includes('email')) && !fieldTitle.includes('line 2')) {
         caregiverData.address = answer.text
       }
-      if (ref.includes('address_line_2')) {
+      if (fieldTitle.includes('address line 2') || fieldTitle.includes('address_line_2')) {
         caregiverData.address_line_2 = answer.text
       }
-      if (ref.includes('city') || ref.includes('town')) {
+      if (fieldTitle.includes('city') || fieldTitle.includes('town')) {
         caregiverData.city_town = answer.text
       }
-      if (ref.includes('state') || ref.includes('region') || ref.includes('province')) {
+      if (fieldTitle.includes('state') || fieldTitle.includes('region') || fieldTitle.includes('province')) {
         caregiverData.state_region_province = answer.text || answer.choice?.label
       }
-      if (ref.includes('post_code') || ref.includes('zip')) {
+      if (fieldTitle.includes('post') || fieldTitle.includes('zip')) {
         caregiverData.zip_post_code = answer.text
       }
-      if (ref.includes('country')) {
+      if (fieldTitle.includes('country')) {
         caregiverData.country = answer.text || answer.choice?.label
       }
 
       // Experience
-      if (ref.includes('years') || ref.includes('experience')) {
-        caregiverData.years_practicing = answer.text || answer.number?.toString()
+      if (fieldTitle.includes('years') && fieldTitle.includes('practic')) {
+        caregiverData.years_practicing = answer.text || answer.choice?.label || answer.number?.toString()
       }
-      if (ref.includes('births')) {
-        caregiverData.births_supported = answer.text || answer.number?.toString()
+      if (fieldTitle.includes('births') && fieldTitle.includes('support')) {
+        caregiverData.births_supported = answer.text || answer.choice?.label || answer.number?.toString()
       }
-      if (ref.includes('care_style')) {
+      if (fieldTitle.includes('care style')) {
         caregiverData.care_style = answer.text || answer.choice?.label
       }
-      if (ref.includes('certification') || ref.includes('training')) {
+      if (fieldTitle.includes('certification') || fieldTitle.includes('training')) {
         caregiverData.certifications_training = answer.text || answer.choices?.labels?.join(', ')
       }
 
-      // Role types (boolean flags)
-      if (ref.includes('doula') || (type === 'choice' && answer.choice?.label?.toLowerCase().includes('doula'))) {
-        caregiverData.is_doula = true
-      }
-      if (ref.includes('midwife') || (type === 'choice' && answer.choice?.label?.toLowerCase().includes('midwife'))) {
-        caregiverData.is_private_midwife = true
-      }
-      if (ref.includes('lactation') || (type === 'choice' && answer.choice?.label?.toLowerCase().includes('lactation'))) {
-        caregiverData.is_lactation_consultant = true
-      }
-      if (ref.includes('sleep') || (type === 'choice' && answer.choice?.label?.toLowerCase().includes('sleep'))) {
-        caregiverData.is_sleep_consultant = true
-      }
-      if (ref.includes('hypnobirth') || (type === 'choice' && answer.choice?.label?.toLowerCase().includes('hypnobirth'))) {
-        caregiverData.is_hypnobirthing_coach = true
-      }
-      if (ref.includes('bereavement') || (type === 'choice' && answer.choice?.label?.toLowerCase().includes('bereavement'))) {
-        caregiverData.is_bereavement_councillor = true
+      // Caregiver types (from multiple choice)
+      if (fieldTitle.includes('type of caregiver') || fieldTitle.includes('what type')) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
+        for (const label of labels) {
+          const l = label.toLowerCase()
+          if (l.includes('doula')) caregiverData.is_doula = true
+          if (l.includes('midwife')) caregiverData.is_private_midwife = true
+          if (l.includes('lactation')) caregiverData.is_lactation_consultant = true
+          if (l.includes('sleep')) caregiverData.is_sleep_consultant = true
+          if (l.includes('hypnobirth')) caregiverData.is_hypnobirthing_coach = true
+          if (l.includes('bereavement')) caregiverData.is_bereavement_councillor = true
+        }
+        // Handle "other" text
+        if (answer.choices?.other) {
+          caregiverData.support_type_other = answer.choices.other
+        }
       }
 
-      // Languages (boolean flags)
-      const handleLanguages = (labels: string[]) => {
+      // Languages
+      if (fieldTitle.includes('language')) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
         for (const lang of labels) {
           const l = lang.toLowerCase()
           if (l.includes('english')) caregiverData.speaks_english = true
@@ -134,26 +145,19 @@ Deno.serve(async (req) => {
           if (l.includes('portuguese')) caregiverData.speaks_portuguese = true
           if (l.includes('mandarin')) caregiverData.speaks_mandarin = true
         }
-      }
-      if (ref.includes('language')) {
-        if (answer.choices?.labels) {
-          handleLanguages(answer.choices.labels)
-        } else if (answer.choice?.label) {
-          handleLanguages([answer.choice.label])
-        }
-        // Store "other" languages
-        if (answer.text) {
-          caregiverData.language_other = answer.text
+        if (answer.choices?.other) {
+          caregiverData.language_other = answer.choices.other
         }
       }
 
-      // Services offered (boolean flags)
-      const handleServices = (labels: string[]) => {
+      // Services offered
+      if (fieldTitle.includes('service') || fieldTitle.includes('what type of service')) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
         for (const svc of labels) {
           const s = svc.toLowerCase()
           if (s.includes('birth planning')) caregiverData.offers_birth_planning = true
           if (s.includes('postnatal')) caregiverData.offers_postnatal_support = true
-          if (s.includes('labour') || s.includes('labor')) caregiverData.offers_active_labour_support = true
+          if (s.includes('labour') || s.includes('labor') || s.includes('active')) caregiverData.offers_active_labour_support = true
           if (s.includes('fertility') || s.includes('conception')) caregiverData.offers_fertility_conception = true
           if (s.includes('nutrition')) caregiverData.offers_nutrition_support = true
           if (s.includes('lactation') || s.includes('feeding')) caregiverData.offers_lactation_support = true
@@ -161,20 +165,14 @@ Deno.serve(async (req) => {
           if (s.includes('hypnobirth')) caregiverData.offers_hypnobirthing = true
           if (s.includes('loss') || s.includes('bereavement')) caregiverData.offers_loss_bereavement_care = true
         }
-      }
-      if (ref.includes('service')) {
-        if (answer.choices?.labels) {
-          handleServices(answer.choices.labels)
-        } else if (answer.choice?.label) {
-          handleServices([answer.choice.label])
-        }
-        if (answer.text) {
-          caregiverData.services_other = answer.text
+        if (answer.choices?.other) {
+          caregiverData.services_other = answer.choices.other
         }
       }
 
-      // Availability (boolean flags)
-      const handleAvailability = (labels: string[]) => {
+      // Availability
+      if (fieldTitle.includes('availability') || fieldTitle.includes('available')) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
         for (const avail of labels) {
           const a = avail.toLowerCase()
           if (a.includes('weekday') && a.includes('morning')) caregiverData.avail_weekdays_mornings = true
@@ -188,16 +186,10 @@ Deno.serve(async (req) => {
           if (a.includes('school holiday')) caregiverData.unavailable_school_holidays = true
         }
       }
-      if (ref.includes('availability') || ref.includes('avail')) {
-        if (answer.choices?.labels) {
-          handleAvailability(answer.choices.labels)
-        } else if (answer.choice?.label) {
-          handleAvailability([answer.choice.label])
-        }
-      }
 
-      // Support specialties (boolean flags)
-      const handleSupports = (labels: string[]) => {
+      // Support specialties
+      if (fieldTitle.includes('communities') || fieldTitle.includes('speciali') || fieldTitle.includes('experience supporting')) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
         for (const sup of labels) {
           const s = sup.toLowerCase()
           if (s.includes('solo') || s.includes('single parent')) caregiverData.supports_solo_parents = true
@@ -216,19 +208,21 @@ Deno.serve(async (req) => {
           if (s.includes('rebozo')) caregiverData.supports_rebozo = true
         }
       }
-      if (ref.includes('support') || ref.includes('speciali')) {
-        if (answer.choices?.labels) {
-          handleSupports(answer.choices.labels)
-        } else if (answer.choice?.label) {
-          handleSupports([answer.choice.label])
-        }
-        if (answer.text) {
-          caregiverData.support_type_other = answer.text
+
+      // Birth types supported
+      if (fieldTitle.includes('birth type') || fieldTitle.includes('type of birth')) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
+        for (const bt of labels) {
+          const b = bt.toLowerCase()
+          if (b.includes('home')) caregiverData.supports_home_births = true
+          if (b.includes('water')) caregiverData.supports_water_births = true
+          if (b.includes('caesarean') || b.includes('c-section')) caregiverData.supports_caesareans = true
         }
       }
 
-      // Care types (boolean flags)
-      const handleCareTypes = (labels: string[]) => {
+      // Care types
+      if (fieldTitle.includes('care') && (fieldTitle.includes('type') || fieldTitle.includes('stage'))) {
+        const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
         for (const care of labels) {
           const c = care.toLowerCase()
           if (c.includes('antenatal') || c.includes('prenatal')) caregiverData.care_antenatal_planning = true
@@ -241,23 +235,16 @@ Deno.serve(async (req) => {
           if (c.includes('cultural') || c.includes('spiritual')) caregiverData.care_cultural_spiritual = true
         }
       }
-      if (ref.includes('care_type') || ref.includes('care type')) {
-        if (answer.choices?.labels) {
-          handleCareTypes(answer.choices.labels)
-        } else if (answer.choice?.label) {
-          handleCareTypes([answer.choice.label])
-        }
-      }
 
       // GDPR consent
-      if (ref.includes('gdpr') || ref.includes('consent')) {
-        caregiverData.gdpr_consent = answer.boolean === true || answer.choice?.label?.toLowerCase() === 'yes'
+      if (fieldTitle.includes('gdpr') || fieldTitle.includes('consent') || fieldTitle.includes('agree')) {
+        caregiverData.gdpr_consent = answer.boolean === true || answer.choice?.label?.toLowerCase() === 'yes' || answer.choice?.label?.toLowerCase().includes('agree')
       }
     }
 
     // Validate required fields
     if (!caregiverData.email) {
-      console.error('Missing required email field')
+      console.error('Missing required email field. Caregiver data collected:', JSON.stringify(caregiverData, null, 2))
       return new Response(JSON.stringify({ error: 'Missing required email' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
