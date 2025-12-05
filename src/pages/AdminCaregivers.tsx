@@ -9,7 +9,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus } from "lucide-react";
 
 interface Caregiver {
   id: string;
@@ -255,6 +256,8 @@ const AdminCaregivers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({});
+  const [inviting, setInviting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchCaregivers();
@@ -333,6 +336,39 @@ const AdminCaregivers = () => {
                 {filteredCaregivers.length} of {caregivers.length} caregivers
               </p>
             </div>
+            <Button 
+              onClick={async () => {
+                setInviting(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("invite-caregivers", {
+                    body: { invite_all: true },
+                  });
+                  
+                  if (error) throw error;
+                  
+                  toast({
+                    title: "Invitations sent",
+                    description: `${data.invited} caregivers invited. ${data.errors?.length || 0} errors.`,
+                  });
+                  
+                  if (data.errors?.length > 0) {
+                    console.log("Invite errors:", data.errors);
+                  }
+                } catch (err: any) {
+                  toast({
+                    title: "Error",
+                    description: err.message,
+                    variant: "destructive",
+                  });
+                } finally {
+                  setInviting(false);
+                }
+              }}
+              disabled={inviting}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              {inviting ? "Inviting..." : "Invite All Caregivers"}
+            </Button>
           </div>
 
           {/* Search */}
