@@ -171,25 +171,23 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Insert new caregiver (without user_id - will be linked when they create account)
-    // Note: The table requires user_id, so we need to handle this differently
-    // For now, we'll create a placeholder user or skip if no auth
-    
-    // Since user_id is required and NOT NULL, we need a strategy:
-    // Option 1: Create the record without user_id (requires schema change)
-    // Option 2: Store in a staging table (requires new table)
-    // Option 3: Skip insert and just log (current approach for safety)
-    
-    console.log('Typeform data received and processed. Caregiver will be created when they sign up with email:', caregiverData.email)
-    
-    // Store the typeform data for later use when user signs up
-    // For now, just acknowledge receipt
-    return new Response(JSON.stringify({ 
-      success: true, 
-      action: 'received',
-      message: 'Typeform data received. Caregiver record will be created upon account signup.',
-      email: caregiverData.email
-    }), {
+    // Insert new caregiver without user_id (will be linked when they create account)
+    const { data: newCaregiver, error: insertError } = await supabase
+      .from('caregivers')
+      .insert(caregiverData)
+      .select('id')
+      .single()
+
+    if (insertError) {
+      console.error('Error inserting caregiver:', insertError)
+      return new Response(JSON.stringify({ error: insertError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    console.log('Created new caregiver:', newCaregiver.id)
+    return new Response(JSON.stringify({ success: true, action: 'created', id: newCaregiver.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
