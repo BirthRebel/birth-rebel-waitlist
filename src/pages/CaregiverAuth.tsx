@@ -40,27 +40,38 @@ const CaregiverAuth = () => {
         });
         if (error) throw error;
         
-        // Try to link existing caregiver record if not already linked
-        if (signInData.user) {
-          const { data: existingCaregiver } = await supabase
-            .from("caregivers")
-            .select("id, user_id")
-            .eq("email", email)
-            .maybeSingle();
-          
-          if (existingCaregiver && !existingCaregiver.user_id) {
-            await supabase
-              .from("caregivers")
-              .update({ user_id: signInData.user.id })
-              .eq("id", existingCaregiver.id);
-          }
-        }
-        
-        // Check if user has a caregiver profile
+        // Check if user has a linked caregiver profile
         const { data: caregiver } = await supabase
           .from("caregivers")
           .select("id")
+          .eq("user_id", signInData.user.id)
           .maybeSingle();
+        
+        // If no linked profile, try to link by email (RLS allows this via the new policy)
+        if (!caregiver) {
+          const { error: updateError } = await supabase
+            .from("caregivers")
+            .update({ user_id: signInData.user.id })
+            .eq("email", email)
+            .is("user_id", null);
+          
+          if (!updateError) {
+            // Re-check for caregiver after linking
+            const { data: linkedCaregiver } = await supabase
+              .from("caregivers")
+              .select("id")
+              .eq("user_id", signInData.user.id)
+              .maybeSingle();
+            
+            toast({
+              title: "Welcome!",
+              description: linkedCaregiver ? "Your account has been linked." : "You have successfully logged in.",
+            });
+            
+            navigate(linkedCaregiver ? "/caregiver/matches" : "/caregiver/onboarding");
+            return;
+          }
+        }
         
         toast({
           title: "Welcome back!",
