@@ -38,10 +38,19 @@ const CaregiverMatches = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Safety timeout to prevent infinite loading on mobile
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("Loading timeout reached");
+        setLoading(false);
+      }
+    }, 10000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
         if (!session?.user) {
+          setLoading(false);
           navigate("/caregiver/auth");
         }
       }
@@ -50,12 +59,16 @@ const CaregiverMatches = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
+        setLoading(false);
         navigate("/caregiver/auth");
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
+  }, [navigate, loading]);
 
   useEffect(() => {
     if (user) {
@@ -64,37 +77,57 @@ const CaregiverMatches = () => {
   }, [user]);
 
   const fetchCaregiverData = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     try {
+      // Query with explicit user_id filter
       const { data: caregiver, error: caregiverError } = await supabase
         .from("caregivers")
         .select("id")
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (caregiverError) {
-        throw caregiverError;
+        console.error("Caregiver fetch error:", caregiverError);
+        setLoading(false);
+        return;
       }
 
       if (!caregiver) {
+        setLoading(false);
         navigate("/caregiver/onboarding");
         return;
       }
 
       setCaregiverId(caregiver.id);
 
+      // Fetch matches for this caregiver
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
         .select("*")
+        .eq("caregiver_id", caregiver.id)
         .order("created_at", { ascending: false });
 
-      if (matchesError) throw matchesError;
-      setMatches((matchesData || []) as Match[]);
+      if (matchesError) {
+        console.error("Matches fetch error:", matchesError);
+      } else {
+        setMatches((matchesData || []) as Match[]);
+      }
 
+      // Fetch commissions for this caregiver
       const { data: commissionsData, error: commissionsError } = await supabase
         .from("commissions")
-        .select("*");
+        .select("*")
+        .eq("caregiver_id", caregiver.id);
 
-      if (commissionsError) throw commissionsError;
-      setCommissions(commissionsData || []);
+      if (commissionsError) {
+        console.error("Commissions fetch error:", commissionsError);
+      } else {
+        setCommissions(commissionsData || []);
+      }
     } catch (error: any) {
       console.error("Error fetching data:", error);
     } finally {
