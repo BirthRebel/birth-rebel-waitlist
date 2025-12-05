@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { BookingModal } from "@/components/BookingModal";
+import { CaregiverMessagesPanel } from "@/components/messaging/CaregiverMessagesPanel";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -64,7 +65,6 @@ const CaregiverMatches = () => {
 
   const fetchCaregiverData = async () => {
     try {
-      // Get caregiver record
       const { data: caregiver, error: caregiverError } = await supabase
         .from("caregivers")
         .select("id")
@@ -74,7 +74,6 @@ const CaregiverMatches = () => {
         throw caregiverError;
       }
 
-      // Redirect to onboarding if no caregiver profile exists
       if (!caregiver) {
         navigate("/caregiver/onboarding");
         return;
@@ -82,7 +81,6 @@ const CaregiverMatches = () => {
 
       setCaregiverId(caregiver.id);
 
-      // Fetch matches
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
         .select("*")
@@ -91,7 +89,6 @@ const CaregiverMatches = () => {
       if (matchesError) throw matchesError;
       setMatches((matchesData || []) as Match[]);
 
-      // Fetch commissions
       const { data: commissionsData, error: commissionsError } = await supabase
         .from("commissions")
         .select("*");
@@ -109,7 +106,6 @@ const CaregiverMatches = () => {
     if (!caregiverId) return;
 
     try {
-      // Update match status
       const { error: updateError } = await supabase
         .from("matches")
         .update({ status: "booked" })
@@ -117,7 +113,6 @@ const CaregiverMatches = () => {
 
       if (updateError) throw updateError;
 
-      // Create commission
       const commissionAmount = bookingValue * 0.12;
       const { error: insertError } = await supabase
         .from("commissions")
@@ -205,12 +200,22 @@ const CaregiverMatches = () => {
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold" style={{ color: '#E2725B' }}>
-              My Matches
+              My Dashboard
             </h1>
             <Button variant="outline" onClick={handleLogout}>
               Log Out
             </Button>
           </div>
+
+          {/* Messages Section */}
+          <div className="mb-8">
+            <CaregiverMessagesPanel />
+          </div>
+
+          {/* Matches Section */}
+          <h2 className="text-xl font-semibold mb-4" style={{ color: '#36454F' }}>
+            My Matches
+          </h2>
 
           {matches.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
