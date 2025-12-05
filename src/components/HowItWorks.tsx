@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const HowItWorks = () => {
+  const navigate = useNavigate();
   const steps = [
     {
       number: "01",
@@ -65,7 +67,7 @@ export const HowItWorks = () => {
           <Button 
             variant="hero" 
             size="xl" 
-            onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
+            onClick={() => navigate('/find-caregiver')}
           >
             Find Your Maternity Caregiver
           </Button>
