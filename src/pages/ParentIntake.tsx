@@ -52,13 +52,34 @@ export default function ParentIntake() {
     
     setLoading(true);
     try {
+      // Map support type to the correct boolean column
+      const supportTypeColumnMap: Record<SupportType, string> = {
+        doula: "is_doula",
+        lactation: "is_lactation_consultant",
+        sleep: "is_sleep_consultant",
+        hypnobirthing: "is_hypnobirthing_coach",
+      };
+      const supportTypeColumn = supportTypeColumnMap[formData.supportType];
+
       // Find an active caregiver matching the support type
-      const { data: caregivers, error: caregiverError } = await supabase
+      let query = supabase
         .from("caregivers")
         .select("id")
-        .eq("type_of_support", formData.supportType)
         .eq("active", true)
         .limit(1);
+
+      // Apply the dynamic filter
+      if (formData.supportType === "doula") {
+        query = query.eq("is_doula", true);
+      } else if (formData.supportType === "lactation") {
+        query = query.eq("is_lactation_consultant", true);
+      } else if (formData.supportType === "sleep") {
+        query = query.eq("is_sleep_consultant", true);
+      } else if (formData.supportType === "hypnobirthing") {
+        query = query.eq("is_hypnobirthing_coach", true);
+      }
+
+      const { data: caregivers, error: caregiverError } = await query;
 
       if (caregiverError) throw caregiverError;
 
