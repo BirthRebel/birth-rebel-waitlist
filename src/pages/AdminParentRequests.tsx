@@ -36,7 +36,8 @@ import {
   ChevronUp,
   Plus,
   MessageSquare,
-  Send
+  Send,
+  Pencil
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -76,11 +77,14 @@ const AdminParentRequests = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ParentRequest | null>(null);
+  const [editingRequest, setEditingRequest] = useState<ParentRequest | null>(null);
   const [messageContent, setMessageContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [newRequest, setNewRequest] = useState({
     first_name: "",
     last_name: "",
@@ -152,6 +156,56 @@ const AdminParentRequests = () => {
       });
     }
     setIsSubmitting(false);
+  };
+
+  const handleEditRequest = async () => {
+    if (!editingRequest) return;
+
+    if (!editingRequest.first_name || !editingRequest.email) {
+      toast({
+        title: "Missing fields",
+        description: "First name and email are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("parent_requests")
+        .update({
+          first_name: editingRequest.first_name,
+          last_name: editingRequest.last_name || null,
+          email: editingRequest.email,
+          phone: editingRequest.phone || null,
+          support_type: editingRequest.support_type || null,
+          due_date: editingRequest.due_date || null,
+          location: editingRequest.location || null,
+          special_requirements: editingRequest.special_requirements || null,
+        })
+        .eq("id", editingRequest.id);
+
+      if (error) throw error;
+
+      setRequests((prev) =>
+        prev.map((r) => (r.id === editingRequest.id ? editingRequest : r))
+      );
+      setIsEditDialogOpen(false);
+      setEditingRequest(null);
+      toast({
+        title: "Request updated",
+        description: `Parent request for ${editingRequest.first_name} has been updated`,
+      });
+    } catch (error: any) {
+      console.error("Error updating request:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    setIsUpdating(false);
   };
 
   const handleSendMessage = async () => {
@@ -620,7 +674,19 @@ const AdminParentRequests = () => {
                             </div>
                           </div>
 
-                          <div className="flex gap-2 pt-4">
+                          <div className="flex flex-wrap gap-2 pt-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingRequest(request);
+                                setIsEditDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                             <Button
                               variant="default"
                               size="sm"
@@ -725,6 +791,140 @@ const AdminParentRequests = () => {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Parent Request</DialogTitle>
+          </DialogHeader>
+          {editingRequest && (
+            <div className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_first_name">First Name *</Label>
+                  <Input
+                    id="edit_first_name"
+                    value={editingRequest.first_name}
+                    onChange={(e) =>
+                      setEditingRequest({ ...editingRequest, first_name: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_last_name">Last Name</Label>
+                  <Input
+                    id="edit_last_name"
+                    value={editingRequest.last_name || ""}
+                    onChange={(e) =>
+                      setEditingRequest({ ...editingRequest, last_name: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_email">Email *</Label>
+                <Input
+                  id="edit_email"
+                  type="email"
+                  value={editingRequest.email}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, email: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_phone">Phone</Label>
+                <Input
+                  id="edit_phone"
+                  type="tel"
+                  value={editingRequest.phone || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, phone: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_support_type">Support Type</Label>
+                <Select
+                  value={editingRequest.support_type || ""}
+                  onValueChange={(value) =>
+                    setEditingRequest({ ...editingRequest, support_type: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select support type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="doula">Doula</SelectItem>
+                    <SelectItem value="lactation">Lactation Consultant</SelectItem>
+                    <SelectItem value="sleep">Sleep Consultant</SelectItem>
+                    <SelectItem value="hypnobirthing">Hypnobirthing</SelectItem>
+                    <SelectItem value="postnatal">Postnatal Support</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_due_date">Due Date</Label>
+                <Input
+                  id="edit_due_date"
+                  type="date"
+                  value={editingRequest.due_date || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, due_date: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_location">Location</Label>
+                <Input
+                  id="edit_location"
+                  value={editingRequest.location || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, location: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_special_requirements">Special Requirements</Label>
+                <Textarea
+                  id="edit_special_requirements"
+                  value={editingRequest.special_requirements || ""}
+                  onChange={(e) =>
+                    setEditingRequest({
+                      ...editingRequest,
+                      special_requirements: e.target.value,
+                    })
+                  }
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingRequest(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleEditRequest} disabled={isUpdating}>
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
