@@ -29,7 +29,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const { error: emailError } = await resend.emails.send({
-      from: "Birth Rebel <hello@birthrebel.com>",
+      from: "Birth Rebel <hello@notifications.birthrebel.com>",
       to: [parentEmail],
       subject: "You have a new message from Birth Rebel",
       html: `
