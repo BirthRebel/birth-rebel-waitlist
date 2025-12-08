@@ -34,7 +34,9 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  Plus
+  Plus,
+  MessageSquare,
+  Send
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -74,7 +76,11 @@ const AdminParentRequests = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<ParentRequest | null>(null);
+  const [messageContent, setMessageContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [newRequest, setNewRequest] = useState({
     first_name: "",
     last_name: "",
@@ -146,6 +152,98 @@ const AdminParentRequests = () => {
       });
     }
     setIsSubmitting(false);
+  };
+
+  const handleSendMessage = async () => {
+    if (!selectedRequest || !messageContent.trim()) {
+      toast({
+        title: "Missing message",
+        description: "Please enter a message to send",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingMessage(true);
+    try {
+      // First, find or create a conversation for this parent request
+      let conversationId: string;
+      
+      const { data: existingConv } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("parent_request_id", selectedRequest.id)
+        .maybeSingle();
+
+      if (existingConv) {
+        conversationId = existingConv.id;
+      } else {
+        // Create a new conversation
+        const { data: newConv, error: convError } = await supabase
+          .from("conversations")
+          .insert({
+            parent_request_id: selectedRequest.id,
+            parent_email: selectedRequest.email,
+            subject: `Support request from ${selectedRequest.first_name}`,
+            status: "open",
+          })
+          .select()
+          .single();
+
+        if (convError) throw convError;
+        conversationId = newConv.id;
+      }
+
+      // Insert the message
+      const { error: msgError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversationId,
+          content: messageContent,
+          sender_type: "admin",
+        });
+
+      if (msgError) throw msgError;
+
+      // Send email notification to parent
+      const { error: emailError } = await supabase.functions.invoke(
+        "send-parent-message-notification",
+        {
+          body: {
+            parentEmail: selectedRequest.email,
+            parentName: selectedRequest.first_name,
+            messageContent: messageContent,
+          },
+        }
+      );
+
+      if (emailError) {
+        console.error("Email notification error:", emailError);
+        // Don't fail the whole operation if email fails
+      }
+
+      // Update status to contacted if it was new
+      if (selectedRequest.status === "new") {
+        await updateStatus(selectedRequest.id, "contacted");
+      }
+
+      toast({
+        title: "Message sent",
+        description: "Your message has been sent and an email notification was delivered",
+      });
+
+      setIsMessageDialogOpen(false);
+      setMessageContent("");
+      setSelectedRequest(null);
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    setIsSendingMessage(false);
   };
 
   useEffect(() => {
@@ -524,6 +622,18 @@ const AdminParentRequests = () => {
 
                           <div className="flex gap-2 pt-4">
                             <Button
+                              variant="default"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRequest(request);
+                                setIsMessageDialogOpen(true);
+                              }}
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Send Message
+                            </Button>
+                            <Button
                               variant="outline"
                               size="sm"
                               onClick={(e) => {
@@ -560,6 +670,63 @@ const AdminParentRequests = () => {
       </main>
 
       <Footer />
+
+      {/* Send Message Dialog */}
+      <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Send Message to {selectedRequest?.first_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="text-muted-foreground">
+                This will send an in-app message and email notification to{" "}
+                <strong>{selectedRequest?.email}</strong> with instructions to
+                log in and view your message.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="message">Your Message</Label>
+              <Textarea
+                id="message"
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                placeholder="Hi! Thank you for reaching out to Birth Rebel..."
+                rows={6}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsMessageDialogOpen(false);
+                  setMessageContent("");
+                  setSelectedRequest(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendMessage}
+                disabled={isSendingMessage || !messageContent.trim()}
+              >
+                {isSendingMessage ? (
+                  "Sending..."
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Message
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
