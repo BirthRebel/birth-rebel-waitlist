@@ -6,9 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import ParentIntake from "./pages/ParentIntake";
+import Auth from "./pages/Auth";
 import CaregiverAuth from "./pages/CaregiverAuth";
 import CaregiverOnboarding from "./pages/CaregiverOnboarding";
 import CaregiverMatches from "./pages/CaregiverMatches";
+import ParentDashboard from "./pages/ParentDashboard";
 import AdminImport from "./pages/AdminImport";
 import AdminCaregivers from "./pages/AdminCaregivers";
 import AdminMessages from "./pages/AdminMessages";
@@ -27,9 +29,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/find-caregiver" element={<ParentIntake />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/caregiver/auth" element={<CaregiverAuth />} />
           <Route path="/caregiver/onboarding" element={<CaregiverOnboarding />} />
           <Route path="/caregiver/matches" element={<CaregiverMatches />} />
+          <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/admin/import" element={<AdminImport />} />
           <Route path="/admin/caregivers" element={<AdminCaregivers />} />
           <Route path="/admin/messages" element={<AdminMessages />} />
