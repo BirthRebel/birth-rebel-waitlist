@@ -6,16 +6,16 @@ import type { User } from "@supabase/supabase-js";
 
 export const Header = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [isCaregiver, setIsCaregiver] = useState(false);
+  const [userType, setUserType] = useState<"caregiver" | "parent" | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => checkIfCaregiver(session.user.id), 0);
+          setTimeout(() => checkUserType(session.user.id, session.user.email), 0);
         } else {
-          setIsCaregiver(false);
+          setUserType(null);
         }
       }
     );
@@ -23,20 +23,28 @@ export const Header = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkIfCaregiver(session.user.id);
+        checkUserType(session.user.id, session.user.email);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkIfCaregiver = async (userId: string) => {
-    const { data } = await supabase
+  const checkUserType = async (userId: string, email: string | undefined) => {
+    // Check if caregiver first
+    const { data: caregiver } = await supabase
       .from("caregivers")
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
-    setIsCaregiver(!!data);
+    
+    if (caregiver) {
+      setUserType("caregiver");
+      return;
+    }
+
+    // Otherwise treat as parent
+    setUserType("parent");
   };
 
   return (
@@ -66,21 +74,31 @@ export const Header = () => {
             >
               About
             </Link>
-            {user && isCaregiver ? (
-              <Link 
-                to="/caregiver/matches" 
-                className="text-lg font-semibold hover:text-primary transition-colors"
-                style={{ color: '#E2725B' }}
-              >
-                My Matches
-              </Link>
+            {user ? (
+              userType === "caregiver" ? (
+                <Link 
+                  to="/caregiver/matches" 
+                  className="text-lg font-semibold hover:text-primary transition-colors"
+                  style={{ color: '#E2725B' }}
+                >
+                  My Dashboard
+                </Link>
+              ) : (
+                <Link 
+                  to="/parent/dashboard" 
+                  className="text-lg font-semibold hover:text-primary transition-colors"
+                  style={{ color: '#E2725B' }}
+                >
+                  My Dashboard
+                </Link>
+              )
             ) : (
               <Link 
-                to="/caregiver/auth" 
+                to="/auth" 
                 className="text-lg font-semibold hover:text-primary transition-colors"
                 style={{ color: '#36454F' }}
               >
-                Caregiver Login
+                Login
               </Link>
             )}
           </nav>
