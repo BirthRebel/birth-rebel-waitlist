@@ -6,6 +6,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
@@ -17,7 +33,8 @@ import {
   Heart,
   RefreshCw,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Plus
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -56,7 +73,80 @@ const AdminParentRequests = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newRequest, setNewRequest] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    support_type: "",
+    due_date: "",
+    location: "",
+    special_requirements: "",
+  });
   const { toast } = useToast();
+
+  const resetForm = () => {
+    setNewRequest({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      support_type: "",
+      due_date: "",
+      location: "",
+      special_requirements: "",
+    });
+  };
+
+  const handleAddRequest = async () => {
+    if (!newRequest.first_name || !newRequest.email) {
+      toast({
+        title: "Missing fields",
+        description: "First name and email are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase
+        .from("parent_requests")
+        .insert({
+          first_name: newRequest.first_name,
+          last_name: newRequest.last_name || null,
+          email: newRequest.email,
+          phone: newRequest.phone || null,
+          support_type: newRequest.support_type || null,
+          due_date: newRequest.due_date || null,
+          location: newRequest.location || null,
+          special_requirements: newRequest.special_requirements || null,
+          status: "new",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setRequests((prev) => [data, ...prev]);
+      setIsAddDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Request added",
+        description: `Parent request for ${newRequest.first_name} has been created`,
+      });
+    } catch (error: any) {
+      console.error("Error adding request:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    setIsSubmitting(false);
+  };
 
   useEffect(() => {
     fetchRequests();
@@ -138,10 +228,155 @@ const AdminParentRequests = () => {
                 Formless.ai
               </p>
             </div>
-            <Button onClick={fetchRequests} variant="outline" disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Request
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add Parent Request</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="first_name">First Name *</Label>
+                        <Input
+                          id="first_name"
+                          value={newRequest.first_name}
+                          onChange={(e) =>
+                            setNewRequest({ ...newRequest, first_name: e.target.value })
+                          }
+                          placeholder="Jane"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="last_name">Last Name</Label>
+                        <Input
+                          id="last_name"
+                          value={newRequest.last_name}
+                          onChange={(e) =>
+                            setNewRequest({ ...newRequest, last_name: e.target.value })
+                          }
+                          placeholder="Smith"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={newRequest.email}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, email: e.target.value })
+                        }
+                        placeholder="jane@example.com"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={newRequest.phone}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, phone: e.target.value })
+                        }
+                        placeholder="+44 7123 456789"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="support_type">Support Type</Label>
+                      <Select
+                        value={newRequest.support_type}
+                        onValueChange={(value) =>
+                          setNewRequest({ ...newRequest, support_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select support type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="doula">Doula</SelectItem>
+                          <SelectItem value="lactation">Lactation Consultant</SelectItem>
+                          <SelectItem value="sleep">Sleep Consultant</SelectItem>
+                          <SelectItem value="hypnobirthing">Hypnobirthing</SelectItem>
+                          <SelectItem value="postnatal">Postnatal Support</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="due_date">Due Date</Label>
+                      <Input
+                        id="due_date"
+                        type="date"
+                        value={newRequest.due_date}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, due_date: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input
+                        id="location"
+                        value={newRequest.location}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, location: e.target.value })
+                        }
+                        placeholder="London, UK"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="special_requirements">Special Requirements</Label>
+                      <Textarea
+                        id="special_requirements"
+                        value={newRequest.special_requirements}
+                        onChange={(e) =>
+                          setNewRequest({
+                            ...newRequest,
+                            special_requirements: e.target.value,
+                          })
+                        }
+                        placeholder="Any specific needs or preferences..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsAddDialogOpen(false);
+                          resetForm();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddRequest} disabled={isSubmitting}>
+                        {isSubmitting ? "Adding..." : "Add Request"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button onClick={fetchRequests} variant="outline" disabled={isLoading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           {/* Search */}
