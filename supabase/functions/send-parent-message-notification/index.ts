@@ -28,9 +28,9 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Parent email is required");
     }
 
-    // Send email notification
+    // Note: Using Resend test domain. To use your own domain, verify it at https://resend.com/domains
     const { error: emailError } = await resend.emails.send({
-      from: "Birth Rebel <notifications@birthrebel.co.uk>",
+      from: "Birth Rebel <onboarding@resend.dev>",
       to: [parentEmail],
       subject: "You have a new message from Birth Rebel",
       html: `
