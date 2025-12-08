@@ -63,7 +63,7 @@ serve(async (req: Request): Promise<Response> => {
               </div>
               <p>To view this message and reply, please log in to your Birth Rebel account.</p>
               <p style="text-align: center;">
-                <a href="https://birthrebel.co.uk" class="button">View Message</a>
+                <a href="https://birthrebel.com" class="button">View Message</a>
               </p>
             </div>
             <div class="footer">
