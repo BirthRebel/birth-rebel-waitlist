@@ -34,6 +34,35 @@ export const CaregiverMessagesPanel = () => {
     fetchConversations();
   }, []);
 
+  // Real-time subscription for messages
+  useEffect(() => {
+    if (!selectedConversation?.id) return;
+
+    const channel = supabase
+      .channel(`caregiver-messages-${selectedConversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${selectedConversation.id}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.id === newMessage.id);
+            return exists ? prev : [...prev, newMessage];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedConversation?.id]);
+
   const fetchConversations = async () => {
     try {
       const { data, error } = await supabase
