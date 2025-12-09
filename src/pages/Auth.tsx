@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -10,15 +10,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
+  const prefillEmail = searchParams.get("email") || "";
+  const prefillType = searchParams.get("type") as "parent" | "caregiver" | null;
+  
   const [isLogin, setIsLogin] = useState(true);
   const [isReset, setIsReset] = useState(false);
-  const [userType, setUserType] = useState<"parent" | "caregiver">("parent");
-  const [email, setEmail] = useState("");
+  const [userType, setUserType] = useState<"parent" | "caregiver">(prefillType || "parent");
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Show helpful message if coming from email link
+  const isFromEmailLink = !!prefillEmail;
 
   useEffect(() => {
     // Check if user is already logged in
@@ -222,7 +229,7 @@ const Auth = () => {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h1
-              className="text-2xl font-bold text-center mb-6"
+              className="text-2xl font-bold text-center mb-2"
               style={{ color: "#E2725B" }}
             >
               {isReset
@@ -231,6 +238,18 @@ const Auth = () => {
                 ? "Welcome Back"
                 : "Create Account"}
             </h1>
+
+            {isFromEmailLink && !isLogin && (
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                Create an account with <strong>{prefillEmail}</strong> to view your messages
+              </p>
+            )}
+
+            {isFromEmailLink && isLogin && (
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                Log in with <strong>{prefillEmail}</strong> to view your messages, or sign up if this is your first time
+              </p>
+            )}
 
             {!isLogin && !isReset && (
               <Tabs
