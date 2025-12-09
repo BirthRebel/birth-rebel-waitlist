@@ -239,6 +239,22 @@ const AdminMatches = () => {
 
       if (msgError) throw msgError;
 
+      // Send email notification to parent
+      const { error: notifyError } = await supabase.functions.invoke(
+        "send-parent-message-notification",
+        {
+          body: {
+            parentEmail: match.parent_email,
+            parentName: match.parent_first_name,
+            messageContent: content.trim(),
+          },
+        }
+      );
+
+      if (notifyError) {
+        console.error("Failed to send email notification:", notifyError);
+      }
+
       toast({ title: "Message sent to parent" });
       setMessageContent((prev) => ({
         ...prev,
@@ -292,6 +308,22 @@ const AdminMatches = () => {
       });
 
       if (msgError) throw msgError;
+
+      // Send email notification to caregiver
+      const { error: notifyError } = await supabase.functions.invoke(
+        "send-message-notification",
+        {
+          body: {
+            conversationId: conversation.id,
+            messageContent: content.trim(),
+            senderType: "admin",
+          },
+        }
+      );
+
+      if (notifyError) {
+        console.error("Failed to send email notification:", notifyError);
+      }
 
       toast({ title: "Message sent to caregiver" });
       setMessageContent((prev) => ({
