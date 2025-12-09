@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare } from "lucide-react";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard } from "lucide-react";
 import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 
 interface Caregiver {
@@ -259,7 +259,22 @@ const AdminCaregivers = () => {
   const [filters, setFilters] = useState<FilterState>({});
   const [inviting, setInviting] = useState(false);
   const [messagePanelCaregiver, setMessagePanelCaregiver] = useState<Caregiver | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<Record<string, { subscribed: boolean; subscription_end?: string }>>({});
   const { toast } = useToast();
+
+  const fetchSubscriptionStatus = async (emails: string[]) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-caregiver-subscription", {
+        body: { emails },
+      });
+      if (error) throw error;
+      if (data?.subscriptions) {
+        setSubscriptionStatus(data.subscriptions);
+      }
+    } catch (error) {
+      console.error("Error fetching subscription status:", error);
+    }
+  };
 
   useEffect(() => {
     fetchCaregivers();
@@ -273,7 +288,14 @@ const AdminCaregivers = () => {
       if (error) throw error;
       
       if (data?.caregivers) {
-        setCaregivers(data.caregivers as Caregiver[]);
+        const caregiverList = data.caregivers as Caregiver[];
+        setCaregivers(caregiverList);
+        
+        // Fetch subscription status for all caregivers
+        const emails = caregiverList.map((c) => c.email);
+        if (emails.length > 0) {
+          fetchSubscriptionStatus(emails);
+        }
       }
     } catch (error) {
       console.error("Error fetching caregivers:", error);
@@ -459,7 +481,13 @@ const AdminCaregivers = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {subscriptionStatus[caregiver.email]?.subscribed && (
+                          <Badge className="bg-green-500 text-white hover:bg-green-600">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            Subscribed
+                          </Badge>
+                        )}
                         {caregiver.active ? (
                           <Badge variant="default">Active</Badge>
                         ) : (
