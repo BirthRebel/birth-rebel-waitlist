@@ -198,33 +198,6 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
         )}
       >
         <div className="border-t border-border">
-          {/* Conversation Tabs */}
-          {conversations.length > 1 && (
-            <div className="flex gap-2 p-3 border-b border-border overflow-x-auto">
-              {conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => {
-                    setSelectedConversation(conv);
-                    fetchMessages(conv.id);
-                  }}
-                  className={cn(
-                    "px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors",
-                    selectedConversation?.id === conv.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80"
-                  )}
-                  style={
-                    selectedConversation?.id === conv.id
-                      ? { backgroundColor: "#E2725B" }
-                      : {}
-                  }
-                >
-                  {conv.subject || "Birth Rebel Team"}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Messages */}
           <div className="h-80 flex flex-col">
