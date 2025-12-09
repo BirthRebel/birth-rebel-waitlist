@@ -39,35 +39,34 @@ const Auth = () => {
   }, []);
 
   const redirectBasedOnUserType = async (userId: string) => {
-    // Check if caregiver
-    const { data: caregiver } = await supabase
-      .from("caregivers")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (caregiver) {
-      navigate("/caregiver/matches");
-      return;
-    }
-
-    // Check if parent (has a parent_request linked)
-    const { data: userEmail } = await supabase.auth.getUser();
-    if (userEmail?.user?.email) {
-      const { data: parentRequest } = await supabase
-        .from("parent_requests")
+    try {
+      // Check if caregiver with timeout
+      const caregiverPromise = supabase
+        .from("caregivers")
         .select("id")
-        .eq("email", userEmail.user.email)
+        .eq("user_id", userId)
         .maybeSingle();
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('timeout')), 3000)
+      );
 
-      if (parentRequest) {
-        navigate("/parent/dashboard");
-        return;
+      try {
+        const { data: caregiver } = await Promise.race([caregiverPromise, timeoutPromise]) as any;
+        if (caregiver) {
+          navigate("/caregiver/matches");
+          return;
+        }
+      } catch (e) {
+        console.log("Caregiver check timed out or failed, continuing as parent");
       }
-    }
 
-    // Default to parent dashboard for new users
-    navigate("/parent/dashboard");
+      // Default to parent dashboard
+      navigate("/parent/dashboard");
+    } catch (error) {
+      console.error("Redirect error:", error);
+      navigate("/parent/dashboard");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
