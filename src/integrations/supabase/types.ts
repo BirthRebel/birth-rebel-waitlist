@@ -323,6 +323,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "commissions_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "commissions_match_id_fkey"
             columns: ["match_id"]
             isOneToOne: false
