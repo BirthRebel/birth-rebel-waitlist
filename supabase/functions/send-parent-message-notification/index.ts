@@ -28,8 +28,9 @@ serve(async (req: Request): Promise<Response> => {
       throw new Error("Parent email is required");
     }
 
+    // Using resend.dev domain until birthrebel.co.uk is verified in Resend
     const { error: emailError } = await resend.emails.send({
-      from: "Birth Rebel <hello@notifications.birthrebel.com>",
+      from: "Birth Rebel <onboarding@resend.dev>",
       to: [parentEmail],
       subject: "You have a new message from Birth Rebel",
       html: `
