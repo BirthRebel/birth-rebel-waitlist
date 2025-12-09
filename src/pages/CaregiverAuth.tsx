@@ -81,7 +81,7 @@ const CaregiverAuth = () => {
           });
           
           setLoading(false);
-          navigate(linkedCaregiver ? "/caregiver/matches" : "/caregiver/onboarding");
+          navigate("/caregiver/matches");
           return;
         }
         
@@ -91,7 +91,7 @@ const CaregiverAuth = () => {
         });
         
         setLoading(false);
-        navigate(caregiver ? "/caregiver/matches" : "/caregiver/onboarding");
+        navigate("/caregiver/matches");
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
