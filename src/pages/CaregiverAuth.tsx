@@ -17,45 +17,8 @@ const CaregiverAuth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Check if user is already authenticated and handle auth state changes
-  useEffect(() => {
-    let isMounted = true;
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email);
-      
-      if (!isMounted) return;
-      
-      if (event === 'SIGNED_IN' && session?.user) {
-        // User just signed in, redirect to matches
-        console.log("Redirecting to matches...");
-        navigate("/caregiver/matches", { replace: true });
-      } else if (event === 'SIGNED_OUT' || !session) {
-        setCheckingAuth(false);
-      }
-    });
-
-    // Initial session check - if already logged in, redirect
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      
-      if (session?.user) {
-        console.log("Already logged in, redirecting...");
-        navigate("/caregiver/matches", { replace: true });
-      } else {
-        setCheckingAuth(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
 
   // Pre-fill email and set signup mode from URL params
   useEffect(() => {
@@ -69,17 +32,6 @@ const CaregiverAuth = () => {
       setMode("signup");
     }
   }, [searchParams]);
-
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FFFAF5' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: '#E2725B' }}></div>
-          <p className="text-muted-foreground">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,14 +135,14 @@ const CaregiverAuth = () => {
         return;
       }
       
-      // Auth state change listener will handle the redirect
-      // Just show a success toast - don't manually navigate
       toast({
         title: "Welcome!",
         description: "Logging you in...",
       });
       
-      // Don't reset loading - let onAuthStateChange handle navigation
+      // Navigate directly after successful login
+      setLoading(false);
+      navigate("/caregiver/matches", { replace: true });
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({

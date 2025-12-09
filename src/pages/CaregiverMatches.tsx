@@ -46,33 +46,9 @@ const CaregiverMatches = () => {
   useEffect(() => {
     let isMounted = true;
 
-    // Safety timeout to prevent infinite loading on mobile
-    const timeout = setTimeout(() => {
-      if (loading && isMounted) {
-        console.warn("Loading timeout reached");
-        setLoading(false);
-      }
-    }, 10000);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!isMounted) return;
-        
-        console.log("CaregiverMatches auth change:", event, session?.user?.email);
-        setUser(session?.user ?? null);
-        
-        // Only redirect on explicit sign out, not on initial load
-        if (event === 'SIGNED_OUT') {
-          navigate("/caregiver/auth", { replace: true });
-        }
-      }
-    );
-
-    // Initial session check
+    // Check session once on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!isMounted) return;
-      
-      console.log("CaregiverMatches initial session:", session?.user?.email);
       
       if (session?.user) {
         setUser(session.user);
@@ -83,9 +59,18 @@ const CaregiverMatches = () => {
       }
     });
 
+    // Listen for sign out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (!isMounted) return;
+        if (event === 'SIGNED_OUT') {
+          navigate("/caregiver/auth", { replace: true });
+        }
+      }
+    );
+
     return () => {
       isMounted = false;
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [navigate]);
