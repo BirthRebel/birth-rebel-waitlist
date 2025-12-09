@@ -81,7 +81,10 @@ export const AdminMessagePanel = ({
         },
         (payload) => {
           const newMessage = payload.new as Message;
-          setMessages((prev) => [...prev, newMessage]);
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.id === newMessage.id);
+            return exists ? prev : [...prev, newMessage];
+          });
         }
       )
       .subscribe();
@@ -198,16 +201,19 @@ export const AdminMessagePanel = ({
     }
 
     try {
-      const { error } = await supabase.from("messages").insert({
+      const { data: newMessage, error } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         content,
         sender_type: "admin",
-      });
+      }).select().single();
 
       if (error) throw error;
 
-      // Refresh messages
-      fetchMessages(conversationId);
+      // Optimistically add message to state (real-time might also add it, so we check for duplicates)
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === newMessage.id);
+        return exists ? prev : [...prev, newMessage];
+      });
 
       // Update conversation timestamp
       await supabase
