@@ -457,46 +457,73 @@ export type Database = {
       }
       parent_requests: {
         Row: {
+          budget: string | null
+          caregiver_preferences: string | null
           created_at: string
           due_date: string | null
           email: string
+          family_context: string | null
           first_name: string
+          general_availability: string | null
           id: string
+          language: string | null
           last_name: string | null
           location: string | null
           matched_caregiver_id: string | null
           phone: string | null
+          preferred_communication: string | null
+          shared_identity_requests: string | null
           special_requirements: string | null
+          specific_concerns: string | null
+          stage_of_journey: string | null
           status: string
           support_type: string | null
           updated_at: string
         }
         Insert: {
+          budget?: string | null
+          caregiver_preferences?: string | null
           created_at?: string
           due_date?: string | null
           email: string
+          family_context?: string | null
           first_name: string
+          general_availability?: string | null
           id?: string
+          language?: string | null
           last_name?: string | null
           location?: string | null
           matched_caregiver_id?: string | null
           phone?: string | null
+          preferred_communication?: string | null
+          shared_identity_requests?: string | null
           special_requirements?: string | null
+          specific_concerns?: string | null
+          stage_of_journey?: string | null
           status?: string
           support_type?: string | null
           updated_at?: string
         }
         Update: {
+          budget?: string | null
+          caregiver_preferences?: string | null
           created_at?: string
           due_date?: string | null
           email?: string
+          family_context?: string | null
           first_name?: string
+          general_availability?: string | null
           id?: string
+          language?: string | null
           last_name?: string | null
           location?: string | null
           matched_caregiver_id?: string | null
           phone?: string | null
+          preferred_communication?: string | null
+          shared_identity_requests?: string | null
           special_requirements?: string | null
+          specific_concerns?: string | null
+          stage_of_journey?: string | null
           status?: string
           support_type?: string | null
           updated_at?: string

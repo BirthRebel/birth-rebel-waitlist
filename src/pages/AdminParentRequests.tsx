@@ -54,6 +54,15 @@ interface ParentRequest {
   status: string;
   created_at: string;
   matched_caregiver_id: string | null;
+  stage_of_journey: string | null;
+  family_context: string | null;
+  caregiver_preferences: string | null;
+  language: string | null;
+  preferred_communication: string | null;
+  shared_identity_requests: string | null;
+  budget: string | null;
+  general_availability: string | null;
+  specific_concerns: string | null;
 }
 
 const getStatusColor = (status: string) => {
@@ -91,9 +100,15 @@ const AdminParentRequests = () => {
     email: "",
     phone: "",
     support_type: "",
-    due_date: "",
-    location: "",
-    special_requirements: "",
+    stage_of_journey: "",
+    family_context: "",
+    caregiver_preferences: "",
+    language: "",
+    preferred_communication: "",
+    shared_identity_requests: "",
+    budget: "",
+    general_availability: "",
+    specific_concerns: "",
   });
   const { toast } = useToast();
 
@@ -104,9 +119,15 @@ const AdminParentRequests = () => {
       email: "",
       phone: "",
       support_type: "",
-      due_date: "",
-      location: "",
-      special_requirements: "",
+      stage_of_journey: "",
+      family_context: "",
+      caregiver_preferences: "",
+      language: "",
+      preferred_communication: "",
+      shared_identity_requests: "",
+      budget: "",
+      general_availability: "",
+      specific_concerns: "",
     });
   };
 
@@ -130,9 +151,15 @@ const AdminParentRequests = () => {
           email: newRequest.email,
           phone: newRequest.phone || null,
           support_type: newRequest.support_type || null,
-          due_date: newRequest.due_date || null,
-          location: newRequest.location || null,
-          special_requirements: newRequest.special_requirements || null,
+          stage_of_journey: newRequest.stage_of_journey || null,
+          family_context: newRequest.family_context || null,
+          caregiver_preferences: newRequest.caregiver_preferences || null,
+          language: newRequest.language || null,
+          preferred_communication: newRequest.preferred_communication || null,
+          shared_identity_requests: newRequest.shared_identity_requests || null,
+          budget: newRequest.budget || null,
+          general_availability: newRequest.general_availability || null,
+          specific_concerns: newRequest.specific_concerns || null,
           status: "new",
         })
         .select()
@@ -180,9 +207,15 @@ const AdminParentRequests = () => {
           email: editingRequest.email,
           phone: editingRequest.phone || null,
           support_type: editingRequest.support_type || null,
-          due_date: editingRequest.due_date || null,
-          location: editingRequest.location || null,
-          special_requirements: editingRequest.special_requirements || null,
+          stage_of_journey: editingRequest.stage_of_journey || null,
+          family_context: editingRequest.family_context || null,
+          caregiver_preferences: editingRequest.caregiver_preferences || null,
+          language: editingRequest.language || null,
+          preferred_communication: editingRequest.preferred_communication || null,
+          shared_identity_requests: editingRequest.shared_identity_requests || null,
+          budget: editingRequest.budget || null,
+          general_availability: editingRequest.general_availability || null,
+          specific_concerns: editingRequest.specific_concerns || null,
         })
         .eq("id", editingRequest.id);
 
@@ -467,41 +500,113 @@ const AdminParentRequests = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="due_date">Due Date</Label>
+                      <Label htmlFor="stage_of_journey">Stage of Pregnancy / Postpartum</Label>
                       <Input
-                        id="due_date"
-                        type="date"
-                        value={newRequest.due_date}
+                        id="stage_of_journey"
+                        value={newRequest.stage_of_journey}
                         onChange={(e) =>
-                          setNewRequest({ ...newRequest, due_date: e.target.value })
+                          setNewRequest({ ...newRequest, stage_of_journey: e.target.value })
                         }
+                        placeholder="e.g., 32 weeks pregnant, 3 months postpartum"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={newRequest.location}
-                        onChange={(e) =>
-                          setNewRequest({ ...newRequest, location: e.target.value })
-                        }
-                        placeholder="London, UK"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="special_requirements">Special Requirements</Label>
+                      <Label htmlFor="family_context">Birth and Family Context</Label>
                       <Textarea
-                        id="special_requirements"
-                        value={newRequest.special_requirements}
+                        id="family_context"
+                        value={newRequest.family_context}
                         onChange={(e) =>
-                          setNewRequest({
-                            ...newRequest,
-                            special_requirements: e.target.value,
-                          })
+                          setNewRequest({ ...newRequest, family_context: e.target.value })
                         }
-                        placeholder="Any specific needs or preferences..."
+                        placeholder="Family background, birth situation..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="caregiver_preferences">Caregiver Preferences</Label>
+                      <Textarea
+                        id="caregiver_preferences"
+                        value={newRequest.caregiver_preferences}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, caregiver_preferences: e.target.value })
+                        }
+                        placeholder="What are you looking for in a caregiver?"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="language">Language</Label>
+                      <Input
+                        id="language"
+                        value={newRequest.language}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, language: e.target.value })
+                        }
+                        placeholder="Preferred language(s)"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="preferred_communication">Preferred Way to Communicate</Label>
+                      <Input
+                        id="preferred_communication"
+                        value={newRequest.preferred_communication}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, preferred_communication: e.target.value })
+                        }
+                        placeholder="e.g., Email, WhatsApp, Phone"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="shared_identity_requests">Requests for Shared Identity</Label>
+                      <Textarea
+                        id="shared_identity_requests"
+                        value={newRequest.shared_identity_requests}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, shared_identity_requests: e.target.value })
+                        }
+                        placeholder="Any shared identity preferences..."
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="budget">Budget</Label>
+                      <Input
+                        id="budget"
+                        value={newRequest.budget}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, budget: e.target.value })
+                        }
+                        placeholder="Budget range"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="general_availability">General Availability</Label>
+                      <Input
+                        id="general_availability"
+                        value={newRequest.general_availability}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, general_availability: e.target.value })
+                        }
+                        placeholder="When are you available?"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="specific_concerns">Specific Concerns</Label>
+                      <Textarea
+                        id="specific_concerns"
+                        value={newRequest.specific_concerns}
+                        onChange={(e) =>
+                          setNewRequest({ ...newRequest, specific_concerns: e.target.value })
+                        }
+                        placeholder="Any specific concerns or needs..."
                         rows={3}
                       />
                     </div>
@@ -872,38 +977,104 @@ const AdminParentRequests = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit_due_date">Due Date</Label>
+                <Label htmlFor="edit_stage_of_journey">Stage of Pregnancy / Postpartum</Label>
                 <Input
-                  id="edit_due_date"
-                  type="date"
-                  value={editingRequest.due_date || ""}
+                  id="edit_stage_of_journey"
+                  value={editingRequest.stage_of_journey || ""}
                   onChange={(e) =>
-                    setEditingRequest({ ...editingRequest, due_date: e.target.value })
+                    setEditingRequest({ ...editingRequest, stage_of_journey: e.target.value })
                   }
+                  placeholder="e.g., 32 weeks pregnant, 3 months postpartum"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit_location">Location</Label>
-                <Input
-                  id="edit_location"
-                  value={editingRequest.location || ""}
-                  onChange={(e) =>
-                    setEditingRequest({ ...editingRequest, location: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit_special_requirements">Special Requirements</Label>
+                <Label htmlFor="edit_family_context">Birth and Family Context</Label>
                 <Textarea
-                  id="edit_special_requirements"
-                  value={editingRequest.special_requirements || ""}
+                  id="edit_family_context"
+                  value={editingRequest.family_context || ""}
                   onChange={(e) =>
-                    setEditingRequest({
-                      ...editingRequest,
-                      special_requirements: e.target.value,
-                    })
+                    setEditingRequest({ ...editingRequest, family_context: e.target.value })
+                  }
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_caregiver_preferences">Caregiver Preferences</Label>
+                <Textarea
+                  id="edit_caregiver_preferences"
+                  value={editingRequest.caregiver_preferences || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, caregiver_preferences: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_language">Language</Label>
+                <Input
+                  id="edit_language"
+                  value={editingRequest.language || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, language: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_preferred_communication">Preferred Way to Communicate</Label>
+                <Input
+                  id="edit_preferred_communication"
+                  value={editingRequest.preferred_communication || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, preferred_communication: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_shared_identity_requests">Requests for Shared Identity</Label>
+                <Textarea
+                  id="edit_shared_identity_requests"
+                  value={editingRequest.shared_identity_requests || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, shared_identity_requests: e.target.value })
+                  }
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_budget">Budget</Label>
+                <Input
+                  id="edit_budget"
+                  value={editingRequest.budget || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, budget: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_general_availability">General Availability</Label>
+                <Input
+                  id="edit_general_availability"
+                  value={editingRequest.general_availability || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, general_availability: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_specific_concerns">Specific Concerns</Label>
+                <Textarea
+                  id="edit_specific_concerns"
+                  value={editingRequest.specific_concerns || ""}
+                  onChange={(e) =>
+                    setEditingRequest({ ...editingRequest, specific_concerns: e.target.value })
                   }
                   rows={3}
                 />
