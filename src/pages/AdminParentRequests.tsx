@@ -37,9 +37,11 @@ import {
   Plus,
   MessageSquare,
   Send,
-  Pencil
+  Pencil,
+  Users
 } from "lucide-react";
 import { format } from "date-fns";
+import { MatchCaregiverDialog } from "@/components/admin/MatchCaregiverDialog";
 
 interface ParentRequest {
   id: string;
@@ -88,6 +90,7 @@ const AdminParentRequests = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<ParentRequest | null>(null);
   const [editingRequest, setEditingRequest] = useState<ParentRequest | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -357,6 +360,16 @@ const AdminParentRequests = () => {
       });
     }
     setIsLoading(false);
+  };
+
+  const handleMatchCreated = (requestId: string, caregiverId: string) => {
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === requestId
+          ? { ...r, matched_caregiver_id: caregiverId, status: "matched" }
+          : r
+      )
+    );
   };
 
   const updateStatus = async (id: string, newStatus: string) => {
@@ -805,6 +818,18 @@ const AdminParentRequests = () => {
                               Send Message
                             </Button>
                             <Button
+                              size="sm"
+                              variant={request.matched_caregiver_id ? "secondary" : "outline"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRequest(request);
+                                setIsMatchDialogOpen(true);
+                              }}
+                            >
+                              <Users className="h-4 w-4 mr-2" />
+                              {request.matched_caregiver_id ? "Rematch" : "Match Caregiver"}
+                            </Button>
+                            <Button
                               variant="outline"
                               size="sm"
                               onClick={(e) => {
@@ -1098,6 +1123,14 @@ const AdminParentRequests = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Match Caregiver Dialog */}
+      <MatchCaregiverDialog
+        open={isMatchDialogOpen}
+        onOpenChange={setIsMatchDialogOpen}
+        parentRequest={selectedRequest}
+        onMatchCreated={handleMatchCreated}
+      />
     </div>
   );
 };
