@@ -6,8 +6,10 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+
+const TYPEFORM_URL = "https://form.typeform.com/to/eAJV4XXH?typeform-source=birthrebel.com";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -254,7 +256,13 @@ const Auth = () => {
             {!isLogin && !isReset && (
               <Tabs
                 value={userType}
-                onValueChange={(v) => setUserType(v as "parent" | "caregiver")}
+                onValueChange={(v) => {
+                  if (v === "caregiver") {
+                    window.open(TYPEFORM_URL, "_blank");
+                  } else {
+                    setUserType(v as "parent" | "caregiver");
+                  }
+                }}
                 className="mb-6"
               >
                 <TabsList className="grid w-full grid-cols-2">
