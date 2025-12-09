@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BookingModal } from "@/components/BookingModal";
 import { CaregiverMessagesPanel } from "@/components/messaging/CaregiverMessagesPanel";
 import type { User } from "@supabase/supabase-js";
 
@@ -18,24 +17,31 @@ interface Match {
   created_at: string;
 }
 
-interface Commission {
-  id: string;
-  match_id: string;
-  commission_amount: number;
-  commission_paid: boolean;
-  paid_at: string | null;
-}
-
 const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
-  const [payingCommissionId, setPayingCommissionId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check for subscription success/cancel from URL params
+  useEffect(() => {
+    const subscription = searchParams.get("subscription");
+    if (subscription === "success") {
+      toast({
+        title: "Subscription activated!",
+        description: "Thank you for subscribing. You can now receive matches.",
+      });
+    } else if (subscription === "cancelled") {
+      toast({
+        title: "Subscription cancelled",
+        description: "Your subscription was not completed.",
+        variant: "destructive",
+      });
+    }
+  }, [searchParams, toast]);
 
   useEffect(() => {
     // Safety timeout to prevent infinite loading on mobile
@@ -120,18 +126,6 @@ const CaregiverMatches = () => {
       } else {
         setMatches((matchesData || []) as Match[]);
       }
-
-      // Fetch commissions for this caregiver
-      const { data: commissionsData, error: commissionsError } = await supabase
-        .from("commissions")
-        .select("*")
-        .eq("caregiver_id", caregiver.id);
-
-      if (commissionsError) {
-        console.error("Commissions fetch error:", commissionsError);
-      } else {
-        setCommissions(commissionsData || []);
-      }
     } catch (error: any) {
       console.error("Error fetching data:", error);
     } finally {
@@ -139,83 +133,22 @@ const CaregiverMatches = () => {
     }
   };
 
-  const handleMarkAsBooked = async (matchId: string, bookingValue: number) => {
-    if (!caregiverId) return;
-
-    try {
-      const { error: updateError } = await supabase
-        .from("matches")
-        .update({ status: "booked" })
-        .eq("id", matchId);
-
-      if (updateError) throw updateError;
-
-      const commissionAmount = bookingValue * 0.12;
-      const { error: insertError } = await supabase
-        .from("commissions")
-        .insert({
-          match_id: matchId,
-          caregiver_id: caregiverId,
-          booking_value: bookingValue,
-          commission_rate: 0.12,
-          commission_amount: commissionAmount,
-        });
-
-      if (insertError) throw insertError;
-
-      toast({
-        title: "Booking confirmed",
-        description: `Commission of £${commissionAmount.toFixed(2)} is now due.`,
-      });
-
-      fetchCaregiverData();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePayCommission = async (commissionId: string) => {
-    setPayingCommissionId(commissionId);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("create-commission-checkout", {
-        body: { commission_id: commissionId },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Payment error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setPayingCommissionId(null);
-    }
-  };
-
-  const getCommissionForMatch = (matchId: string) => {
-    return commissions.find((c) => c.match_id === matchId);
-  };
-
-  const getCommissionStatus = (matchId: string) => {
-    const commission = getCommissionForMatch(matchId);
-    if (!commission) return "Not created";
-    if (commission.commission_paid) return "Paid";
-    return "Due";
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "matched":
+        return "bg-yellow-100 text-yellow-800";
+      case "booked":
+        return "bg-green-100 text-green-800";
+      case "closed":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-blue-100 text-blue-800";
+    }
   };
 
   if (loading) {
@@ -266,64 +199,28 @@ const CaregiverMatches = () => {
                     <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Parent</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Support Type</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Commission</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Action</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {matches.map((match) => {
-                    const commission = getCommissionForMatch(match.id);
-                    const commissionStatus = getCommissionStatus(match.id);
-                    
-                    return (
-                      <tr key={match.id} className="border-t border-gray-200">
-                        <td className="px-4 py-4" style={{ color: '#36454F' }}>
-                          {match.parent_first_name}
-                        </td>
-                        <td className="px-4 py-4 capitalize" style={{ color: '#36454F' }}>
-                          {match.support_type}
-                        </td>
-                        <td className="px-4 py-4 capitalize" style={{ color: '#36454F' }}>
+                  {matches.map((match) => (
+                    <tr key={match.id} className="border-t border-gray-200">
+                      <td className="px-4 py-4" style={{ color: '#36454F' }}>
+                        {match.parent_first_name}
+                      </td>
+                      <td className="px-4 py-4 capitalize" style={{ color: '#36454F' }}>
+                        {match.support_type}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadgeColor(match.status)}`}>
                           {match.status}
-                        </td>
-                        <td className="px-4 py-4" style={{ color: '#36454F' }}>
-                          {commissionStatus === "Due" && commission && (
-                            <span>£{commission.commission_amount.toFixed(2)} due</span>
-                          )}
-                          {commissionStatus === "Paid" && commission && (
-                            <span className="text-green-600">
-                              Paid on {new Date(commission.paid_at!).toLocaleDateString()}
-                            </span>
-                          )}
-                          {commissionStatus === "Not created" && <span>-</span>}
-                        </td>
-                        <td className="px-4 py-4">
-                          {match.status === "matched" && !commission && (
-                            <Button
-                              size="sm"
-                              onClick={() => setSelectedMatchId(match.id)}
-                              style={{ backgroundColor: '#E2725B' }}
-                            >
-                              Mark as booked
-                            </Button>
-                          )}
-                          {commission && !commission.commission_paid && (
-                            <Button
-                              size="sm"
-                              onClick={() => handlePayCommission(commission.id)}
-                              disabled={payingCommissionId === commission.id}
-                              style={{ backgroundColor: '#E2725B' }}
-                            >
-                              {payingCommissionId === commission.id ? "Loading..." : "Pay commission"}
-                            </Button>
-                          )}
-                          {commission?.commission_paid && (
-                            <span className="text-green-600 text-sm">✓ Complete</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4" style={{ color: '#36454F' }}>
+                        {new Date(match.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -331,17 +228,6 @@ const CaregiverMatches = () => {
         </div>
       </main>
       <Footer />
-
-      <BookingModal
-        isOpen={!!selectedMatchId}
-        onClose={() => setSelectedMatchId(null)}
-        onConfirm={(bookingValue) => {
-          if (selectedMatchId) {
-            handleMarkAsBooked(selectedMatchId, bookingValue);
-            setSelectedMatchId(null);
-          }
-        }}
-      />
     </div>
   );
 };
