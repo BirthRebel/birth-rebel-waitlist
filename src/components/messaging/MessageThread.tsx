@@ -12,7 +12,7 @@ interface Message {
 
 interface MessageThreadProps {
   messages: Message[];
-  currentUserType: "admin" | "caregiver";
+  currentUserType: "admin" | "caregiver" | "parent";
   isLoading?: boolean;
 }
 

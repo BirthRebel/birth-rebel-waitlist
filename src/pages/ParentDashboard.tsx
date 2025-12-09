@@ -6,9 +6,9 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Calendar, Heart, User } from "lucide-react";
+import { Calendar, Heart } from "lucide-react";
 import { format } from "date-fns";
+import { ParentMessagesPanel } from "@/components/messaging/ParentMessagesPanel";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface ParentRequest {
@@ -24,29 +24,11 @@ interface ParentRequest {
   matched_caregiver_id: string | null;
 }
 
-interface Message {
-  id: string;
-  content: string;
-  sender_type: string;
-  created_at: string;
-  read_at: string | null;
-}
-
-interface Conversation {
-  id: string;
-  subject: string | null;
-  status: string;
-  created_at: string;
-  messages: Message[];
-}
-
 const ParentDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [parentRequest, setParentRequest] = useState<ParentRequest | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -92,42 +74,15 @@ const ParentDashboard = () => {
     }
 
     try {
-      // Fetch parent request by email
-      const { data: request, error: requestError } = await supabase
-        .from("parent_requests")
-        .select("*")
-        .eq("email", user.email)
-        .maybeSingle();
+      // Fetch parent request by email using edge function
+      const { data, error } = await supabase.functions.invoke("get-parent-request", {
+        body: { email: user.email },
+      });
 
-      if (requestError) {
-        console.error("Parent request fetch error:", requestError);
+      if (error) {
+        console.error("Parent request fetch error:", error);
       } else {
-        setParentRequest(request);
-      }
-
-      // Fetch conversations for this parent
-      const { data: convData, error: convError } = await supabase
-        .from("conversations")
-        .select(`
-          id,
-          subject,
-          status,
-          created_at,
-          messages (
-            id,
-            content,
-            sender_type,
-            created_at,
-            read_at
-          )
-        `)
-        .eq("parent_email", user.email)
-        .order("updated_at", { ascending: false });
-
-      if (convError) {
-        console.error("Conversations fetch error:", convError);
-      } else {
-        setConversations(convData || []);
+        setParentRequest(data?.request || null);
       }
     } catch (error: any) {
       console.error("Error fetching parent data:", error);
@@ -154,12 +109,6 @@ const ParentDashboard = () => {
       default:
         return "bg-muted";
     }
-  };
-
-  const getUnreadCount = (messages: Message[]) => {
-    return messages.filter(
-      (m) => m.sender_type === "admin" && !m.read_at
-    ).length;
   };
 
   if (loading) {
@@ -193,8 +142,15 @@ const ParentDashboard = () => {
             </Button>
           </div>
 
+          {/* Messages Section - Similar to Caregiver Dashboard */}
+          {user?.email && (
+            <div className="mb-8">
+              <ParentMessagesPanel parentEmail={user.email} />
+            </div>
+          )}
+
           {/* Request Status Card */}
-          <Card className="mb-8">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Heart className="h-5 w-5" style={{ color: "#E2725B" }} />
@@ -243,62 +199,6 @@ const ParentDashboard = () => {
                   >
                     Find a Caregiver
                   </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Messages Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" style={{ color: "#E2725B" }} />
-                Messages
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {conversations.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    No messages yet. We'll notify you when we have updates about your request.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {conversations.map((conv) => {
-                    const unreadCount = getUnreadCount(conv.messages);
-                    const latestMessage = conv.messages[conv.messages.length - 1];
-
-                    return (
-                      <div
-                        key={conv.id}
-                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {conv.subject || "Birth Rebel Team"}
-                            </span>
-                            {unreadCount > 0 && (
-                              <Badge variant="destructive" className="text-xs">
-                                {unreadCount} new
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(conv.created_at), "MMM d, yyyy")}
-                          </span>
-                        </div>
-                        {latestMessage && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {latestMessage.content}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
                 </div>
               )}
             </CardContent>
