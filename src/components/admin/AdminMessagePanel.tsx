@@ -65,34 +65,58 @@ export const AdminMessagePanel = ({
     }
   }, [isOpen, caregiverId, parentRequestId]);
 
-  // Real-time subscription for messages
-  useEffect(() => {
-    if (!selectedConversation?.id) return;
+  // Quiet fetch for polling (doesn't show loading state)
+  const fetchMessagesQuiet = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
 
-    const channel = supabase
-      .channel(`messages-${selectedConversation.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${selectedConversation.id}`,
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          setMessages((prev) => {
-            const exists = prev.some((m) => m.id === newMessage.id);
-            return exists ? prev : [...prev, newMessage];
-          });
+      if (error) throw error;
+      
+      const newMessages = data || [];
+      setMessages((prev) => {
+        if (newMessages.length !== prev.length) {
+          console.log("Admin: New messages detected");
+          return newMessages;
         }
-      )
-      .subscribe();
+        const lastNew = newMessages[newMessages.length - 1];
+        const lastPrev = prev[prev.length - 1];
+        if (lastNew?.id !== lastPrev?.id) {
+          return newMessages;
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error("Error polling messages:", error);
+    }
+  };
 
-    return () => {
-      supabase.removeChannel(channel);
+  // Poll for new messages every 3 seconds
+  useEffect(() => {
+    if (!selectedConversation?.id || !isOpen) return;
+
+    console.log("Admin: Setting up polling for conversation", selectedConversation.id);
+    const interval = setInterval(() => {
+      fetchMessagesQuiet(selectedConversation.id);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [selectedConversation?.id, isOpen]);
+
+  // Refresh on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (selectedConversation?.id && isOpen) {
+        fetchMessagesQuiet(selectedConversation.id);
+      }
     };
-  }, [selectedConversation?.id]);
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [selectedConversation?.id, isOpen]);
 
   const fetchConversations = async () => {
     setLoading(true);
