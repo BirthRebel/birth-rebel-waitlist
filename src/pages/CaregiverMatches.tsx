@@ -46,6 +46,15 @@ const CaregiverMatches = () => {
   useEffect(() => {
     let isMounted = true;
 
+    // Safety timeout for mobile - prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading && isMounted) {
+        console.warn("Auth check timeout - redirecting to auth");
+        setLoading(false);
+        navigate("/caregiver/auth", { replace: true });
+      }
+    }, 8000);
+
     // Check session once on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!isMounted) return;
@@ -54,6 +63,14 @@ const CaregiverMatches = () => {
         setUser(session.user);
       } else {
         // No session - redirect to auth
+        clearTimeout(timeout);
+        setLoading(false);
+        navigate("/caregiver/auth", { replace: true });
+      }
+    }).catch((error) => {
+      console.error("Session check error:", error);
+      if (isMounted) {
+        clearTimeout(timeout);
         setLoading(false);
         navigate("/caregiver/auth", { replace: true });
       }
@@ -71,9 +88,10 @@ const CaregiverMatches = () => {
 
     return () => {
       isMounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, loading]);
 
   useEffect(() => {
     if (user) {
