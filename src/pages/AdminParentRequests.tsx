@@ -38,10 +38,12 @@ import {
   MessageSquare,
   Send,
   Pencil,
-  Users
+  Users,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { MatchCaregiverDialog } from "@/components/admin/MatchCaregiverDialog";
+import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 
 interface ParentRequest {
   id: string;
@@ -97,6 +99,7 @@ const AdminParentRequests = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [messagePanelRequest, setMessagePanelRequest] = useState<ParentRequest | null>(null);
   const [newRequest, setNewRequest] = useState({
     first_name: "",
     last_name: "",
@@ -810,12 +813,23 @@ const AdminParentRequests = () => {
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
+                                setMessagePanelRequest(request);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Messages
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setSelectedRequest(request);
                                 setIsMessageDialogOpen(true);
                               }}
                             >
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              Send Message
+                              <Send className="h-4 w-4 mr-2" />
+                              Quick Message
                             </Button>
                             <Button
                               size="sm"
@@ -1130,6 +1144,19 @@ const AdminParentRequests = () => {
         onOpenChange={setIsMatchDialogOpen}
         parentRequest={selectedRequest}
         onMatchCreated={handleMatchCreated}
+      />
+
+      {/* Message side panel */}
+      <AdminMessagePanel
+        isOpen={!!messagePanelRequest}
+        onClose={() => setMessagePanelRequest(null)}
+        parentRequestId={messagePanelRequest?.id}
+        parentEmail={messagePanelRequest?.email}
+        parentName={
+          messagePanelRequest
+            ? `${messagePanelRequest.first_name} ${messagePanelRequest.last_name || ""}`.trim()
+            : undefined
+        }
       />
     </div>
   );

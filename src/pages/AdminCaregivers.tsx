@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus } from "lucide-react";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare } from "lucide-react";
+import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 
 interface Caregiver {
   id: string;
@@ -257,6 +258,7 @@ const AdminCaregivers = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({});
   const [inviting, setInviting] = useState(false);
+  const [messagePanelCaregiver, setMessagePanelCaregiver] = useState<Caregiver | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -524,6 +526,21 @@ const AdminCaregivers = () => {
                             </p>
                           </div>
                         )}
+
+                        {/* Messages button */}
+                        <div className="pt-4 border-t mt-4">
+                          <Button
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMessagePanelCaregiver(caregiver);
+                            }}
+                            className="gap-2"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            View Messages
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   )}
@@ -535,6 +552,19 @@ const AdminCaregivers = () => {
       </main>
 
       <Footer />
+
+      {/* Message side panel */}
+      <AdminMessagePanel
+        isOpen={!!messagePanelCaregiver}
+        onClose={() => setMessagePanelCaregiver(null)}
+        caregiverId={messagePanelCaregiver?.id}
+        caregiverName={
+          messagePanelCaregiver
+            ? `${messagePanelCaregiver.first_name || ""} ${messagePanelCaregiver.last_name || ""}`.trim() || "Caregiver"
+            : undefined
+        }
+        caregiverEmail={messagePanelCaregiver?.email}
+      />
     </div>
   );
 };
