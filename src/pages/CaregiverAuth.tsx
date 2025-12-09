@@ -155,7 +155,7 @@ const CaregiverAuth = () => {
       }
       
       // Login mode
-      const { data: signInData, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -169,45 +169,15 @@ const CaregiverAuth = () => {
         });
         return;
       }
-        
-      // Check if user has a linked caregiver profile
-      const { data: caregiver } = await supabase
-        .from("caregivers")
-        .select("id")
-        .eq("user_id", signInData.user.id)
-        .maybeSingle();
-        
-      // If no linked profile, try to link by email
-      if (!caregiver) {
-        await supabase
-          .from("caregivers")
-          .update({ user_id: signInData.user.id })
-          .eq("email", email)
-          .is("user_id", null);
-          
-        const { data: linkedCaregiver } = await supabase
-          .from("caregivers")
-          .select("id")
-          .eq("user_id", signInData.user.id)
-          .maybeSingle();
-          
-        toast({
-          title: "Welcome!",
-          description: linkedCaregiver ? "Your account has been linked." : "You have successfully logged in.",
-        });
-          
-        setLoading(false);
-        navigate("/caregiver/matches");
-        return;
-      }
-        
+      
+      // Auth state change listener will handle the redirect
+      // Just show a success toast - don't manually navigate
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: "Welcome!",
+        description: "Logging you in...",
       });
-        
-      setLoading(false);
-      navigate("/caregiver/matches");
+      
+      // Don't reset loading - let onAuthStateChange handle navigation
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
