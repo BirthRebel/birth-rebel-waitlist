@@ -61,9 +61,9 @@ serve(async (req: Request): Promise<Response> => {
               <div class="message-box">
                 <p style="margin: 0; white-space: pre-wrap;">${messageContent.substring(0, 500)}${messageContent.length > 500 ? '...' : ''}</p>
               </div>
-              <p>To view this message and reply, please log in to your Birth Rebel account.</p>
+              <p>To view this message and reply, please sign up or log in to your Birth Rebel account using this email address (<strong>${parentEmail}</strong>).</p>
               <p style="text-align: center;">
-                <a href="https://birthrebel.com" class="button">View Message</a>
+                <a href="https://birthrebel.com/auth?email=${encodeURIComponent(parentEmail)}&type=parent" class="button">View Message</a>
               </p>
             </div>
             <div class="footer">
