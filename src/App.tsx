@@ -15,6 +15,7 @@ import AdminImport from "./pages/AdminImport";
 import AdminCaregivers from "./pages/AdminCaregivers";
 import AdminMessages from "./pages/AdminMessages";
 import AdminParentRequests from "./pages/AdminParentRequests";
+import AdminMatches from "./pages/AdminMatches";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/admin/caregivers" element={<AdminCaregivers />} />
           <Route path="/admin/messages" element={<AdminMessages />} />
           <Route path="/admin/parent-requests" element={<AdminParentRequests />} />
+          <Route path="/admin/matches" element={<AdminMatches />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
