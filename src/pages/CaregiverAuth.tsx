@@ -21,27 +21,40 @@ const CaregiverAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already authenticated
+  // Check if user is already authenticated and handle auth state changes
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        // User is already logged in, redirect to matches
+      console.log("Auth state changed:", event, session?.user?.email);
+      
+      if (!isMounted) return;
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        // User just signed in, redirect to matches
+        console.log("Redirecting to matches...");
         navigate("/caregiver/matches", { replace: true });
-      } else {
+      } else if (event === 'SIGNED_OUT' || !session) {
         setCheckingAuth(false);
       }
     });
 
-    // Initial session check
+    // Initial session check - if already logged in, redirect
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      
       if (session?.user) {
+        console.log("Already logged in, redirecting...");
         navigate("/caregiver/matches", { replace: true });
       } else {
         setCheckingAuth(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   // Pre-fill email and set signup mode from URL params
