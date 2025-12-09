@@ -4,8 +4,24 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, User, Mail, Calendar } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  RefreshCw,
+  User,
+  Mail,
+  Calendar,
+  Phone,
+  MapPin,
+  ChevronDown,
+  Send,
+  MessageSquare,
+} from "lucide-react";
 import { format } from "date-fns";
 
 interface Match {
@@ -17,15 +33,33 @@ interface Match {
   created_at: string;
   caregiver_id: string;
   caregiver?: {
+    id: string;
     first_name: string | null;
     last_name: string | null;
     email: string;
+    phone: string | null;
+    city_town: string | null;
+  };
+  parent_request?: {
+    id: string;
+    first_name: string;
+    last_name: string | null;
+    email: string;
+    phone: string | null;
+    location: string | null;
+    due_date: string | null;
+    support_type: string | null;
+    stage_of_journey: string | null;
+    special_requirements: string | null;
   };
 }
 
 const AdminMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+  const [messageContent, setMessageContent] = useState<{ [key: string]: { parent: string; caregiver: string } }>({});
+  const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchMatches = async () => {
@@ -35,12 +69,25 @@ const AdminMatches = () => {
         .from("matches")
         .select(`
           *,
-          caregiver:caregivers(first_name, last_name, email)
+          caregiver:caregivers(id, first_name, last_name, email, phone, city_town)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setMatches(data || []);
+
+      // Fetch parent requests for each match
+      const matchesWithParents = await Promise.all(
+        (data || []).map(async (match) => {
+          const { data: parentRequest } = await supabase
+            .from("parent_requests")
+            .select("*")
+            .eq("email", match.parent_email)
+            .maybeSingle();
+          return { ...match, parent_request: parentRequest };
+        })
+      );
+
+      setMatches(matchesWithParents);
     } catch (error: any) {
       console.error("Error fetching matches:", error);
       toast({
@@ -70,6 +117,133 @@ const AdminMatches = () => {
     }
   };
 
+  const updateStatus = async (matchId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("matches")
+        .update({ status: newStatus })
+        .eq("id", matchId);
+
+      if (error) throw error;
+
+      toast({ title: "Status updated" });
+      fetchMatches();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const sendMessageToParent = async (match: Match) => {
+    const content = messageContent[match.id]?.parent;
+    if (!content?.trim()) return;
+
+    setSendingMessage(`${match.id}-parent`);
+    try {
+      // Find or create conversation with parent
+      let { data: conversation } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("parent_email", match.parent_email)
+        .maybeSingle();
+
+      if (!conversation) {
+        const { data: newConv, error: convError } = await supabase
+          .from("conversations")
+          .insert({
+            parent_email: match.parent_email,
+            parent_request_id: match.parent_request?.id,
+            subject: `Regarding your ${match.support_type} support request`,
+          })
+          .select("id")
+          .single();
+
+        if (convError) throw convError;
+        conversation = newConv;
+      }
+
+      // Send message
+      const { error: msgError } = await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        content: content.trim(),
+        sender_type: "admin",
+      });
+
+      if (msgError) throw msgError;
+
+      toast({ title: "Message sent to parent" });
+      setMessageContent((prev) => ({
+        ...prev,
+        [match.id]: { ...prev[match.id], parent: "" },
+      }));
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(null);
+    }
+  };
+
+  const sendMessageToCaregiver = async (match: Match) => {
+    const content = messageContent[match.id]?.caregiver;
+    if (!content?.trim() || !match.caregiver) return;
+
+    setSendingMessage(`${match.id}-caregiver`);
+    try {
+      // Find or create conversation with caregiver
+      let { data: conversation } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("caregiver_id", match.caregiver.id)
+        .eq("parent_email", match.parent_email)
+        .maybeSingle();
+
+      if (!conversation) {
+        const { data: newConv, error: convError } = await supabase
+          .from("conversations")
+          .insert({
+            caregiver_id: match.caregiver.id,
+            parent_email: match.parent_email,
+            subject: `Match: ${match.parent_first_name} - ${match.support_type}`,
+          })
+          .select("id")
+          .single();
+
+        if (convError) throw convError;
+        conversation = newConv;
+      }
+
+      // Send message
+      const { error: msgError } = await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        content: content.trim(),
+        sender_type: "admin",
+      });
+
+      if (msgError) throw msgError;
+
+      toast({ title: "Message sent to caregiver" });
+      setMessageContent((prev) => ({
+        ...prev,
+        [match.id]: { ...prev[match.id], caregiver: "" },
+      }));
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingMessage(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#FFFAF5" }}>
       <Header />
@@ -84,11 +258,7 @@ const AdminMatches = () => {
                 {matches.length} total matches
               </p>
             </div>
-            <Button
-              onClick={fetchMatches}
-              variant="outline"
-              disabled={loading}
-            >
+            <Button onClick={fetchMatches} variant="outline" disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
@@ -106,57 +276,213 @@ const AdminMatches = () => {
           ) : (
             <div className="space-y-4">
               {matches.map((match) => (
-                <div
+                <Collapsible
                   key={match.id}
-                  className="bg-white rounded-lg shadow p-6"
+                  open={expandedMatch === match.id}
+                  onOpenChange={(open) => setExpandedMatch(open ? match.id : null)}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold" style={{ color: "#36454F" }}>
-                          {match.parent_first_name}
-                        </h3>
-                        <Badge className={getStatusColor(match.status)}>
-                          {match.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          <span>{match.parent_email}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>{format(new Date(match.created_at), "MMM d, yyyy")}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-sm font-medium" style={{ color: "#36454F" }}>
-                          Matched Caregiver:
-                        </p>
-                        {match.caregiver ? (
-                          <div className="flex items-center gap-2 mt-1">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {match.caregiver.first_name} {match.caregiver.last_name}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              ({match.caregiver.email})
-                            </span>
+                  <div className="bg-white rounded-lg shadow">
+                    <CollapsibleTrigger className="w-full p-6 text-left">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold" style={{ color: "#36454F" }}>
+                              {match.parent_first_name} ↔{" "}
+                              {match.caregiver?.first_name || "Unknown"}
+                            </h3>
+                            <Badge className={getStatusColor(match.status)}>
+                              {match.status}
+                            </Badge>
                           </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Unknown caregiver</span>
-                        )}
+
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {format(new Date(match.created_at), "MMM d, yyyy")}
+                            </span>
+                            <Badge variant="outline">{match.support_type}</Badge>
+                          </div>
+                        </div>
+
+                        <ChevronDown
+                          className={`h-5 w-5 text-muted-foreground transition-transform ${
+                            expandedMatch === match.id ? "rotate-180" : ""
+                          }`}
+                        />
                       </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-2">
-                      <Badge variant="outline">{match.support_type}</Badge>
-                    </div>
+                    </CollapsibleTrigger>
+
+                    <CollapsibleContent>
+                      <div className="px-6 pb-6 border-t pt-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Parent Details */}
+                          <div className="space-y-4">
+                            <h4 className="font-semibold flex items-center gap-2" style={{ color: "#E2725B" }}>
+                              <User className="h-4 w-4" />
+                              Parent Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                              <p className="font-medium">
+                                {match.parent_request?.first_name}{" "}
+                                {match.parent_request?.last_name}
+                              </p>
+                              <p className="flex items-center gap-2 text-sm">
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                {match.parent_email}
+                              </p>
+                              {match.parent_request?.phone && (
+                                <p className="flex items-center gap-2 text-sm">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  {match.parent_request.phone}
+                                </p>
+                              )}
+                              {match.parent_request?.location && (
+                                <p className="flex items-center gap-2 text-sm">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  {match.parent_request.location}
+                                </p>
+                              )}
+                              {match.parent_request?.due_date && (
+                                <p className="flex items-center gap-2 text-sm">
+                                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                                  Due: {format(new Date(match.parent_request.due_date), "PPP")}
+                                </p>
+                              )}
+                              {match.parent_request?.special_requirements && (
+                                <p className="text-sm mt-2">
+                                  <span className="font-medium">Notes:</span>{" "}
+                                  {match.parent_request.special_requirements}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Message Parent */}
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4" />
+                                Message Parent
+                              </label>
+                              <Textarea
+                                placeholder="Type a message to the parent..."
+                                value={messageContent[match.id]?.parent || ""}
+                                onChange={(e) =>
+                                  setMessageContent((prev) => ({
+                                    ...prev,
+                                    [match.id]: {
+                                      ...prev[match.id],
+                                      parent: e.target.value,
+                                    },
+                                  }))
+                                }
+                                rows={3}
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => sendMessageToParent(match)}
+                                disabled={
+                                  !messageContent[match.id]?.parent?.trim() ||
+                                  sendingMessage === `${match.id}-parent`
+                                }
+                                style={{ backgroundColor: "#E2725B" }}
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                {sendingMessage === `${match.id}-parent` ? "Sending..." : "Send"}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Caregiver Details */}
+                          <div className="space-y-4">
+                            <h4 className="font-semibold flex items-center gap-2" style={{ color: "#E2725B" }}>
+                              <User className="h-4 w-4" />
+                              Caregiver Details
+                            </h4>
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                              {match.caregiver ? (
+                                <>
+                                  <p className="font-medium">
+                                    {match.caregiver.first_name} {match.caregiver.last_name}
+                                  </p>
+                                  <p className="flex items-center gap-2 text-sm">
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    {match.caregiver.email}
+                                  </p>
+                                  {match.caregiver.phone && (
+                                    <p className="flex items-center gap-2 text-sm">
+                                      <Phone className="h-4 w-4 text-muted-foreground" />
+                                      {match.caregiver.phone}
+                                    </p>
+                                  )}
+                                  {match.caregiver.city_town && (
+                                    <p className="flex items-center gap-2 text-sm">
+                                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                                      {match.caregiver.city_town}
+                                    </p>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-muted-foreground">Caregiver not found</p>
+                              )}
+                            </div>
+
+                            {/* Message Caregiver */}
+                            {match.caregiver && (
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                  <MessageSquare className="h-4 w-4" />
+                                  Message Caregiver
+                                </label>
+                                <Textarea
+                                  placeholder="Type a message to the caregiver..."
+                                  value={messageContent[match.id]?.caregiver || ""}
+                                  onChange={(e) =>
+                                    setMessageContent((prev) => ({
+                                      ...prev,
+                                      [match.id]: {
+                                        ...prev[match.id],
+                                        caregiver: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  rows={3}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => sendMessageToCaregiver(match)}
+                                  disabled={
+                                    !messageContent[match.id]?.caregiver?.trim() ||
+                                    sendingMessage === `${match.id}-caregiver`
+                                  }
+                                  style={{ backgroundColor: "#E2725B" }}
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  {sendingMessage === `${match.id}-caregiver` ? "Sending..." : "Send"}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status Actions */}
+                        <div className="mt-6 pt-4 border-t flex flex-wrap gap-2">
+                          <span className="text-sm font-medium mr-2 self-center">Update status:</span>
+                          {["matched", "booked", "closed"].map((status) => (
+                            <Button
+                              key={status}
+                              size="sm"
+                              variant={match.status === status ? "default" : "outline"}
+                              onClick={() => updateStatus(match.id, status)}
+                              disabled={match.status === status}
+                              className="capitalize"
+                            >
+                              {status}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </CollapsibleContent>
                   </div>
-                </div>
+                </Collapsible>
               ))}
             </div>
           )}
