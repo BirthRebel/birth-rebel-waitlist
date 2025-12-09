@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { SetCommissionModal } from "@/components/admin/SetCommissionModal";
 import {
   Collapsible,
   CollapsibleContent,
@@ -21,8 +22,18 @@ import {
   ChevronDown,
   Send,
   MessageSquare,
+  PoundSterling,
 } from "lucide-react";
 import { format } from "date-fns";
+
+interface Commission {
+  id: string;
+  match_id: string;
+  booking_value: number;
+  commission_amount: number;
+  commission_paid: boolean;
+  paid_at: string | null;
+}
 
 interface Match {
   id: string;
@@ -56,10 +67,12 @@ interface Match {
 
 const AdminMatches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
+  const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState<{ [key: string]: { parent: string; caregiver: string } }>({});
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
+  const [commissionModalMatch, setCommissionModalMatch] = useState<Match | null>(null);
   const { toast } = useToast();
 
   const fetchMatches = async () => {
@@ -88,6 +101,12 @@ const AdminMatches = () => {
       );
 
       setMatches(matchesWithParents);
+
+      // Fetch all commissions
+      const { data: commissionsData } = await supabase
+        .from("commissions")
+        .select("*");
+      setCommissions(commissionsData || []);
     } catch (error: any) {
       console.error("Error fetching matches:", error);
       toast({
@@ -103,6 +122,52 @@ const AdminMatches = () => {
   useEffect(() => {
     fetchMatches();
   }, []);
+
+  const getCommissionForMatch = (matchId: string) => {
+    return commissions.find((c) => c.match_id === matchId);
+  };
+
+  const handleSetCommission = async (match: Match, bookingValue: number) => {
+    if (!match.caregiver) return;
+
+    const commissionAmount = bookingValue * 0.12;
+    
+    try {
+      // Update match status to booked
+      const { error: updateError } = await supabase
+        .from("matches")
+        .update({ status: "booked" })
+        .eq("id", match.id);
+
+      if (updateError) throw updateError;
+
+      // Create commission record
+      const { error: insertError } = await supabase
+        .from("commissions")
+        .insert({
+          match_id: match.id,
+          caregiver_id: match.caregiver_id,
+          booking_value: bookingValue,
+          commission_rate: 0.12,
+          commission_amount: commissionAmount,
+        });
+
+      if (insertError) throw insertError;
+
+      toast({
+        title: "Commission created",
+        description: `Commission of £${commissionAmount.toFixed(2)} set for ${match.caregiver.first_name}`,
+      });
+
+      fetchMatches();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -463,6 +528,59 @@ const AdminMatches = () => {
                           </div>
                         </div>
 
+                        {/* Commission Section */}
+                        <div className="mt-6 pt-4 border-t">
+                          <h4 className="font-semibold flex items-center gap-2 mb-3" style={{ color: "#E2725B" }}>
+                            <PoundSterling className="h-4 w-4" />
+                            Commission
+                          </h4>
+                          {(() => {
+                            const commission = getCommissionForMatch(match.id);
+                            if (commission) {
+                              return (
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <span className="text-muted-foreground">Booking value:</span>
+                                      <span className="ml-2 font-medium">£{commission.booking_value.toFixed(2)}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Commission (12%):</span>
+                                      <span className="ml-2 font-medium">£{commission.commission_amount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-muted-foreground">Status:</span>
+                                      {commission.commission_paid ? (
+                                        <Badge className="ml-2 bg-green-100 text-green-800">
+                                          Paid on {format(new Date(commission.paid_at!), "PPP")}
+                                        </Badge>
+                                      ) : (
+                                        <Badge className="ml-2 bg-yellow-100 text-yellow-800">
+                                          Awaiting payment
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex items-center gap-4">
+                                  <p className="text-sm text-muted-foreground">No commission set yet</p>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setCommissionModalMatch(match)}
+                                    style={{ backgroundColor: "#E2725B" }}
+                                  >
+                                    <PoundSterling className="h-4 w-4 mr-2" />
+                                    Set Commission
+                                  </Button>
+                                </div>
+                              );
+                            }
+                          })()}
+                        </div>
+
                         {/* Status Actions */}
                         <div className="mt-6 pt-4 border-t flex flex-wrap gap-2">
                           <span className="text-sm font-medium mr-2 self-center">Update status:</span>
@@ -489,6 +607,19 @@ const AdminMatches = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Set Commission Modal */}
+      <SetCommissionModal
+        isOpen={!!commissionModalMatch}
+        onClose={() => setCommissionModalMatch(null)}
+        onConfirm={async (bookingValue) => {
+          if (commissionModalMatch) {
+            await handleSetCommission(commissionModalMatch, bookingValue);
+          }
+        }}
+        parentName={commissionModalMatch?.parent_first_name || ""}
+        caregiverName={commissionModalMatch?.caregiver?.first_name || "Unknown"}
+      />
     </div>
   );
 };
