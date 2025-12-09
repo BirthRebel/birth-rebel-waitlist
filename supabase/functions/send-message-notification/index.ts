@@ -79,9 +79,9 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Sending notification to ${recipientEmail}`);
 
-    // Send email notification
+    // Send email notification (using resend.dev domain until birthrebel.co.uk is verified)
     const { error: emailError } = await resend.emails.send({
-      from: "Birth Rebel <notifications@birthrebel.co.uk>",
+      from: "Birth Rebel <onboarding@resend.dev>",
       to: [recipientEmail],
       subject: `New message: ${conversation.subject || "Birth Rebel Conversation"}`,
       html: `
