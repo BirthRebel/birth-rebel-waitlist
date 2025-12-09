@@ -1,11 +1,5 @@
 project_id = "zjbzjtljoxwreyhlrjbq"
 
-[functions.create-commission-checkout]
-verify_jwt = false
-
-[functions.stripe-commission-webhook]
-verify_jwt = false
-
 [functions.typeform-webhook]
 verify_jwt = false
 
@@ -25,4 +19,19 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-parent-message-notification]
+verify_jwt = false
+
+[functions.get-parent-conversations]
+verify_jwt = false
+
+[functions.get-parent-messages]
+verify_jwt = false
+
+[functions.send-parent-message]
+verify_jwt = false
+
+[functions.get-parent-request]
+verify_jwt = false
+
+[functions.create-caregiver-subscription]
 verify_jwt = false
