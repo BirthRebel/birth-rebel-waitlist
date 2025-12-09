@@ -107,21 +107,36 @@ const Auth = () => {
         }
 
         // Check user type and redirect accordingly
-        const { data: caregiver } = await supabase
+        const { data: caregiver, error: caregiverError } = await supabase
           .from("caregivers")
           .select("id")
           .eq("user_id", signInData.user.id)
           .maybeSingle();
 
-        if (!caregiver) {
-          // Try to link by email for caregivers
-          await supabase
-            .from("caregivers")
-            .update({ user_id: signInData.user.id })
-            .eq("email", email)
-            .is("user_id", null);
+        // If there's an error (likely RLS), just skip caregiver check
+        if (caregiverError) {
+          console.log("Caregiver check skipped (RLS or error):", caregiverError.message);
+        }
 
-          // Re-check
+        if (caregiver) {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully logged in.",
+          });
+          setLoading(false);
+          navigate("/caregiver/matches");
+          return;
+        }
+
+        // Try to link by email for caregivers (ignore errors)
+        const { error: linkError } = await supabase
+          .from("caregivers")
+          .update({ user_id: signInData.user.id })
+          .eq("email", email)
+          .is("user_id", null);
+
+        if (!linkError) {
+          // Re-check if linking worked
           const { data: linkedCaregiver } = await supabase
             .from("caregivers")
             .select("id")
@@ -137,14 +152,6 @@ const Auth = () => {
             navigate("/caregiver/matches");
             return;
           }
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "You have successfully logged in.",
-          });
-          setLoading(false);
-          navigate("/caregiver/matches");
-          return;
         }
 
         // Not a caregiver, treat as parent
