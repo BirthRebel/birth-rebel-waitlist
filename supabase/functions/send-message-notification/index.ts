@@ -113,9 +113,9 @@ serve(async (req: Request): Promise<Response> => {
               <div class="message-box">
                 <p style="margin: 0; white-space: pre-wrap;">${messageContent.substring(0, 500)}${messageContent.length > 500 ? '...' : ''}</p>
               </div>
-              <p>To view this message and reply, please log in to your Birth Rebel caregiver dashboard using your email address (<strong>${recipientEmail}</strong>).</p>
+              <p>To view this message and reply, please set up your Birth Rebel caregiver account using your email address (<strong>${recipientEmail}</strong>).</p>
               <p style="text-align: center;">
-                <a href="https://birthrebel.com/caregiver/auth?email=${encodeURIComponent(recipientEmail)}&signup=true" class="button">Log In to Dashboard</a>
+                <a href="https://birthrebel.com/caregiver/auth?email=${encodeURIComponent(recipientEmail)}&signup=true" class="button">Set Up Your Account</a>
               </p>
             </div>
             <div class="footer">
