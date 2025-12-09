@@ -81,7 +81,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Send email notification
     const { error: emailError } = await resend.emails.send({
-      from: "Birth Rebel <hello@birthrebel.com>",
+      from: "Birth Rebel <hello@notifications.birthrebel.com>",
       to: [recipientEmail],
       subject: `New message: ${conversation.subject || "Birth Rebel Conversation"}`,
       html: `
