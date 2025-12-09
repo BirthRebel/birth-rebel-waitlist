@@ -115,7 +115,7 @@ serve(async (req: Request): Promise<Response> => {
               </div>
               <p>To view this message and reply, please log in to your Birth Rebel caregiver dashboard using your email address (<strong>${recipientEmail}</strong>).</p>
               <p style="text-align: center;">
-                <a href="https://birthrebel.com/caregiver-auth?email=${encodeURIComponent(recipientEmail)}" class="button">Log In to Dashboard</a>
+                <a href="https://birthrebel.com/caregiver/auth?email=${encodeURIComponent(recipientEmail)}&signup=true" class="button">Log In to Dashboard</a>
               </p>
             </div>
             <div class="footer">
