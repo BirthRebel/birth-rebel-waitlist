@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -22,6 +23,7 @@ import {
   Send,
   MessageSquare,
   CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -396,8 +398,21 @@ const AdminMatches = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold" style={{ color: "#36454F" }}>
-                              {match.parent_first_name} ↔{" "}
-                              {match.caregiver?.first_name || "Unknown"}
+                              <Link 
+                                to={`/admin/parent-requests?email=${encodeURIComponent(match.parent_email)}`}
+                                className="hover:underline hover:text-primary"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {match.parent_first_name}
+                              </Link>
+                              {" ↔ "}
+                              <Link 
+                                to={`/admin/caregivers?id=${match.caregiver_id}`}
+                                className="hover:underline hover:text-primary"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {match.caregiver?.first_name || "Unknown"}
+                              </Link>
                             </h3>
                             <Badge className={getStatusColor(match.status)}>
                               {match.status}
@@ -431,10 +446,14 @@ const AdminMatches = () => {
                               Parent Details
                             </h4>
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                              <p className="font-medium">
+                              <Link 
+                                to={`/admin/parent-requests?email=${encodeURIComponent(match.parent_email)}`}
+                                className="font-medium hover:underline hover:text-primary flex items-center gap-1"
+                              >
                                 {match.parent_request?.first_name}{" "}
                                 {match.parent_request?.last_name}
-                              </p>
+                                <ExternalLink className="h-3 w-3" />
+                              </Link>
                               <p className="flex items-center gap-2 text-sm">
                                 <Mail className="h-4 w-4 text-muted-foreground" />
                                 {match.parent_email}
@@ -509,9 +528,13 @@ const AdminMatches = () => {
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                               {match.caregiver ? (
                                 <>
-                                  <p className="font-medium">
+                                  <Link 
+                                    to={`/admin/caregivers?id=${match.caregiver.id}`}
+                                    className="font-medium hover:underline hover:text-primary flex items-center gap-1"
+                                  >
                                     {match.caregiver.first_name} {match.caregiver.last_name}
-                                  </p>
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Link>
                                   <p className="flex items-center gap-2 text-sm">
                                     <Mail className="h-4 w-4 text-muted-foreground" />
                                     {match.caregiver.email}
