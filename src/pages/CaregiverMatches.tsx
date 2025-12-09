@@ -98,7 +98,11 @@ const CaregiverMatches = () => {
 
       if (!caregiver) {
         setLoading(false);
-        navigate("/caregiver/onboarding");
+        toast({
+          title: "No caregiver profile found",
+          description: "Please contact support if you believe this is an error.",
+          variant: "destructive",
+        });
         return;
       }
 
