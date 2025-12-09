@@ -40,34 +40,12 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
     }
   }, [parentEmail]);
 
-  // Poll for new messages every 5 seconds
-  useEffect(() => {
-    if (!selectedConversation?.id || !parentEmail) return;
-
-    const interval = setInterval(() => {
-      fetchMessagesQuiet(selectedConversation.id);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [selectedConversation?.id, parentEmail]);
-
-  // Refresh on window focus
-  useEffect(() => {
-    const handleFocus = () => {
-      if (selectedConversation?.id) {
-        fetchMessagesQuiet(selectedConversation.id);
-      }
-    };
-
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [selectedConversation?.id]);
-
   // Quiet fetch that doesn't show loading state
-  const fetchMessagesQuiet = async (conversationId: string) => {
+  const fetchMessagesQuiet = async (conversationId: string, email: string) => {
     try {
+      console.log("Polling for new messages...", conversationId);
       const { data, error } = await supabase.functions.invoke("get-parent-messages", {
-        body: { conversation_id: conversationId, parent_email: parentEmail },
+        body: { conversation_id: conversationId, parent_email: email },
       });
 
       if (error) throw error;
@@ -76,12 +54,14 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
       // Only update if there are new messages
       setMessages((prev) => {
         if (newMessages.length !== prev.length) {
+          console.log("New messages detected, updating...");
           return newMessages;
         }
         // Check if last message is different
         const lastNew = newMessages[newMessages.length - 1];
         const lastPrev = prev[prev.length - 1];
         if (lastNew?.id !== lastPrev?.id) {
+          console.log("New message detected, updating...");
           return newMessages;
         }
         return prev;
@@ -90,6 +70,34 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
       console.error("Error fetching messages:", error);
     }
   };
+
+  // Poll for new messages every 3 seconds
+  useEffect(() => {
+    if (!selectedConversation?.id || !parentEmail) return;
+
+    console.log("Setting up polling interval for conversation:", selectedConversation.id);
+    const interval = setInterval(() => {
+      fetchMessagesQuiet(selectedConversation.id, parentEmail);
+    }, 3000);
+
+    return () => {
+      console.log("Clearing polling interval");
+      clearInterval(interval);
+    };
+  }, [selectedConversation?.id, parentEmail]);
+
+  // Refresh on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (selectedConversation?.id && parentEmail) {
+        console.log("Window focused, refreshing messages");
+        fetchMessagesQuiet(selectedConversation.id, parentEmail);
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [selectedConversation?.id, parentEmail]);
 
   const fetchConversations = async () => {
     try {
