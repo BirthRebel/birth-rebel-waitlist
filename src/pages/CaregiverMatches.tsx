@@ -44,9 +44,11 @@ const CaregiverMatches = () => {
   }, [searchParams, toast]);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Safety timeout to prevent infinite loading on mobile
     const timeout = setTimeout(() => {
-      if (loading) {
+      if (loading && isMounted) {
         console.warn("Loading timeout reached");
         setLoading(false);
       }
@@ -54,27 +56,39 @@ const CaregiverMatches = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!isMounted) return;
+        
+        console.log("CaregiverMatches auth change:", event, session?.user?.email);
         setUser(session?.user ?? null);
-        if (!session?.user) {
-          setLoading(false);
-          navigate("/caregiver/auth");
+        
+        // Only redirect on explicit sign out, not on initial load
+        if (event === 'SIGNED_OUT') {
+          navigate("/caregiver/auth", { replace: true });
         }
       }
     );
 
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
+      if (!isMounted) return;
+      
+      console.log("CaregiverMatches initial session:", session?.user?.email);
+      
+      if (session?.user) {
+        setUser(session.user);
+      } else {
+        // No session - redirect to auth
         setLoading(false);
-        navigate("/caregiver/auth");
+        navigate("/caregiver/auth", { replace: true });
       }
     });
 
     return () => {
+      isMounted = false;
       clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [navigate, loading]);
+  }, [navigate]);
 
   useEffect(() => {
     if (user) {
