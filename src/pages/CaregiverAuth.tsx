@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+const TYPEFORM_URL = "https://form.typeform.com/to/eAJV4XXH?typeform-source=birthrebel.com";
+
 const CaregiverAuth = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [isReset, setIsReset] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,8 +38,7 @@ const CaregiverAuth = () => {
         return;
       }
       
-      if (isLogin) {
-        const { data: signInData, error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -92,33 +92,6 @@ const CaregiverAuth = () => {
         
         setLoading(false);
         navigate(caregiver ? "/caregiver/matches" : "/caregiver/onboarding");
-        return;
-      }
-      
-      // Sign up
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/caregiver/auth`,
-        },
-      });
-      
-      if (error) {
-        setLoading(false);
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      toast({
-        title: "Check your email",
-        description: "Click the confirmation link, then come back here to log in.",
-      });
-      setLoading(false);
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
@@ -137,7 +110,7 @@ const CaregiverAuth = () => {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h1 className="text-2xl font-bold text-center mb-6" style={{ color: '#E2725B' }}>
-              {isReset ? "Reset Password" : isLogin ? "Caregiver Login" : "Caregiver Sign Up"}
+              {isReset ? "Reset Password" : "Caregiver Login"}
             </h1>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,11 +147,11 @@ const CaregiverAuth = () => {
                 disabled={loading}
                 style={{ backgroundColor: '#E2725B' }}
               >
-                {loading ? "Loading..." : isReset ? "Send Reset Link" : isLogin ? "Log In" : "Sign Up"}
+                {loading ? "Loading..." : isReset ? "Send Reset Link" : "Log In"}
               </Button>
             </form>
             
-            {isLogin && !isReset && (
+            {!isReset && (
               <p className="text-center mt-3 text-sm">
                 <button
                   type="button"
@@ -203,15 +176,16 @@ const CaregiverAuth = () => {
                 </button>
               ) : (
                 <>
-                  {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(!isLogin)}
+                  Want to join as a caregiver?{" "}
+                  <a
+                    href={TYPEFORM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="underline font-medium"
                     style={{ color: '#E2725B' }}
                   >
-                    {isLogin ? "Sign up" : "Log in"}
-                  </button>
+                    Register here
+                  </a>
                 </>
               )}
             </p>
