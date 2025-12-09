@@ -65,6 +65,32 @@ export const AdminMessagePanel = ({
     }
   }, [isOpen, caregiverId, parentRequestId]);
 
+  // Real-time subscription for messages
+  useEffect(() => {
+    if (!selectedConversation?.id) return;
+
+    const channel = supabase
+      .channel(`messages-${selectedConversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${selectedConversation.id}`,
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          setMessages((prev) => [...prev, newMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedConversation?.id]);
+
   const fetchConversations = async () => {
     setLoading(true);
     try {
