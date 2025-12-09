@@ -16,6 +16,35 @@ interface MessageThreadProps {
   isLoading?: boolean;
 }
 
+// Helper to convert URLs in text to clickable links
+const renderContentWithLinks = (content: string, isCurrentUser: boolean) => {
+  // Regex to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      // Reset regex lastIndex after test
+      urlRegex.lastIndex = 0;
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "underline break-all",
+            isCurrentUser ? "text-primary-foreground hover:text-primary-foreground/80" : "text-primary hover:text-primary/80"
+          )}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 export const MessageThread = ({
   messages,
   currentUserType,
@@ -64,7 +93,9 @@ export const MessageThread = ({
                   : "bg-muted text-foreground rounded-bl-md"
               )}
             >
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {renderContentWithLinks(message.content, isCurrentUser)}
+              </p>
               <p
                 className={cn(
                   "text-xs mt-1",
