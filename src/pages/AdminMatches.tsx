@@ -64,7 +64,22 @@ const AdminMatches = () => {
   const [messageContent, setMessageContent] = useState<{ [key: string]: { parent: string; caregiver: string } }>({});
   const [sendingMessage, setSendingMessage] = useState<string | null>(null);
   const [sendingSubscriptionLink, setSendingSubscriptionLink] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<Record<string, { subscribed: boolean; subscription_end?: string }>>({});
   const { toast } = useToast();
+
+  const fetchSubscriptionStatus = async (emails: string[]) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-caregiver-subscription", {
+        body: { emails },
+      });
+      if (error) throw error;
+      if (data?.subscriptions) {
+        setSubscriptionStatus(data.subscriptions);
+      }
+    } catch (error) {
+      console.error("Error fetching subscription status:", error);
+    }
+  };
 
   const fetchMatches = async () => {
     setLoading(true);
@@ -92,6 +107,14 @@ const AdminMatches = () => {
       );
 
       setMatches(matchesWithParents);
+      
+      // Fetch subscription status for all caregivers
+      const caregiverEmails = matchesWithParents
+        .map((m) => m.caregiver?.email)
+        .filter((email): email is string => !!email);
+      if (caregiverEmails.length > 0) {
+        fetchSubscriptionStatus([...new Set(caregiverEmails)]);
+      }
     } catch (error: any) {
       console.error("Error fetching matches:", error);
       toast({
@@ -393,10 +416,10 @@ const AdminMatches = () => {
                   onOpenChange={(open) => setExpandedMatch(open ? match.id : null)}
                 >
                   <div className="bg-white rounded-lg shadow">
-                    <CollapsibleTrigger className="w-full p-6 text-left">
+                  <CollapsibleTrigger className="w-full p-6 text-left">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
                             <h3 className="text-lg font-semibold" style={{ color: "#36454F" }}>
                               <Link 
                                 to={`/admin/parent-requests?email=${encodeURIComponent(match.parent_email)}`}
@@ -417,6 +440,12 @@ const AdminMatches = () => {
                             <Badge className={getStatusColor(match.status)}>
                               {match.status}
                             </Badge>
+                            {match.caregiver?.email && subscriptionStatus[match.caregiver.email]?.subscribed && (
+                              <Badge className="bg-green-500 text-white hover:bg-green-600">
+                                <CreditCard className="h-3 w-3 mr-1" />
+                                Subscribed
+                              </Badge>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
