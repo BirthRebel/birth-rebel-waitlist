@@ -40,34 +40,56 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
     }
   }, [parentEmail]);
 
-  // Real-time subscription for messages
+  // Poll for new messages every 5 seconds
   useEffect(() => {
-    if (!selectedConversation?.id) return;
+    if (!selectedConversation?.id || !parentEmail) return;
 
-    const channel = supabase
-      .channel(`parent-messages-${selectedConversation.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${selectedConversation.id}`,
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          setMessages((prev) => {
-            const exists = prev.some((m) => m.id === newMessage.id);
-            return exists ? prev : [...prev, newMessage];
-          });
-        }
-      )
-      .subscribe();
+    const interval = setInterval(() => {
+      fetchMessagesQuiet(selectedConversation.id);
+    }, 5000);
 
-    return () => {
-      supabase.removeChannel(channel);
+    return () => clearInterval(interval);
+  }, [selectedConversation?.id, parentEmail]);
+
+  // Refresh on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (selectedConversation?.id) {
+        fetchMessagesQuiet(selectedConversation.id);
+      }
     };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [selectedConversation?.id]);
+
+  // Quiet fetch that doesn't show loading state
+  const fetchMessagesQuiet = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("get-parent-messages", {
+        body: { conversation_id: conversationId, parent_email: parentEmail },
+      });
+
+      if (error) throw error;
+      const newMessages = data?.messages || [];
+      
+      // Only update if there are new messages
+      setMessages((prev) => {
+        if (newMessages.length !== prev.length) {
+          return newMessages;
+        }
+        // Check if last message is different
+        const lastNew = newMessages[newMessages.length - 1];
+        const lastPrev = prev[prev.length - 1];
+        if (lastNew?.id !== lastPrev?.id) {
+          return newMessages;
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
 
   const fetchConversations = async () => {
     try {
