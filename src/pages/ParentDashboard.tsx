@@ -190,15 +190,9 @@ const ParentDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-muted-foreground mb-4">
-                    You don't have an active support request yet.
+                  <p className="text-muted-foreground">
+                    You don't have an active support request yet. Please contact us to get matched with a caregiver.
                   </p>
-                  <Button
-                    onClick={() => navigate("/find-caregiver")}
-                    style={{ backgroundColor: "#E2725B" }}
-                  >
-                    Find a Caregiver
-                  </Button>
                 </div>
               )}
             </CardContent>
