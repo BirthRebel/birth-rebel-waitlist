@@ -4,16 +4,16 @@ project_id = "zjbzjtljoxwreyhlrjbq"
 verify_jwt = false
 
 [functions.import-caregivers-csv]
-verify_jwt = false
+verify_jwt = true
 
 [functions.formless-webhook]
 verify_jwt = false
 
 [functions.get-all-caregivers]
-verify_jwt = false
+verify_jwt = true
 
 [functions.invite-caregivers]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-message-notification]
 verify_jwt = false
@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.check-caregiver-subscription]
 verify_jwt = false
+
+[functions.mark-as-booked]
+verify_jwt = true

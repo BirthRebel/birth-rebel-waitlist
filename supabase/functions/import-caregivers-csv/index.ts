@@ -272,6 +272,42 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+    // Verify admin authentication
+    const authHeader = req.headers.get("Authorization")
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const token = authHeader.replace("Bearer ", "")
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError)
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Check if user is admin
+    const { data: hasAdminRole, error: roleError } = await supabase
+      .rpc("has_role", { _user_id: user.id, _role: "admin" })
+
+    if (roleError || !hasAdminRole) {
+      console.log("Admin access denied for user:", user.id)
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { csvContent } = await req.json()
     
     if (!csvContent) {
@@ -281,7 +317,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    console.log('Received CSV import request')
+    console.log('Admin', user.id, 'initiated CSV import')
     
     // Parse CSV properly handling quoted fields with newlines
     const rows = parseCSVContent(csvContent)
@@ -314,10 +350,7 @@ Deno.serve(async (req) => {
       console.log(`Header "${header}" -> dbColumn: ${dbColumn}, multiChoice: ${multiChoiceCategory}`)
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // supabase client already initialized above
 
     const results = {
       imported: 0,
