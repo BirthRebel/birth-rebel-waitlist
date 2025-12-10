@@ -24,9 +24,41 @@ serve(async (req) => {
       },
     });
 
+    // Verify admin authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if user is admin
+    const { data: hasAdminRole, error: roleError } = await supabaseAdmin
+      .rpc("has_role", { _user_id: user.id, _role: "admin" });
+
+    if (roleError || !hasAdminRole) {
+      console.log("Admin access denied for user:", user.id);
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Parse request body
     const { caregiver_id, invite_all } = await req.json();
-    console.log("Invite request:", { caregiver_id, invite_all });
+    console.log("Admin", user.id, "invite request:", { caregiver_id, invite_all });
 
     // Get caregivers to invite (those without user_id)
     let query = supabaseAdmin
