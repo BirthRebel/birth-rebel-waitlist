@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
 
       // Caregiver types (from multiple choice)
       if (fieldTitle.includes('type of caregiver') || fieldTitle.includes('what type')) {
+        console.log('Processing caregiver type answer:', JSON.stringify(answer, null, 2))
         const labels = answer.choices?.labels || (answer.choice?.label ? [answer.choice.label] : [])
         for (const label of labels) {
           const l = label.toLowerCase()
@@ -120,10 +121,16 @@ Deno.serve(async (req) => {
           if (l.includes('sleep')) caregiverData.is_sleep_consultant = true
           if (l.includes('hypnobirth')) caregiverData.is_hypnobirthing_coach = true
           if (l.includes('bereavement')) caregiverData.is_bereavement_councillor = true
+          // Check if the label itself is "other" with text
+          if (l.includes('other')) {
+            console.log('Found "other" in labels')
+          }
         }
-        // Handle "other" text
-        if (answer.choices?.other) {
-          caregiverData.support_type_other = answer.choices.other
+        // Handle "other" text - Typeform can structure this multiple ways
+        const otherText = answer.choices?.other || answer.choice?.other || answer.other || answer.text
+        if (otherText && !labels.some(l => l.toLowerCase() === otherText.toLowerCase())) {
+          caregiverData.support_type_other = otherText
+          console.log('Captured support_type_other:', otherText)
         }
       }
 
