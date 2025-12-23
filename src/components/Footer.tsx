@@ -1,3 +1,5 @@
+import { Instagram } from "lucide-react";
+
 export const Footer = () => {
   return (
     <footer className="bg-foreground text-background py-12">
@@ -7,6 +9,16 @@ export const Footer = () => {
             <h3 className="text-2xl font-bold mb-2">Birth Rebel</h3>
             <p className="text-background/80">Rebuilding trust in maternal care</p>
           </div>
+
+          <a 
+            href="https://www.instagram.com/wearebirthrebel/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-background/80 hover:text-background transition-colors"
+            aria-label="Follow us on Instagram"
+          >
+            <Instagram size={24} />
+          </a>
 
           <div className="text-center text-sm text-background/60 max-w-2xl">
             <p>
