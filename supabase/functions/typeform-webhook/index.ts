@@ -126,6 +126,31 @@ Deno.serve(async (req) => {
         caregiverData.certifications_training = answer.text || answer.choices?.labels?.join(', ')
       }
 
+      // File uploads - Typeform file_upload type
+      if (type === 'file_upload' && answer.file_url) {
+        console.log('Processing file upload - title:', fieldTitle, 'url:', answer.file_url)
+        
+        // Match file uploads to appropriate document columns based on field title
+        if (fieldTitle.includes('training') || fieldTitle.includes('qualification')) {
+          caregiverData.training_certificate_url = answer.file_url
+          console.log('Matched training_certificate_url:', answer.file_url)
+        } else if (fieldTitle.includes('insurance') || fieldTitle.includes('indemnity')) {
+          caregiverData.insurance_certificate_url = answer.file_url
+          console.log('Matched insurance_certificate_url:', answer.file_url)
+        } else if (fieldTitle.includes('dbs') || fieldTitle.includes('background') || fieldTitle.includes('criminal')) {
+          caregiverData.dbs_certificate_url = answer.file_url
+          console.log('Matched dbs_certificate_url:', answer.file_url)
+        } else if (!caregiverData.additional_certificate_1_url) {
+          // First additional certificate
+          caregiverData.additional_certificate_1_url = answer.file_url
+          console.log('Matched additional_certificate_1_url:', answer.file_url)
+        } else if (!caregiverData.additional_certificate_2_url) {
+          // Second additional certificate
+          caregiverData.additional_certificate_2_url = answer.file_url
+          console.log('Matched additional_certificate_2_url:', answer.file_url)
+        }
+      }
+
       // Caregiver types (from multiple choice)
       if (fieldTitle.includes('type of caregiver') || fieldTitle.includes('what type')) {
         console.log('Processing caregiver type answer:', JSON.stringify(answer, null, 2))
