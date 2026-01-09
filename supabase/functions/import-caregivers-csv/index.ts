@@ -5,45 +5,74 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Map Typeform CSV column headers to database columns
+// EXACT Typeform CSV column headers mapped to database columns
 const columnMapping: Record<string, string> = {
-  // Basic info
-  'pronouns': 'pronouns',
+  // Basic info - EXACT MATCHES from Typeform export
+  '#': 'typeform_response_id',
+  'what are your pronouns?': 'pronouns',
   'first name': 'first_name',
   'last name': 'last_name',
-  'email': 'email',
-  'phone': 'phone',
+  'email address': 'email',
   'phone number': 'phone',
   
-  // Address
+  // Address - EXACT MATCHES
   'address': 'address',
   'address line 2': 'address_line_2',
-  'city / town': 'city_town',
   'city/town': 'city_town',
-  'city': 'city_town',
-  'town': 'city_town',
-  'state / region / province': 'state_region_province',
   'state/region/province': 'state_region_province',
-  'state': 'state_region_province',
-  'region': 'state_region_province',
-  'zip / post code': 'zip_post_code',
   'zip/post code': 'zip_post_code',
-  'postcode': 'zip_post_code',
-  'zip code': 'zip_post_code',
   'country': 'country',
   
-  // Experience
-  'how long have you been practicing?': 'years_practicing',
-  'years practicing': 'years_practicing',
-  'how many births have you supported?': 'births_supported',
-  'births supported': 'births_supported',
-  'describe your care style': 'care_style',
-  'care style': 'care_style',
-  'how would you describe your care style?': 'care_style',
-  'certifications and training': 'certifications_training',
-  'certifications': 'certifications_training',
+  // Caregiver types - individual columns from Typeform
+  'doula': 'is_doula',
+  'private midwife': 'is_private_midwife',
+  'lactation consultant': 'is_lactation_consultant',
+  'sleep consultant': 'is_sleep_consultant',
+  'hypnobirthing coach': 'is_hypnobirthing_coach',
+  'bereavement councillor': 'is_bereavement_councillor',
   
-  // Individual boolean columns from Typeform expanded format
+  // Languages - individual columns from Typeform
+  'english': 'speaks_english',
+  'french': 'speaks_french',
+  'german': 'speaks_german',
+  'spanish': 'speaks_spanish',
+  'italian': 'speaks_italian',
+  'punjabi': 'speaks_punjabi',
+  'urdu': 'speaks_urdu',
+  'arabic': 'speaks_arabic',
+  'bengali': 'speaks_bengali',
+  'gujrati': 'speaks_gujrati',
+  'portuguese': 'speaks_portuguese',
+  'mandarin': 'speaks_mandarin',
+  
+  // Experience/training - EXACT MATCHES
+  'what certifications or training do you hold?': 'certifications_training',
+  'how many years have you been practicing as a maternity caregiver': 'years_practicing',
+  'how many births have you supported?': 'births_supported',
+  
+  // Services offered - individual columns from Typeform
+  'birth planning & signposting': 'offers_birth_planning',
+  'postnatal support': 'offers_postnatal_support',
+  'support during active labour': 'offers_active_labour_support',
+  'fertility & conception': 'offers_fertility_conception',
+  'nutrition support': 'offers_nutrition_support',
+  'lactation support': 'offers_lactation_support',
+  'newborn sleep support': 'offers_newborn_sleep_support',
+  'hypnobirthing': 'offers_hypnobirthing',
+  'loss & bereavement care': 'offers_loss_bereavement_care',
+  
+  // Availability - individual columns from Typeform
+  'weekdays: mornings': 'avail_weekdays_mornings',
+  'weekdays: afternoons': 'avail_weekdays_afternoons',
+  'weekdays: evenings': 'avail_weekdays_evenings',
+  'weekdays: overnight': 'avail_weekdays_overnight',
+  'weekends: mornings': 'avail_weekends_mornings',
+  'weekends: afternoons': 'avail_weekends_afternoons',
+  'weekends: evenings': 'avail_weekends_evenings',
+  'weekends: overnight': 'avail_weekends_overnight',
+  'i am generally not available during school holidays': 'unavailable_school_holidays',
+  
+  // Communities/support specialties - individual columns from Typeform
   'solo parents': 'supports_solo_parents',
   'multiples (e.g. twins)': 'supports_multiples',
   'families of colour': 'supports_families_of_colour',
@@ -59,101 +88,26 @@ const columnMapping: Record<string, string> = {
   'caesareans': 'supports_caesareans',
   'rebozo': 'supports_rebozo',
   
-  // Care types
+  // Care types - individual columns from Typeform
   'antenatal planning, signposting & information': 'care_antenatal_planning',
-  'postnatal support': 'care_postnatal_support',
+  'birth support': 'care_birth_support',
   'grief & loss care': 'care_grief_loss',
   'full-spectrum reproductive support': 'care_full_spectrum',
   'fertility & conception support': 'care_fertility_conception',
   'feeding and lactation support': 'care_feeding_lactation',
   'cultural, ritual or spiritual practices': 'care_cultural_spiritual',
   
-  // Availability
-  'weekdays: mornings': 'avail_weekdays_mornings',
-  'weekdays: afternoons': 'avail_weekdays_afternoons',
-  'weekdays: evenings': 'avail_weekdays_evenings',
-  'weekdays: overnight': 'avail_weekdays_overnight',
-  'weekends: mornings': 'avail_weekends_mornings',
-  'weekends: afternoons': 'avail_weekends_afternoons',
-  'weekends: evenings': 'avail_weekends_evenings',
-  'weekends: overnight': 'avail_weekends_overnight',
-  'i am generally not available during school holidays': 'unavailable_school_holidays',
-}
-
-// Multi-choice columns that need special parsing
-const multiChoiceMapping: Record<string, Record<string, string>> = {
-  'what type of caregiver are you?': {
-    'doula': 'is_doula',
-    'private midwife': 'is_private_midwife',
-    'midwife': 'is_private_midwife',
-    'lactation consultant': 'is_lactation_consultant',
-    'sleep consultant': 'is_sleep_consultant',
-    'hypnobirthing coach': 'is_hypnobirthing_coach',
-    'bereavement councillor': 'is_bereavement_councillor',
-  },
-  'which languages do you speak fluently?': {
-    'english': 'speaks_english',
-    'french': 'speaks_french',
-    'german': 'speaks_german',
-    'spanish': 'speaks_spanish',
-    'italian': 'speaks_italian',
-    'punjabi': 'speaks_punjabi',
-    'urdu': 'speaks_urdu',
-    'arabic': 'speaks_arabic',
-    'bengali': 'speaks_bengali',
-    'gujarati': 'speaks_gujrati',
-    'gujrati': 'speaks_gujrati',
-    'portuguese': 'speaks_portuguese',
-    'mandarin': 'speaks_mandarin',
-  },
-  'what type of service do you offer?': {
-    'birth planning': 'offers_birth_planning',
-    'postnatal support': 'offers_postnatal_support',
-    'active labour support': 'offers_active_labour_support',
-    'active labor support': 'offers_active_labour_support',
-    'fertility and conception': 'offers_fertility_conception',
-    'nutrition support': 'offers_nutrition_support',
-    'lactation support': 'offers_lactation_support',
-    'newborn sleep support': 'offers_newborn_sleep_support',
-    'hypnobirthing': 'offers_hypnobirthing',
-    'loss and bereavement care': 'offers_loss_bereavement_care',
-  },
-  'availability': {
-    'weekday mornings': 'avail_weekdays_mornings',
-    'weekday afternoons': 'avail_weekdays_afternoons',
-    'weekday evenings': 'avail_weekdays_evenings',
-    'weekday overnight': 'avail_weekdays_overnight',
-    'weekend mornings': 'avail_weekends_mornings',
-    'weekend afternoons': 'avail_weekends_afternoons',
-    'weekend evenings': 'avail_weekends_evenings',
-    'weekend overnight': 'avail_weekends_overnight',
-    'unavailable school holidays': 'unavailable_school_holidays',
-  },
-  'communities you support': {
-    'solo parents': 'supports_solo_parents',
-    'single parent': 'supports_solo_parents',
-    'multiples': 'supports_multiples',
-    'twins': 'supports_multiples',
-    'families of colour': 'supports_families_of_colour',
-    'bame': 'supports_families_of_colour',
-    'bipoc': 'supports_families_of_colour',
-    'queer': 'supports_queer_trans',
-    'lgbtq': 'supports_queer_trans',
-    'trans': 'supports_queer_trans',
-    'disabled parents': 'supports_disabled_parents',
-    'neurodivergent': 'supports_neurodivergent',
-    'trauma survivors': 'supports_trauma_survivors',
-    'bereavement': 'supports_bereavement',
-    'immigrant': 'supports_immigrant_refugee',
-    'refugee': 'supports_immigrant_refugee',
-    'complex health': 'supports_complex_health',
-    'high risk': 'supports_complex_health',
-    'home births': 'supports_home_births',
-    'water births': 'supports_water_births',
-    'caesareans': 'supports_caesareans',
-    'c-section': 'supports_caesareans',
-    'rebozo': 'supports_rebozo',
-  },
+  // Care style - EXACT MATCH
+  'how would you describe your care style?': 'care_style',
+  
+  // GDPR consent - EXACT MATCH (with HTML stripped)
+  'to comply with uk data protection law, we need your permission to store and use the information you provide in this form.': 'gdpr_consent',
+  
+  // Document uploads
+  'please upload training certificates': 'training_certificate_url',
+  'additional training certificates (optional)': 'additional_certificate_1_url',
+  'please add dbs certificates.': 'dbs_certificate_url',
+  'please add insurance certificates': 'insurance_certificate_url',
 }
 
 // Parse entire CSV content into rows, handling quoted fields with newlines
@@ -211,59 +165,25 @@ function parseCSVContent(content: string): string[][] {
 }
 
 function findMatchingColumn(header: string): string | null {
-  const normalized = header.toLowerCase().trim()
+  // Strip HTML tags and normalize
+  const normalized = header
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .toLowerCase()
+    .trim()
   
-  // Direct match
+  // Direct match first (most reliable)
   if (columnMapping[normalized]) {
     return columnMapping[normalized]
   }
   
-  // Partial match
+  // Try matching by checking if the header starts with a known key
   for (const [key, value] of Object.entries(columnMapping)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
+    if (normalized === key) {
       return value
     }
   }
   
   return null
-}
-
-function findMultiChoiceCategory(header: string): string | null {
-  const normalized = header.toLowerCase().trim()
-  
-  for (const key of Object.keys(multiChoiceMapping)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
-      return key
-    }
-  }
-  
-  // Additional partial matches
-  if (normalized.includes('caregiver') && normalized.includes('type')) return 'what type of caregiver are you?'
-  if (normalized.includes('language')) return 'which languages do you speak fluently?'
-  if (normalized.includes('service')) return 'what type of service do you offer?'
-  if (normalized.includes('availab')) return 'availability'
-  if (normalized.includes('communit') || normalized.includes('support') && normalized.includes('who')) return 'communities you support'
-  
-  return null
-}
-
-function parseMultiChoiceValue(value: string, category: string): Record<string, boolean> {
-  const result: Record<string, boolean> = {}
-  const mapping = multiChoiceMapping[category]
-  if (!mapping) return result
-  
-  // Split by comma or semicolon
-  const choices = value.split(/[,;]/).map(s => s.trim().toLowerCase())
-  
-  for (const choice of choices) {
-    for (const [key, dbColumn] of Object.entries(mapping)) {
-      if (choice.includes(key) || key.includes(choice)) {
-        result[dbColumn] = true
-      }
-    }
-  }
-  
-  return result
 }
 
 Deno.serve(async (req) => {
@@ -334,28 +254,36 @@ Deno.serve(async (req) => {
     console.log('Total data rows:', rows.length - 1)
 
     // Build column mapping for this CSV
-    const csvColumnMap: { index: number; dbColumn: string | null; multiChoiceCategory: string | null }[] = []
+    const csvColumnMap: { index: number; header: string; dbColumn: string | null }[] = []
+    const unmatchedHeaders: string[] = []
     
     for (let i = 0; i < headers.length; i++) {
       const header = headers[i]
       const dbColumn = findMatchingColumn(header)
-      const multiChoiceCategory = findMultiChoiceCategory(header)
       
       csvColumnMap.push({
         index: i,
+        header,
         dbColumn,
-        multiChoiceCategory,
       })
       
-      console.log(`Header "${header}" -> dbColumn: ${dbColumn}, multiChoice: ${multiChoiceCategory}`)
+      if (dbColumn) {
+        console.log(`✓ Header "${header}" -> ${dbColumn}`)
+      } else {
+        // Skip known non-data columns
+        const lowerHeader = header.toLowerCase()
+        if (!['other', 'response type', 'start date (utc)', 'stage date (utc)', 'submit date (utc)', 'network id', 'tags', 'ending'].includes(lowerHeader)) {
+          unmatchedHeaders.push(header)
+          console.log(`✗ Header "${header}" -> NO MATCH`)
+        }
+      }
     }
-
-    // supabase client already initialized above
 
     const results = {
       imported: 0,
       updated: 0,
       errors: [] as string[],
+      unmatchedHeaders,
     }
 
     // Process each data row
@@ -366,37 +294,39 @@ Deno.serve(async (req) => {
       // Map CSV values to database columns
       for (const mapping of csvColumnMap) {
         const value = values[mapping.index]?.trim()
-        if (!value) continue
+        if (!value || !mapping.dbColumn) continue
 
-        if (mapping.dbColumn) {
-          // Check if this is a boolean column (starts with supports_, avail_, care_, is_, speaks_, offers_, or specific flags)
-          const isBooleanColumn = mapping.dbColumn.startsWith('supports_') || 
-                                   mapping.dbColumn.startsWith('avail_') || 
-                                   mapping.dbColumn.startsWith('care_') ||
-                                   mapping.dbColumn.startsWith('is_') ||
-                                   mapping.dbColumn.startsWith('speaks_') ||
-                                   mapping.dbColumn.startsWith('offers_') ||
-                                   mapping.dbColumn === 'unavailable_school_holidays' ||
-                                   mapping.dbColumn === 'gdpr_consent'
-          
-          if (isBooleanColumn) {
-            // Convert various truthy values to boolean
-            const lowerValue = value.toLowerCase()
-            caregiverData[mapping.dbColumn] = lowerValue === '1' || 
-                                               lowerValue === 'yes' || 
-                                               lowerValue === 'true' ||
-                                               lowerValue === 'x' ||
-                                               lowerValue === '✓' ||
-                                               lowerValue === '✔' ||
-                                               value.length > 0 // Any non-empty value counts as true for checkboxes
-          } else {
-            caregiverData[mapping.dbColumn] = value
-          }
-        }
+        // Check if this is a boolean column
+        const isBooleanColumn = mapping.dbColumn.startsWith('supports_') || 
+                                 mapping.dbColumn.startsWith('avail_') || 
+                                 mapping.dbColumn.startsWith('care_') ||
+                                 mapping.dbColumn.startsWith('is_') ||
+                                 mapping.dbColumn.startsWith('speaks_') ||
+                                 mapping.dbColumn.startsWith('offers_') ||
+                                 mapping.dbColumn === 'unavailable_school_holidays' ||
+                                 mapping.dbColumn === 'gdpr_consent'
         
-        if (mapping.multiChoiceCategory) {
-          const booleanFields = parseMultiChoiceValue(value, mapping.multiChoiceCategory)
-          Object.assign(caregiverData, booleanFields)
+        if (isBooleanColumn) {
+          // For Typeform expanded CSV, the column contains the value itself if selected
+          // e.g., "Doula" column contains "Doula" if selected, empty if not
+          // Also handle checkmark columns like availability
+          const lowerValue = value.toLowerCase()
+          const headerLower = mapping.header.toLowerCase()
+          
+          // If the value matches the header (Typeform pattern), it's selected
+          // Or if it's a truthy value
+          caregiverData[mapping.dbColumn] = 
+            lowerValue === headerLower ||
+            value.toLowerCase().includes(headerLower) ||
+            lowerValue === '1' || 
+            lowerValue === 'yes' || 
+            lowerValue === 'true' ||
+            lowerValue === 'x' ||
+            lowerValue === '✓' ||
+            lowerValue === '✔' ||
+            lowerValue.includes('i understand') // GDPR consent
+        } else {
+          caregiverData[mapping.dbColumn] = value
         }
       }
 
@@ -406,7 +336,7 @@ Deno.serve(async (req) => {
         continue
       }
 
-      console.log(`Row ${rowIndex + 1} - Processing email: ${caregiverData.email}`)
+      console.log(`Row ${rowIndex + 1} - Processing: ${caregiverData.first_name} ${caregiverData.last_name} <${caregiverData.email}>`)
 
       // Check if caregiver exists
       const { data: existing } = await supabase
