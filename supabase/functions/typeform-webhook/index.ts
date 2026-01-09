@@ -45,6 +45,23 @@ Deno.serve(async (req) => {
       intake_completed_at: new Date().toISOString(),
     }
 
+    // Helper to parse date from various formats
+    const parseDate = (value: string | undefined): string | undefined => {
+      if (!value) return undefined
+      // Try to parse common date formats
+      const dateMatch = value.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{4})|(\d{2}-\d{2}-\d{4})/)
+      if (dateMatch) {
+        const dateStr = dateMatch[0]
+        // Handle DD/MM/YYYY or DD-MM-YYYY format
+        if (dateStr.includes('/') || (dateStr.includes('-') && dateStr.indexOf('-') === 2)) {
+          const parts = dateStr.split(/[\/\-]/)
+          return `${parts[2]}-${parts[1]}-${parts[0]}` // Convert to YYYY-MM-DD
+        }
+        return dateStr // Already YYYY-MM-DD
+      }
+      return undefined
+    }
+
     // Process each answer based on field title (more reliable than ref)
     for (const answer of answers) {
       const ref = answer.field?.ref || ''
@@ -246,6 +263,34 @@ Deno.serve(async (req) => {
       // GDPR consent
       if (fieldTitle.includes('gdpr') || fieldTitle.includes('consent') || fieldTitle.includes('agree')) {
         caregiverData.gdpr_consent = answer.boolean === true || answer.choice?.label?.toLowerCase() === 'yes' || answer.choice?.label?.toLowerCase().includes('agree')
+      }
+
+      // Document expiration dates
+      if (fieldTitle.includes('training') && fieldTitle.includes('expir')) {
+        const expiryDate = parseDate(answer.text || answer.date)
+        if (expiryDate) caregiverData.training_certificate_expires = expiryDate
+        console.log('Matched training_certificate_expires:', expiryDate)
+      }
+      if (fieldTitle.includes('insurance') && fieldTitle.includes('expir')) {
+        const expiryDate = parseDate(answer.text || answer.date)
+        if (expiryDate) caregiverData.insurance_certificate_expires = expiryDate
+        console.log('Matched insurance_certificate_expires:', expiryDate)
+      }
+      if (fieldTitle.includes('dbs') && fieldTitle.includes('expir')) {
+        const expiryDate = parseDate(answer.text || answer.date)
+        if (expiryDate) caregiverData.dbs_certificate_expires = expiryDate
+        console.log('Matched dbs_certificate_expires:', expiryDate)
+      }
+      if ((fieldTitle.includes('certificate') || fieldTitle.includes('certification')) && fieldTitle.includes('expir')) {
+        // Generic certificate expiry - map to additional certificate if not already set
+        const expiryDate = parseDate(answer.text || answer.date)
+        if (expiryDate && !caregiverData.additional_certificate_1_expires) {
+          caregiverData.additional_certificate_1_expires = expiryDate
+          console.log('Matched additional_certificate_1_expires:', expiryDate)
+        } else if (expiryDate && !caregiverData.additional_certificate_2_expires) {
+          caregiverData.additional_certificate_2_expires = expiryDate
+          console.log('Matched additional_certificate_2_expires:', expiryDate)
+        }
       }
     }
 

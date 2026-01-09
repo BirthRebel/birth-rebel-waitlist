@@ -17,7 +17,9 @@ export type Database = {
       caregivers: {
         Row: {
           active: boolean
+          additional_certificate_1_expires: string | null
           additional_certificate_1_url: string | null
+          additional_certificate_2_expires: string | null
           additional_certificate_2_url: string | null
           address: string | null
           address_line_2: string | null
@@ -43,11 +45,13 @@ export type Database = {
           city_town: string | null
           country: string | null
           created_at: string
+          dbs_certificate_expires: string | null
           dbs_certificate_url: string | null
           email: string
           first_name: string | null
           gdpr_consent: boolean | null
           id: string
+          insurance_certificate_expires: string | null
           insurance_certificate_url: string | null
           intake_completed_at: string | null
           is_bereavement_councillor: boolean | null
@@ -98,6 +102,7 @@ export type Database = {
           supports_solo_parents: boolean | null
           supports_trauma_survivors: boolean | null
           supports_water_births: boolean | null
+          training_certificate_expires: string | null
           training_certificate_url: string | null
           typeform_response_id: string | null
           unavailable_school_holidays: boolean | null
@@ -107,7 +112,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          additional_certificate_1_expires?: string | null
           additional_certificate_1_url?: string | null
+          additional_certificate_2_expires?: string | null
           additional_certificate_2_url?: string | null
           address?: string | null
           address_line_2?: string | null
@@ -133,11 +140,13 @@ export type Database = {
           city_town?: string | null
           country?: string | null
           created_at?: string
+          dbs_certificate_expires?: string | null
           dbs_certificate_url?: string | null
           email: string
           first_name?: string | null
           gdpr_consent?: boolean | null
           id?: string
+          insurance_certificate_expires?: string | null
           insurance_certificate_url?: string | null
           intake_completed_at?: string | null
           is_bereavement_councillor?: boolean | null
@@ -188,6 +197,7 @@ export type Database = {
           supports_solo_parents?: boolean | null
           supports_trauma_survivors?: boolean | null
           supports_water_births?: boolean | null
+          training_certificate_expires?: string | null
           training_certificate_url?: string | null
           typeform_response_id?: string | null
           unavailable_school_holidays?: boolean | null
@@ -197,7 +207,9 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          additional_certificate_1_expires?: string | null
           additional_certificate_1_url?: string | null
+          additional_certificate_2_expires?: string | null
           additional_certificate_2_url?: string | null
           address?: string | null
           address_line_2?: string | null
@@ -223,11 +235,13 @@ export type Database = {
           city_town?: string | null
           country?: string | null
           created_at?: string
+          dbs_certificate_expires?: string | null
           dbs_certificate_url?: string | null
           email?: string
           first_name?: string | null
           gdpr_consent?: boolean | null
           id?: string
+          insurance_certificate_expires?: string | null
           insurance_certificate_url?: string | null
           intake_completed_at?: string | null
           is_bereavement_councillor?: boolean | null
@@ -278,6 +292,7 @@ export type Database = {
           supports_solo_parents?: boolean | null
           supports_trauma_survivors?: boolean | null
           supports_water_births?: boolean | null
+          training_certificate_expires?: string | null
           training_certificate_url?: string | null
           typeform_response_id?: string | null
           unavailable_school_holidays?: boolean | null

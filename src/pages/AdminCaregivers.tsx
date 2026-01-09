@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard } from "lucide-react";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar } from "lucide-react";
 import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 
 interface Caregiver {
@@ -90,7 +90,81 @@ interface Caregiver {
   // Other
   years_practicing: string | null;
   births_supported: string | null;
+  // Document URLs
+  training_certificate_url: string | null;
+  additional_certificate_1_url: string | null;
+  additional_certificate_2_url: string | null;
+  dbs_certificate_url: string | null;
+  insurance_certificate_url: string | null;
+  // Document expiration dates
+  training_certificate_expires: string | null;
+  additional_certificate_1_expires: string | null;
+  additional_certificate_2_expires: string | null;
+  dbs_certificate_expires: string | null;
+  insurance_certificate_expires: string | null;
 }
+
+// Document configuration for tracking
+const documentConfig = [
+  { key: 'training_certificate', label: 'Training Certificate', urlField: 'training_certificate_url', expiresField: 'training_certificate_expires' },
+  { key: 'insurance_certificate', label: 'Insurance', urlField: 'insurance_certificate_url', expiresField: 'insurance_certificate_expires' },
+  { key: 'dbs_certificate', label: 'DBS Certificate', urlField: 'dbs_certificate_url', expiresField: 'dbs_certificate_expires' },
+  { key: 'additional_certificate_1', label: 'Additional Cert 1', urlField: 'additional_certificate_1_url', expiresField: 'additional_certificate_1_expires' },
+  { key: 'additional_certificate_2', label: 'Additional Cert 2', urlField: 'additional_certificate_2_url', expiresField: 'additional_certificate_2_expires' },
+] as const;
+
+type DocumentStatus = 'missing' | 'expired' | 'expiring_soon' | 'valid' | 'no_expiry';
+
+const getDocumentStatus = (url: string | null, expiresDate: string | null): DocumentStatus => {
+  if (!url) return 'missing';
+  if (!expiresDate) return 'no_expiry'; // Document uploaded but no expiry date set
+  
+  const now = new Date();
+  const expires = new Date(expiresDate);
+  const daysUntilExpiry = Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (daysUntilExpiry < 0) return 'expired';
+  if (daysUntilExpiry <= 60) return 'expiring_soon';
+  return 'valid';
+};
+
+const getDocumentStatusBadge = (status: DocumentStatus, expiresDate: string | null) => {
+  switch (status) {
+    case 'missing':
+      return <Badge variant="outline" className="text-muted-foreground border-muted-foreground/50"><FileX className="h-3 w-3 mr-1" />Not uploaded</Badge>;
+    case 'expired':
+      return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Expired</Badge>;
+    case 'expiring_soon':
+      const days = Math.ceil((new Date(expiresDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      return <Badge className="bg-amber-500 hover:bg-amber-600 text-white"><AlertTriangle className="h-3 w-3 mr-1" />Expires in {days}d</Badge>;
+    case 'valid':
+      return <Badge className="bg-green-500 hover:bg-green-600 text-white"><FileCheck className="h-3 w-3 mr-1" />Valid</Badge>;
+    case 'no_expiry':
+      return <Badge variant="secondary"><FileCheck className="h-3 w-3 mr-1" />Uploaded (no expiry)</Badge>;
+  }
+};
+
+const getCaregiverDocumentSummary = (caregiver: Caregiver) => {
+  let hasIssues = false;
+  let expiringSoon = 0;
+  let expired = 0;
+  let missing = 0;
+  
+  // Only check Insurance and DBS as required documents
+  const requiredDocs = ['insurance_certificate', 'dbs_certificate'] as const;
+  
+  for (const docKey of requiredDocs) {
+    const url = caregiver[`${docKey}_url` as keyof Caregiver] as string | null;
+    const expires = caregiver[`${docKey}_expires` as keyof Caregiver] as string | null;
+    const status = getDocumentStatus(url, expires);
+    
+    if (status === 'expired') { expired++; hasIssues = true; }
+    if (status === 'expiring_soon') { expiringSoon++; hasIssues = true; }
+    if (status === 'missing') { missing++; }
+  }
+  
+  return { hasIssues, expiringSoon, expired, missing };
+};
 
 const fieldGroups = {
   serviceTypes: {
@@ -482,6 +556,26 @@ const AdminCaregivers = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
+                        {/* Document status warning badges */}
+                        {(() => {
+                          const docSummary = getCaregiverDocumentSummary(caregiver);
+                          return (
+                            <>
+                              {docSummary.expired > 0 && (
+                                <Badge variant="destructive">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  {docSummary.expired} Expired
+                                </Badge>
+                              )}
+                              {docSummary.expiringSoon > 0 && (
+                                <Badge className="bg-amber-500 text-white hover:bg-amber-600">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {docSummary.expiringSoon} Expiring
+                                </Badge>
+                              )}
+                            </>
+                          );
+                        })()}
                         {subscriptionStatus[caregiver.email]?.subscribed && (
                           <Badge className="bg-green-500 text-white hover:bg-green-600">
                             <CreditCard className="h-3 w-3 mr-1" />
@@ -555,7 +649,34 @@ const AdminCaregivers = () => {
                           </div>
                         )}
 
-                        {/* Messages button */}
+                        {/* Documents Section */}
+                        <div className="col-span-full border-t pt-4 mt-4">
+                          <h4 className="font-medium text-sm flex items-center gap-2 text-foreground mb-3">
+                            <FileCheck className="h-4 w-4 text-primary" />
+                            Documents & Certifications
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {documentConfig.map((doc) => {
+                              const url = caregiver[doc.urlField as keyof Caregiver] as string | null;
+                              const expires = caregiver[doc.expiresField as keyof Caregiver] as string | null;
+                              const status = getDocumentStatus(url, expires);
+                              
+                              return (
+                                <div key={doc.key} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium">{doc.label}</span>
+                                    {expires && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Expires: {new Date(expires).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {getDocumentStatusBadge(status, expires)}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                         <div className="pt-4 border-t mt-4">
                           <Button
                             variant="outline"
