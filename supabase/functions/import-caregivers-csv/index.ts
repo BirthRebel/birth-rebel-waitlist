@@ -6,109 +6,135 @@ const corsHeaders = {
 }
 
 // EXACT Typeform CSV column headers mapped to database columns
+// Keys must be EXACTLY as they appear in the CSV (case-insensitive matching done later)
 const columnMapping: Record<string, string> = {
-  // Basic info - EXACT MATCHES from Typeform export
+  // Basic info
   '#': 'typeform_response_id',
-  'what are your pronouns?': 'pronouns',
-  'first name': 'first_name',
-  'last name': 'last_name',
-  'email address': 'email',
-  'phone number': 'phone',
+  'What are your pronouns?': 'pronouns',
+  'First Name': 'first_name',
+  'Last Name': 'last_name',
+  'Email Address': 'email',
+  'Phone number': 'phone',
   
-  // Address - EXACT MATCHES
-  'address': 'address',
-  'address line 2': 'address_line_2',
-  'city/town': 'city_town',
-  'state/region/province': 'state_region_province',
-  'zip/post code': 'zip_post_code',
-  'country': 'country',
+  // Address
+  'Address': 'address',
+  'Address line 2': 'address_line_2',
+  'City/Town': 'city_town',
+  'State/Region/Province': 'state_region_province',
+  'Zip/Post Code': 'zip_post_code',
+  'Country': 'country',
   
-  // Caregiver types - individual columns from Typeform
-  'doula': 'is_doula',
-  'private midwife': 'is_private_midwife',
-  'lactation consultant': 'is_lactation_consultant',
-  'sleep consultant': 'is_sleep_consultant',
-  'hypnobirthing coach': 'is_hypnobirthing_coach',
-  'bereavement councillor': 'is_bereavement_councillor',
+  // Caregiver types - these are individual checkbox columns
+  'Doula': 'is_doula',
+  'Private midwife': 'is_private_midwife',
+  'Lactation consultant': 'is_lactation_consultant',
+  'Sleep consultant': 'is_sleep_consultant',
+  'Hypnobirthing coach': 'is_hypnobirthing_coach',
+  'Bereavement Councillor': 'is_bereavement_councillor',
   
-  // Languages - individual columns from Typeform
-  'english': 'speaks_english',
-  'french': 'speaks_french',
-  'german': 'speaks_german',
-  'spanish': 'speaks_spanish',
-  'italian': 'speaks_italian',
-  'punjabi': 'speaks_punjabi',
-  'urdu': 'speaks_urdu',
-  'arabic': 'speaks_arabic',
-  'bengali': 'speaks_bengali',
-  'gujrati': 'speaks_gujrati',
-  'portuguese': 'speaks_portuguese',
-  'mandarin': 'speaks_mandarin',
+  // Languages
+  'English': 'speaks_english',
+  'French': 'speaks_french',
+  'German': 'speaks_german',
+  'Spanish': 'speaks_spanish',
+  'Italian': 'speaks_italian',
+  'Punjabi': 'speaks_punjabi',
+  'Urdu': 'speaks_urdu',
+  'Arabic': 'speaks_arabic',
+  'Bengali': 'speaks_bengali',
+  'Gujrati': 'speaks_gujrati',
+  'Portuguese': 'speaks_portuguese',
+  'Mandarin': 'speaks_mandarin',
   
-  // Experience/training - EXACT MATCHES
-  'what certifications or training do you hold?': 'certifications_training',
-  'how many years have you been practicing as a maternity caregiver': 'years_practicing',
-  'how many births have you supported?': 'births_supported',
+  // Experience/training
+  'What certifications or training do you hold?': 'certifications_training',
+  'How many years have you been practicing as a maternity caregiver': 'years_practicing',
+  'How many births have you supported?': 'births_supported',
   
-  // Services offered - individual columns from Typeform
-  'birth planning & signposting': 'offers_birth_planning',
-  'postnatal support': 'offers_postnatal_support',
-  'support during active labour': 'offers_active_labour_support',
-  'fertility & conception': 'offers_fertility_conception',
-  'nutrition support': 'offers_nutrition_support',
-  'lactation support': 'offers_lactation_support',
-  'newborn sleep support': 'offers_newborn_sleep_support',
-  'hypnobirthing': 'offers_hypnobirthing',
-  'loss & bereavement care': 'offers_loss_bereavement_care',
+  // Services offered (these appear in "What services do you offer?" multi-select)
+  'Birth planning & signposting': 'offers_birth_planning',
+  'Support during active labour': 'offers_active_labour_support',
+  'Fertility & conception': 'offers_fertility_conception',
+  'Nutrition support': 'offers_nutrition_support',
+  'Lactation support': 'offers_lactation_support',
+  'Newborn sleep support': 'offers_newborn_sleep_support',
+  'Hypnobirthing': 'offers_hypnobirthing',
+  'Loss & bereavement care': 'offers_loss_bereavement_care',
   
-  // Availability - individual columns from Typeform
-  'weekdays: mornings': 'avail_weekdays_mornings',
-  'weekdays: afternoons': 'avail_weekdays_afternoons',
-  'weekdays: evenings': 'avail_weekdays_evenings',
-  'weekdays: overnight': 'avail_weekdays_overnight',
-  'weekends: mornings': 'avail_weekends_mornings',
-  'weekends: afternoons': 'avail_weekends_afternoons',
-  'weekends: evenings': 'avail_weekends_evenings',
-  'weekends: overnight': 'avail_weekends_overnight',
-  'i am generally not available during school holidays': 'unavailable_school_holidays',
+  // Availability
+  'Weekdays: Mornings': 'avail_weekdays_mornings',
+  'Weekdays: Afternoons': 'avail_weekdays_afternoons',
+  'Weekdays: Evenings': 'avail_weekdays_evenings',
+  'Weekdays: Overnight': 'avail_weekdays_overnight',
+  'Weekends: Mornings': 'avail_weekends_mornings',
+  'Weekends: Afternoons': 'avail_weekends_afternoons',
+  'Weekends: Evenings': 'avail_weekends_evenings',
+  'Weekends: Overnight': 'avail_weekends_overnight',
+  'I am generally not available during school holidays': 'unavailable_school_holidays',
   
-  // Communities/support specialties - individual columns from Typeform
-  'solo parents': 'supports_solo_parents',
-  'multiples (e.g. twins)': 'supports_multiples',
-  'families of colour': 'supports_families_of_colour',
-  'queer and/or trans families': 'supports_queer_trans',
-  'disabled parents': 'supports_disabled_parents',
-  'neurodivergent clients': 'supports_neurodivergent',
-  'survivors of trauma/ trauma informed birth': 'supports_trauma_survivors',
-  'bereavement from previous births and/or pregnancies': 'supports_bereavement',
-  'immigrant or refugee families': 'supports_immigrant_refugee',
-  'clients with complex health needs': 'supports_complex_health',
-  'home births': 'supports_home_births',
-  'water births': 'supports_water_births',
-  'caesareans': 'supports_caesareans',
-  'rebozo': 'supports_rebozo',
+  // Communities/support specialties
+  'Solo parents': 'supports_solo_parents',
+  'Multiples (e.g. twins)': 'supports_multiples',
+  'Families of colour': 'supports_families_of_colour',
+  'Queer and/or trans families': 'supports_queer_trans',
+  'Disabled parents': 'supports_disabled_parents',
+  'Neurodivergent clients': 'supports_neurodivergent',
+  'Survivors of trauma/ trauma informed birth': 'supports_trauma_survivors',
+  'Bereavement from previous births and/or pregnancies': 'supports_bereavement',
+  'Immigrant or refugee families': 'supports_immigrant_refugee',
+  'Clients with complex health needs': 'supports_complex_health',
+  'Home births': 'supports_home_births',
+  'Water births': 'supports_water_births',
+  'Caesareans': 'supports_caesareans',
+  'Rebozo': 'supports_rebozo',
   
-  // Care types - individual columns from Typeform
-  'antenatal planning, signposting & information': 'care_antenatal_planning',
-  'birth support': 'care_birth_support',
-  'grief & loss care': 'care_grief_loss',
-  'full-spectrum reproductive support': 'care_full_spectrum',
-  'fertility & conception support': 'care_fertility_conception',
-  'feeding and lactation support': 'care_feeding_lactation',
-  'cultural, ritual or spiritual practices': 'care_cultural_spiritual',
+  // Care types (different from services - this is "What type of care do you offer?")
+  'Antenatal planning, signposting & information': 'care_antenatal_planning',
+  'Birth support': 'care_birth_support',
+  'Grief & loss care': 'care_grief_loss',
+  'Full-spectrum reproductive support': 'care_full_spectrum',
+  'Fertility & conception support': 'care_fertility_conception',
+  'Feeding and lactation support': 'care_feeding_lactation',
+  'Cultural, ritual or spiritual practices': 'care_cultural_spiritual',
   
-  // Care style - EXACT MATCH
-  'how would you describe your care style?': 'care_style',
+  // Care style
+  'How would you describe your care style?': 'care_style',
   
-  // GDPR consent - EXACT MATCH (with HTML stripped)
-  'to comply with uk data protection law, we need your permission to store and use the information you provide in this form.': 'gdpr_consent',
+  // GDPR consent - header contains HTML but we'll match the start
+  'To comply with UK data protection law, we need your permission to store and use the information you provide in this form.': 'gdpr_consent',
   
   // Document uploads
-  'please upload training certificates': 'training_certificate_url',
-  'additional training certificates (optional)': 'additional_certificate_1_url',
-  'please add dbs certificates.': 'dbs_certificate_url',
-  'please add insurance certificates': 'insurance_certificate_url',
+  'Please upload training certificates': 'training_certificate_url',
+  'Additional training certificates (optional)': 'additional_certificate_1_url',
+  'Please add DBS certificates.': 'dbs_certificate_url',
+  'Please add insurance certificates': 'insurance_certificate_url',
 }
+
+// Track which columns are for "services offered" vs "care types" to handle the duplicate "Postnatal support"
+// In the CSV, there are TWO "Postnatal support" columns - one for services and one for care types
+// We need to track column position to differentiate them
+const servicesColumns = [
+  'Birth planning & signposting',
+  'Postnatal support', // First one - maps to offers_postnatal_support
+  'Support during active labour',
+  'Fertility & conception',
+  'Nutrition support',
+  'Lactation support',
+  'Newborn sleep support',
+  'Hypnobirthing',
+  'Loss & bereavement care',
+]
+
+const careTypeColumns = [
+  'Antenatal planning, signposting & information',
+  'Birth support',
+  'Postnatal support', // Second one - maps to care_postnatal_support
+  'Grief & loss care',
+  'Full-spectrum reproductive support',
+  'Fertility & conception support',
+  'Feeding and lactation support',
+  'Cultural, ritual or spiritual practices',
+]
 
 // Parse entire CSV content into rows, handling quoted fields with newlines
 function parseCSVContent(content: string): string[][] {
@@ -164,23 +190,43 @@ function parseCSVContent(content: string): string[][] {
   return rows
 }
 
-function findMatchingColumn(header: string): string | null {
-  // Strip HTML tags and normalize
-  const normalized = header
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .toLowerCase()
-    .trim()
+function findMatchingColumn(header: string, allHeaders: string[], headerIndex: number): string | null {
+  // Strip HTML tags and clean the header
+  const cleanHeader = header.replace(/<[^>]*>/g, '').trim()
   
-  // Direct match first (most reliable)
-  if (columnMapping[normalized]) {
-    return columnMapping[normalized]
-  }
-  
-  // Try matching by checking if the header starts with a known key
+  // Direct case-insensitive match
   for (const [key, value] of Object.entries(columnMapping)) {
-    if (normalized === key) {
+    if (cleanHeader.toLowerCase() === key.toLowerCase()) {
       return value
     }
+  }
+  
+  // Handle the duplicate "Postnatal support" column - check position
+  if (cleanHeader.toLowerCase() === 'postnatal support') {
+    // Find all "Postnatal support" columns
+    const postnatalIndices = allHeaders
+      .map((h, i) => h.toLowerCase() === 'postnatal support' ? i : -1)
+      .filter(i => i !== -1)
+    
+    if (postnatalIndices.length >= 2) {
+      // First occurrence is services (offers_postnatal_support)
+      // Second occurrence is care types (care_postnatal_support)
+      if (headerIndex === postnatalIndices[0]) {
+        return 'offers_postnatal_support'
+      } else if (headerIndex === postnatalIndices[1]) {
+        return 'care_postnatal_support'
+      }
+    } else {
+      // Only one found, default to offers
+      return 'offers_postnatal_support'
+    }
+  }
+  
+  // Partial match for GDPR consent (header may be truncated or have HTML)
+  if (cleanHeader.toLowerCase().includes('comply with uk data protection') || 
+      cleanHeader.toLowerCase().includes('gdpr') ||
+      cleanHeader.toLowerCase().includes('permission to store')) {
+    return 'gdpr_consent'
   }
   
   return null
@@ -250,6 +296,7 @@ Deno.serve(async (req) => {
     }
 
     const headers = rows[0]
+    console.log('CSV headers:', JSON.stringify(headers))
     console.log('CSV headers count:', headers.length)
     console.log('Total data rows:', rows.length - 1)
 
@@ -259,7 +306,7 @@ Deno.serve(async (req) => {
     
     for (let i = 0; i < headers.length; i++) {
       const header = headers[i]
-      const dbColumn = findMatchingColumn(header)
+      const dbColumn = findMatchingColumn(header, headers, i)
       
       csvColumnMap.push({
         index: i,
@@ -268,13 +315,13 @@ Deno.serve(async (req) => {
       })
       
       if (dbColumn) {
-        console.log(`✓ Header "${header}" -> ${dbColumn}`)
+        console.log(`✓ [${i}] "${header}" -> ${dbColumn}`)
       } else {
         // Skip known non-data columns
         const lowerHeader = header.toLowerCase()
         if (!['other', 'response type', 'start date (utc)', 'stage date (utc)', 'submit date (utc)', 'network id', 'tags', 'ending'].includes(lowerHeader)) {
           unmatchedHeaders.push(header)
-          console.log(`✗ Header "${header}" -> NO MATCH`)
+          console.log(`✗ [${i}] "${header}" -> NO MATCH`)
         }
       }
     }
@@ -294,7 +341,10 @@ Deno.serve(async (req) => {
       // Map CSV values to database columns
       for (const mapping of csvColumnMap) {
         const value = values[mapping.index]?.trim()
-        if (!value || !mapping.dbColumn) continue
+        if (!mapping.dbColumn) continue
+        
+        // Skip empty values for most columns
+        if (!value) continue
 
         // Check if this is a boolean column
         const isBooleanColumn = mapping.dbColumn.startsWith('supports_') || 
@@ -307,24 +357,20 @@ Deno.serve(async (req) => {
                                  mapping.dbColumn === 'gdpr_consent'
         
         if (isBooleanColumn) {
-          // For Typeform expanded CSV, the column contains the value itself if selected
-          // e.g., "Doula" column contains "Doula" if selected, empty if not
-          // Also handle checkmark columns like availability
-          const lowerValue = value.toLowerCase()
-          const headerLower = mapping.header.toLowerCase()
+          // Typeform CSV pattern: when checkbox is selected, the cell contains the header text
+          // When not selected, the cell is empty
+          // So if we have ANY value in this cell, the checkbox was selected
+          const hasValue = value.length > 0
           
-          // If the value matches the header (Typeform pattern), it's selected
-          // Or if it's a truthy value
-          caregiverData[mapping.dbColumn] = 
-            lowerValue === headerLower ||
-            value.toLowerCase().includes(headerLower) ||
-            lowerValue === '1' || 
-            lowerValue === 'yes' || 
-            lowerValue === 'true' ||
-            lowerValue === 'x' ||
-            lowerValue === '✓' ||
-            lowerValue === '✔' ||
-            lowerValue.includes('i understand') // GDPR consent
+          // Additional check: if the value contains "I understand" it's a consent field
+          const isConsent = value.toLowerCase().includes('i understand')
+          
+          caregiverData[mapping.dbColumn] = hasValue || isConsent
+          
+          // Debug log for caregiver types
+          if (mapping.dbColumn.startsWith('is_') && hasValue) {
+            console.log(`  → ${mapping.dbColumn} = true (value: "${value}")`)
+          }
         } else {
           caregiverData[mapping.dbColumn] = value
         }
@@ -336,7 +382,16 @@ Deno.serve(async (req) => {
         continue
       }
 
-      console.log(`Row ${rowIndex + 1} - Processing: ${caregiverData.first_name} ${caregiverData.last_name} <${caregiverData.email}>`)
+      // Log what we're importing
+      const caregiverTypes = []
+      if (caregiverData.is_doula) caregiverTypes.push('Doula')
+      if (caregiverData.is_hypnobirthing_coach) caregiverTypes.push('Hypnobirthing')
+      if (caregiverData.is_lactation_consultant) caregiverTypes.push('Lactation')
+      if (caregiverData.is_sleep_consultant) caregiverTypes.push('Sleep')
+      if (caregiverData.is_private_midwife) caregiverTypes.push('Midwife')
+      if (caregiverData.is_bereavement_councillor) caregiverTypes.push('Bereavement')
+      
+      console.log(`Row ${rowIndex + 1}: ${caregiverData.first_name} ${caregiverData.last_name} <${caregiverData.email}> - Types: [${caregiverTypes.join(', ')}] - State: ${caregiverData.state_region_province || 'N/A'}`)
 
       // Check if caregiver exists
       const { data: existing } = await supabase
