@@ -239,10 +239,10 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    const supabase = createClient(supabaseUrl, serviceRoleKey)
-
-    // Verify admin authentication
+    
+    // Create client with user's auth token to verify identity
     const authHeader = req.headers.get("Authorization")
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization header" }), {
@@ -251,8 +251,14 @@ Deno.serve(async (req) => {
       })
     }
 
-    const token = authHeader.replace("Bearer ", "")
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // Use anon key client with user token to properly verify the JWT
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    })
+    
+    const { data: { user }, error: authError } = await userClient.auth.getUser()
     
     if (authError || !user) {
       console.error("Auth error:", authError)
@@ -261,6 +267,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    // Create service role client for database operations
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     // Check if user is admin
     const { data: hasAdminRole, error: roleError } = await supabase

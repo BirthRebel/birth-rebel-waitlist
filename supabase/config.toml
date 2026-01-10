@@ -4,7 +4,7 @@ project_id = "zjbzjtljoxwreyhlrjbq"
 verify_jwt = false
 
 [functions.import-caregivers-csv]
-verify_jwt = true
+verify_jwt = false
 
 [functions.formless-webhook]
 verify_jwt = false
