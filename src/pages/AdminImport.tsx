@@ -123,7 +123,29 @@ const AdminImport = () => {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <FileText className="h-4 w-4" />
                   <span>
-                    {csvContent.split("\n").filter((l) => l.trim()).length - 1} rows detected
+                    {(() => {
+                      // Proper CSV row counting that handles quoted fields with newlines
+                      let rowCount = 0;
+                      let inQuotes = false;
+                      let hasContent = false;
+                      
+                      for (let i = 0; i < csvContent.length; i++) {
+                        const char = csvContent[i];
+                        if (char === '"') {
+                          inQuotes = !inQuotes;
+                          hasContent = true;
+                        } else if (char === '\n' && !inQuotes) {
+                          if (hasContent) rowCount++;
+                          hasContent = false;
+                        } else if (char.trim()) {
+                          hasContent = true;
+                        }
+                      }
+                      // Count last row if it has content and doesn't end with newline
+                      if (hasContent) rowCount++;
+                      
+                      return Math.max(0, rowCount - 1); // Subtract header row
+                    })()} rows detected
                   </span>
                 </div>
               </div>
