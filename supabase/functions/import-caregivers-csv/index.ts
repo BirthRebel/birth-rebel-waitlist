@@ -279,7 +279,7 @@ Deno.serve(async (req) => {
       .rpc("has_role", { _user_id: userId, _role: "admin" })
 
     if (roleError || !hasAdminRole) {
-      console.log("Admin access denied for user:", user.id)
+      console.log("Admin access denied for user:", userId)
       return new Response(JSON.stringify({ error: "Admin access required" }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
