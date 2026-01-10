@@ -88,43 +88,100 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Helper to extract clean text (removes question prefixes from Formless transcripts)
-const cleanFormlessText = (text: string | null): string | null => {
+// Extract just the parent's responses from Formless transcripts (removes bot questions)
+const extractResponsesOnly = (text: string | null): string | null => {
   if (!text) return null;
   
-  // If it looks like a Formless transcript (contains multiple question patterns), extract key info
-  if (text.includes("Thank you") && text.includes("?")) {
-    // Try to find the last meaningful sentence before a question
-    const sentences = text.split(/[.!]/).filter(s => s.trim().length > 5);
-    // Return first meaningful short sentence or truncate
-    for (const sentence of sentences) {
-      const clean = sentence.trim();
-      if (clean.length > 10 && clean.length < 100 && !clean.includes("?")) {
-        return clean;
-      }
+  // Common Formless bot question patterns to filter out
+  const questionPatterns = [
+    /Tell me a little about[^,]*[.,]/gi,
+    /I'll gather the essentials[^,]*[.,]/gi,
+    /Great to hear you're ready![^?]*\?/gi,
+    /What's your name\?/gi,
+    /Lovely to meet you[^.]*\./gi,
+    /What type of support[^?]*\?/gi,
+    /For example[^?]*\?/gi,
+    /Thank you[^.]*\./gi,
+    /Thanks[^.]*\./gi,
+    /How long postpartum[^?]*\?/gi,
+    /If you feel comfortable[^?]*\?/gi,
+    /Could you tell me[^?]*\?/gi,
+    /do you have any preferences[^?]*\?/gi,
+    /would you prefer[^?]*\?/gi,
+    /Would it be important[^?]*\?/gi,
+    /What communication style[^?]*\?/gi,
+    /Would you like your caregiver[^?]*\?/gi,
+    /If yes, please tell me[^.]*\./gi,
+    /Or if not interested[^.]*\./gi,
+    /What budget range[^?]*\?/gi,
+    /What days and times[^?]*\?/gi,
+    /Are there any specific concerns[^?]*\?/gi,
+    /Could you please share[^?]*\?/gi,
+    /And finally[^?]*\?/gi,
+    /Understood[^.]*\./gi,
+    /It sounds like[^.]*\./gi,
+  ];
+  
+  let cleaned = text;
+  
+  // Remove all question patterns
+  for (const pattern of questionPatterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+  
+  // Clean up extra commas and whitespace
+  cleaned = cleaned
+    .replace(/,\s*,/g, ',')
+    .replace(/\s+/g, ' ')
+    .replace(/^\s*,\s*/g, '')
+    .replace(/\s*,\s*$/g, '')
+    .trim();
+  
+  // If nothing meaningful left, return null
+  if (cleaned.length < 5) return null;
+  
+  return cleaned;
+};
+
+// Generate a clean responses-only summary for display
+const generateResponsesSummary = (request: ParentRequest): string[] => {
+  const responses: string[] = [];
+  
+  // Extract and clean each field
+  const fields = [
+    { label: "Support needed", value: extractResponsesOnly(request.support_type) },
+    { label: "Stage", value: request.stage_of_journey },
+    { label: "Family context", value: request.family_context },
+    { label: "Preferences", value: request.caregiver_preferences },
+    { label: "Concerns", value: request.specific_concerns },
+    { label: "Availability", value: request.general_availability },
+    { label: "Budget", value: request.budget },
+    { label: "Language", value: request.language },
+    { label: "Identity preferences", value: request.shared_identity_requests },
+    { label: "Location", value: request.location },
+  ];
+  
+  for (const field of fields) {
+    if (field.value && field.value.trim().length > 0) {
+      responses.push(`**${field.label}:** ${field.value.trim()}`);
     }
   }
   
-  return text;
+  return responses;
 };
 
 // Generate a brief summary snippet for at-a-glance view
 const generateSummarySnippet = (request: ParentRequest): string => {
   const parts: string[] = [];
   
-  if (request.support_type) {
-    // Clean up support type if it's a long transcript
-    const supportType = request.support_type.length > 50 
-      ? request.support_type.substring(0, 50).split(/[,.]/).map(s => s.trim()).filter(s => s.length > 2)[0] || request.support_type.substring(0, 30)
-      : request.support_type;
-    parts.push(supportType);
+  // Try to get clean support type
+  const cleanSupport = extractResponsesOnly(request.support_type);
+  if (cleanSupport && cleanSupport.length < 60) {
+    parts.push(cleanSupport);
   }
   
-  if (request.stage_of_journey) {
-    const stage = request.stage_of_journey.length > 40
-      ? request.stage_of_journey.substring(0, 40) + "..."
-      : request.stage_of_journey;
-    parts.push(stage);
+  if (request.stage_of_journey && request.stage_of_journey.length < 40) {
+    parts.push(request.stage_of_journey);
   }
   
   if (request.due_date) {
@@ -135,15 +192,16 @@ const generateSummarySnippet = (request: ParentRequest): string => {
     }
   }
   
-  if (request.location) {
-    const loc = request.location.length > 25 
-      ? request.location.substring(0, 25) + "..."
-      : request.location;
-    parts.push(loc);
+  if (request.location && request.location.length < 30) {
+    parts.push(request.location);
   }
   
   if (parts.length === 0) {
-    return "No details provided yet";
+    // Fallback: show first 60 chars of family context if available
+    if (request.family_context) {
+      return request.family_context.substring(0, 60) + "...";
+    }
+    return "Click to view details";
   }
   
   return parts.join(" • ");
@@ -1022,80 +1080,20 @@ const AdminParentRequests = () => {
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Column 1: Full Conversation Summary */}
+                        {/* Column 1: Responses Summary (cleaned, no questions) */}
                         <div className="space-y-4">
-                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Conversation Summary</h4>
+                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Parent's Responses</h4>
                           
-                          {/* Show all available info in a readable format */}
+                          {/* Show cleaned responses only */}
                           <div className="bg-muted/30 p-4 rounded-lg space-y-3 text-sm max-h-[400px] overflow-y-auto">
-                            {request.support_type && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">What they're looking for:</p>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{request.support_type}</p>
-                              </div>
-                            )}
-                            
-                            {request.stage_of_journey && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Stage of journey:</p>
-                                <p className="text-muted-foreground">{request.stage_of_journey}</p>
-                              </div>
-                            )}
-                            
-                            {request.family_context && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Family context:</p>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{request.family_context}</p>
-                              </div>
-                            )}
-                            
-                            {request.caregiver_preferences && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Caregiver preferences:</p>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{request.caregiver_preferences}</p>
-                              </div>
-                            )}
-                            
-                            {request.specific_concerns && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Specific concerns:</p>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{request.specific_concerns}</p>
-                              </div>
-                            )}
-                            
-                            {request.general_availability && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Availability:</p>
-                                <p className="text-muted-foreground">{request.general_availability}</p>
-                              </div>
-                            )}
-                            
-                            {request.budget && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Budget:</p>
-                                <p className="text-muted-foreground">{request.budget}</p>
-                              </div>
-                            )}
-                            
-                            {request.language && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Language:</p>
-                                <p className="text-muted-foreground">{request.language}</p>
-                              </div>
-                            )}
-                            
-                            {request.shared_identity_requests && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Identity preferences:</p>
-                                <p className="text-muted-foreground">{request.shared_identity_requests}</p>
-                              </div>
-                            )}
-                            
-                            {request.location && (
-                              <div>
-                                <p className="font-medium text-foreground mb-1">Location:</p>
-                                <p className="text-muted-foreground">{request.location}</p>
-                              </div>
+                            {generateResponsesSummary(request).length > 0 ? (
+                              generateResponsesSummary(request).map((response, index) => (
+                                <p key={index} className="text-foreground" dangerouslySetInnerHTML={{ 
+                                  __html: response.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') 
+                                }} />
+                              ))
+                            ) : (
+                              <p className="text-muted-foreground italic">No responses recorded</p>
                             )}
                           </div>
                         </div>
