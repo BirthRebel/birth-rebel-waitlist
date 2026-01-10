@@ -1021,87 +1021,86 @@ const AdminParentRequests = () => {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Column 1: Key Details */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Column 1: Full Conversation Summary */}
                         <div className="space-y-4">
-                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Key Details</h4>
+                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Conversation Summary</h4>
                           
-                          {request.stage_of_journey && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Stage of Journey</p>
-                              <p className="text-sm">{request.stage_of_journey}</p>
-                            </div>
-                          )}
-                          
-                          {request.due_date && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Due Date</p>
-                              <p className="text-sm flex items-center gap-2">
-                                <Baby className="h-4 w-4" />
-                                {format(new Date(request.due_date), "MMMM d, yyyy")}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {request.general_availability && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Availability</p>
-                              <p className="text-sm">{request.general_availability}</p>
-                            </div>
-                          )}
-                          
-                          {request.budget && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Budget</p>
-                              <p className="text-sm">{request.budget}</p>
-                            </div>
-                          )}
+                          {/* Show all available info in a readable format */}
+                          <div className="bg-muted/30 p-4 rounded-lg space-y-3 text-sm max-h-[400px] overflow-y-auto">
+                            {request.support_type && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">What they're looking for:</p>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{request.support_type}</p>
+                              </div>
+                            )}
+                            
+                            {request.stage_of_journey && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Stage of journey:</p>
+                                <p className="text-muted-foreground">{request.stage_of_journey}</p>
+                              </div>
+                            )}
+                            
+                            {request.family_context && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Family context:</p>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{request.family_context}</p>
+                              </div>
+                            )}
+                            
+                            {request.caregiver_preferences && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Caregiver preferences:</p>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{request.caregiver_preferences}</p>
+                              </div>
+                            )}
+                            
+                            {request.specific_concerns && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Specific concerns:</p>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{request.specific_concerns}</p>
+                              </div>
+                            )}
+                            
+                            {request.general_availability && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Availability:</p>
+                                <p className="text-muted-foreground">{request.general_availability}</p>
+                              </div>
+                            )}
+                            
+                            {request.budget && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Budget:</p>
+                                <p className="text-muted-foreground">{request.budget}</p>
+                              </div>
+                            )}
+                            
+                            {request.language && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Language:</p>
+                                <p className="text-muted-foreground">{request.language}</p>
+                              </div>
+                            )}
+                            
+                            {request.shared_identity_requests && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Identity preferences:</p>
+                                <p className="text-muted-foreground">{request.shared_identity_requests}</p>
+                              </div>
+                            )}
+                            
+                            {request.location && (
+                              <div>
+                                <p className="font-medium text-foreground mb-1">Location:</p>
+                                <p className="text-muted-foreground">{request.location}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Column 2: Context & Preferences */}
-                        <div className="space-y-4">
-                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Context & Preferences</h4>
-                          
-                          {request.family_context && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Family Context</p>
-                              <p className="text-sm bg-muted/50 p-2 rounded">{request.family_context}</p>
-                            </div>
-                          )}
-                          
-                          {request.caregiver_preferences && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Caregiver Preferences</p>
-                              <p className="text-sm bg-muted/50 p-2 rounded">{request.caregiver_preferences}</p>
-                            </div>
-                          )}
-                          
-                          {request.specific_concerns && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Specific Concerns</p>
-                              <p className="text-sm bg-muted/50 p-2 rounded">{request.specific_concerns}</p>
-                            </div>
-                          )}
-                          
-                          {request.shared_identity_requests && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Identity Preferences</p>
-                              <p className="text-sm">{request.shared_identity_requests}</p>
-                            </div>
-                          )}
-                          
-                          {request.language && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1">Language</p>
-                              <p className="text-sm flex items-center gap-1">
-                                <Globe className="h-3 w-3" />
-                                {request.language}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Column 3: Actions */}
+                        {/* Column 2: Actions */}
                         <div className="space-y-4">
                           <h4 className="font-medium text-sm text-foreground border-b pb-2">Actions</h4>
                           
@@ -1130,25 +1129,6 @@ const AdminParentRequests = () => {
                               )}
                             </div>
                           </div>
-
-                          {/* Copy summary button */}
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="w-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const summary = generateCaregiverSummary(request);
-                              navigator.clipboard.writeText(summary);
-                              toast({
-                                title: "Copied to clipboard",
-                                description: "Parent summary ready to share with caregivers via messages",
-                              });
-                            }}
-                          >
-                            <Copy className="h-4 w-4 mr-2" />
-                            Copy Summary for Caregivers
-                          </Button>
 
                           {/* Share with matched caregiver - only shows when matched */}
                           {request.matched_caregiver_id && (
