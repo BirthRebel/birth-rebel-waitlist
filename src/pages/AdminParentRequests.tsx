@@ -88,32 +88,58 @@ const getStatusColor = (status: string) => {
   }
 };
 
+// Helper to extract clean text (removes question prefixes from Formless transcripts)
+const cleanFormlessText = (text: string | null): string | null => {
+  if (!text) return null;
+  
+  // If it looks like a Formless transcript (contains multiple question patterns), extract key info
+  if (text.includes("Thank you") && text.includes("?")) {
+    // Try to find the last meaningful sentence before a question
+    const sentences = text.split(/[.!]/).filter(s => s.trim().length > 5);
+    // Return first meaningful short sentence or truncate
+    for (const sentence of sentences) {
+      const clean = sentence.trim();
+      if (clean.length > 10 && clean.length < 100 && !clean.includes("?")) {
+        return clean;
+      }
+    }
+  }
+  
+  return text;
+};
+
 // Generate a brief summary snippet for at-a-glance view
 const generateSummarySnippet = (request: ParentRequest): string => {
   const parts: string[] = [];
   
   if (request.support_type) {
-    parts.push(`Looking for ${request.support_type} support`);
+    // Clean up support type if it's a long transcript
+    const supportType = request.support_type.length > 50 
+      ? request.support_type.substring(0, 50).split(/[,.]/).map(s => s.trim()).filter(s => s.length > 2)[0] || request.support_type.substring(0, 30)
+      : request.support_type;
+    parts.push(supportType);
   }
   
   if (request.stage_of_journey) {
-    parts.push(request.stage_of_journey);
+    const stage = request.stage_of_journey.length > 40
+      ? request.stage_of_journey.substring(0, 40) + "..."
+      : request.stage_of_journey;
+    parts.push(stage);
   }
   
   if (request.due_date) {
     try {
-      parts.push(`Due ${format(new Date(request.due_date), "MMM d, yyyy")}`);
+      parts.push(`Due ${format(new Date(request.due_date), "MMM d")}`);
     } catch {
       // Invalid date, skip
     }
   }
   
-  if (request.family_context) {
-    // Take first 50 chars of family context
-    const context = request.family_context.length > 50 
-      ? request.family_context.substring(0, 50) + "..." 
-      : request.family_context;
-    parts.push(context);
+  if (request.location) {
+    const loc = request.location.length > 25 
+      ? request.location.substring(0, 25) + "..."
+      : request.location;
+    parts.push(loc);
   }
   
   if (parts.length === 0) {
@@ -895,10 +921,10 @@ const AdminParentRequests = () => {
                             <Badge className={getStatusColor(request.status)}>
                               {request.status}
                             </Badge>
-                            {request.support_type && (
-                              <Badge variant="outline" className="hidden sm:flex">
-                                <Heart className="h-3 w-3 mr-1" />
-                                {request.support_type}
+                            {request.support_type && request.support_type.length < 50 && (
+                              <Badge variant="outline" className="hidden sm:flex max-w-[200px] truncate">
+                                <Heart className="h-3 w-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">{request.support_type}</span>
                               </Badge>
                             )}
                           </div>
@@ -933,12 +959,12 @@ const AdminParentRequests = () => {
                           {generateSummarySnippet(request)}
                         </p>
 
-                        {/* Key info pills */}
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                          {request.location && (
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
-                              <MapPin className="h-3 w-3" />
-                              {request.location}
+                        {/* Key info pills - only show if data is reasonable length */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                          {request.location && request.location.length < 50 && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full max-w-[150px]">
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{request.location}</span>
                             </span>
                           )}
                           {request.due_date && (
@@ -947,25 +973,27 @@ const AdminParentRequests = () => {
                               Due {format(new Date(request.due_date), "MMM d")}
                             </span>
                           )}
-                          {request.general_availability && (
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
-                              <Clock className="h-3 w-3" />
-                              {request.general_availability.length > 20 
-                                ? request.general_availability.substring(0, 20) + "..." 
-                                : request.general_availability}
+                          {request.general_availability && request.general_availability.length < 100 && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full max-w-[180px]">
+                              <Clock className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">
+                                {request.general_availability.length > 25 
+                                  ? request.general_availability.substring(0, 25) + "..." 
+                                  : request.general_availability}
+                              </span>
                             </span>
                           )}
-                          {request.language && (
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
-                              <Globe className="h-3 w-3" />
-                              {request.language}
+                          {request.language && request.language.length < 50 && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full max-w-[120px]">
+                              <Globe className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{request.language}</span>
                             </span>
                           )}
-                          {/* Show support type as pill on mobile */}
-                          {request.support_type && (
-                            <span className="flex sm:hidden items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full">
-                              <Heart className="h-3 w-3" />
-                              {request.support_type}
+                          {/* Show support type as pill on mobile - only if short */}
+                          {request.support_type && request.support_type.length < 50 && (
+                            <span className="flex sm:hidden items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full max-w-[150px]">
+                              <Heart className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{request.support_type}</span>
                             </span>
                           )}
                         </div>
