@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    console.log('Admin', user.id, 'initiated CSV import')
+    console.log('Admin', userId, 'initiated CSV import')
     
     // Parse CSV properly handling quoted fields with newlines
     const rows = parseCSVContent(csvContent)
