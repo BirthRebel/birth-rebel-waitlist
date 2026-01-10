@@ -201,6 +201,7 @@ const AdminParentRequests = () => {
   const [messageContent, setMessageContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isSharingWithCaregiver, setIsSharingWithCaregiver] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [messagePanelRequest, setMessagePanelRequest] = useState<ParentRequest | null>(null);
   const [newRequest, setNewRequest] = useState({
@@ -440,6 +441,104 @@ const AdminParentRequests = () => {
       });
     }
     setIsSendingMessage(false);
+  };
+
+  const handleShareWithCaregiver = async (request: ParentRequest) => {
+    if (!request.matched_caregiver_id) {
+      toast({
+        title: "No caregiver matched",
+        description: "Please match a caregiver first before sharing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSharingWithCaregiver(request.id);
+    try {
+      // Get caregiver details for the message
+      const { data: caregiver, error: caregiverError } = await supabase
+        .from("caregivers")
+        .select("first_name, last_name, email")
+        .eq("id", request.matched_caregiver_id)
+        .single();
+
+      if (caregiverError) throw caregiverError;
+
+      // Find or create a conversation between admin and this caregiver for this parent
+      let conversationId: string;
+      
+      const { data: existingConv } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("caregiver_id", request.matched_caregiver_id)
+        .eq("parent_request_id", request.id)
+        .maybeSingle();
+
+      if (existingConv) {
+        conversationId = existingConv.id;
+      } else {
+        // Create a new conversation linking the caregiver to this parent request
+        const { data: newConv, error: convError } = await supabase
+          .from("conversations")
+          .insert({
+            caregiver_id: request.matched_caregiver_id,
+            parent_request_id: request.id,
+            parent_email: request.email,
+            subject: `New match: ${request.first_name} - ${request.support_type || "Support request"}`,
+            status: "open",
+          })
+          .select()
+          .single();
+
+        if (convError) throw convError;
+        conversationId = newConv.id;
+      }
+
+      // Generate and send the summary as a message
+      const summary = generateCaregiverSummary(request);
+      const messageContent = `Hi ${caregiver.first_name},\n\nYou've been matched with a new parent. Here are the details:\n\n${summary}\n\nPlease review and reach out to discuss next steps.`;
+
+      const { error: msgError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversationId,
+          content: messageContent,
+          sender_type: "admin",
+        });
+
+      if (msgError) throw msgError;
+
+      // Send email notification to caregiver
+      const { error: emailError } = await supabase.functions.invoke(
+        "send-message-notification",
+        {
+          body: {
+            caregiverEmail: caregiver.email,
+            caregiverName: caregiver.first_name,
+            parentName: request.first_name,
+            messageContent: `You've been matched with ${request.first_name}. Log in to view the full details and next steps.`,
+          },
+        }
+      );
+
+      if (emailError) {
+        console.error("Email notification error:", emailError);
+        // Don't fail the whole operation if email fails
+      }
+
+      toast({
+        title: "Shared with caregiver",
+        description: `Parent summary sent to ${caregiver.first_name} ${caregiver.last_name || ""} via platform messaging`,
+      });
+    } catch (error: any) {
+      console.error("Error sharing with caregiver:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    setIsSharingWithCaregiver(null);
   };
 
   useEffect(() => {
@@ -1004,7 +1103,7 @@ const AdminParentRequests = () => {
                             </div>
                           </div>
 
-                          {/* Copy summary button - prominent */}
+                          {/* Copy summary button */}
                           <Button
                             variant="secondary"
                             size="sm"
@@ -1022,6 +1121,32 @@ const AdminParentRequests = () => {
                             <Copy className="h-4 w-4 mr-2" />
                             Copy Summary for Caregivers
                           </Button>
+
+                          {/* Share with matched caregiver - only shows when matched */}
+                          {request.matched_caregiver_id && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="w-full"
+                              disabled={isSharingWithCaregiver === request.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareWithCaregiver(request);
+                              }}
+                            >
+                              {isSharingWithCaregiver === request.id ? (
+                                <>
+                                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                  Sending...
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Share with Matched Caregiver
+                                </>
+                              )}
+                            </Button>
+                          )}
 
                           {/* Action buttons */}
                           <div className="flex flex-wrap gap-2">
