@@ -44,6 +44,13 @@ const AdminImport = () => {
     setResults(null);
 
     try {
+      // Get the current session to ensure we have a valid user token
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error("You must be logged in to import caregivers");
+      }
+
       const { data, error } = await supabase.functions.invoke("import-caregivers-csv", {
         body: { csvContent },
       });
