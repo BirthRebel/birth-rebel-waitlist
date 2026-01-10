@@ -39,7 +39,11 @@ import {
   Send,
   Pencil,
   Users,
-  Eye
+  Eye,
+  Copy,
+  Clock,
+  Baby,
+  Globe
 } from "lucide-react";
 import { format } from "date-fns";
 import { MatchCaregiverDialog } from "@/components/admin/MatchCaregiverDialog";
@@ -82,6 +86,105 @@ const getStatusColor = (status: string) => {
     default:
       return "bg-muted";
   }
+};
+
+// Generate a brief summary snippet for at-a-glance view
+const generateSummarySnippet = (request: ParentRequest): string => {
+  const parts: string[] = [];
+  
+  if (request.support_type) {
+    parts.push(`Looking for ${request.support_type} support`);
+  }
+  
+  if (request.stage_of_journey) {
+    parts.push(request.stage_of_journey);
+  }
+  
+  if (request.due_date) {
+    try {
+      parts.push(`Due ${format(new Date(request.due_date), "MMM d, yyyy")}`);
+    } catch {
+      // Invalid date, skip
+    }
+  }
+  
+  if (request.family_context) {
+    // Take first 50 chars of family context
+    const context = request.family_context.length > 50 
+      ? request.family_context.substring(0, 50) + "..." 
+      : request.family_context;
+    parts.push(context);
+  }
+  
+  if (parts.length === 0) {
+    return "No details provided yet";
+  }
+  
+  return parts.join(" • ");
+};
+
+// Generate formatted summary for sharing with caregivers
+const generateCaregiverSummary = (request: ParentRequest): string => {
+  const lines: string[] = [];
+  
+  lines.push(`=== Parent Support Request ===`);
+  lines.push(`Name: ${request.first_name}${request.last_name ? ` ${request.last_name}` : ""}`);
+  
+  if (request.location) {
+    lines.push(`Location: ${request.location}`);
+  }
+  
+  lines.push("");
+  lines.push("--- Support Needs ---");
+  
+  if (request.support_type) {
+    lines.push(`Type: ${request.support_type}`);
+  }
+  
+  if (request.stage_of_journey) {
+    lines.push(`Stage: ${request.stage_of_journey}`);
+  }
+  
+  if (request.due_date) {
+    try {
+      lines.push(`Due Date: ${format(new Date(request.due_date), "MMMM d, yyyy")}`);
+    } catch {
+      // Invalid date
+    }
+  }
+  
+  if (request.general_availability) {
+    lines.push(`Availability: ${request.general_availability}`);
+  }
+  
+  if (request.family_context) {
+    lines.push("");
+    lines.push("--- Family Context ---");
+    lines.push(request.family_context);
+  }
+  
+  if (request.caregiver_preferences) {
+    lines.push("");
+    lines.push("--- Preferences ---");
+    lines.push(request.caregiver_preferences);
+  }
+  
+  if (request.specific_concerns) {
+    lines.push("");
+    lines.push("--- Specific Concerns ---");
+    lines.push(request.specific_concerns);
+  }
+  
+  if (request.language) {
+    lines.push("");
+    lines.push(`Language: ${request.language}`);
+  }
+  
+  if (request.shared_identity_requests) {
+    lines.push(`Identity Preferences: ${request.shared_identity_requests}`);
+  }
+  
+  return lines.join("\n");
 };
 
 const AdminParentRequests = () => {
@@ -676,102 +779,208 @@ const AdminParentRequests = () => {
               {filteredRequests.map((request) => (
                 <Card key={request.id} className="overflow-hidden">
                   <CardHeader
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    className="cursor-pointer hover:bg-muted/50 transition-colors pb-3"
                     onClick={() =>
                       setExpandedId(expandedId === request.id ? null : request.id)
                     }
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">
-                            {request.first_name}{" "}
-                            {request.last_name && request.last_name}
-                          </CardTitle>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1 flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {request.email}
-                            </span>
-                            {request.phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {request.phone}
-                              </span>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        {/* Top row: Name, status badges, and expand icon */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <CardTitle className="text-lg">
+                              {request.first_name}{" "}
+                              {request.last_name && request.last_name}
+                            </CardTitle>
+                            <Badge className={getStatusColor(request.status)}>
+                              {request.status}
+                            </Badge>
+                            {request.support_type && (
+                              <Badge variant="outline" className="hidden sm:flex">
+                                <Heart className="h-3 w-3 mr-1" />
+                                {request.support_type}
+                              </Badge>
                             )}
-                            {request.location && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {request.location}
-                              </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const summary = generateCaregiverSummary(request);
+                                navigator.clipboard.writeText(summary);
+                                toast({
+                                  title: "Copied to clipboard",
+                                  description: "Parent summary ready to share with caregivers",
+                                });
+                              }}
+                              title="Copy summary for caregivers"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            {expandedId === request.id ? (
+                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
                             )}
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(request.status)}>
-                          {request.status}
-                        </Badge>
-                        {request.support_type && (
-                          <Badge variant="outline">
-                            <Heart className="h-3 w-3 mr-1" />
-                            {request.support_type}
-                          </Badge>
-                        )}
-                        {expandedId === request.id ? (
-                          <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                        )}
+
+                        {/* Summary snippet - the key at-a-glance info */}
+                        <p className="text-sm text-foreground/80 mb-3 line-clamp-2">
+                          {generateSummarySnippet(request)}
+                        </p>
+
+                        {/* Key info pills */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                          {request.location && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
+                              <MapPin className="h-3 w-3" />
+                              {request.location}
+                            </span>
+                          )}
+                          {request.due_date && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
+                              <Baby className="h-3 w-3" />
+                              Due {format(new Date(request.due_date), "MMM d")}
+                            </span>
+                          )}
+                          {request.general_availability && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
+                              <Clock className="h-3 w-3" />
+                              {request.general_availability.length > 20 
+                                ? request.general_availability.substring(0, 20) + "..." 
+                                : request.general_availability}
+                            </span>
+                          )}
+                          {request.language && (
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
+                              <Globe className="h-3 w-3" />
+                              {request.language}
+                            </span>
+                          )}
+                          {/* Show support type as pill on mobile */}
+                          {request.support_type && (
+                            <span className="flex sm:hidden items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full">
+                              <Heart className="h-3 w-3" />
+                              {request.support_type}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
 
                   {expandedId === request.id && (
                     <CardContent className="border-t pt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Contact info row */}
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-6 pb-4 border-b">
+                        <span className="flex items-center gap-1">
+                          <Mail className="h-4 w-4" />
+                          {request.email}
+                        </span>
+                        {request.phone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-4 w-4" />
+                            {request.phone}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          Submitted {format(new Date(request.created_at), "MMM d, yyyy")}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Column 1: Key Details */}
                         <div className="space-y-4">
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Due Date
-                            </h4>
-                            <p className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              {request.due_date
-                                ? format(new Date(request.due_date), "PPP")
-                                : "Not specified"}
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                              Submitted
-                            </h4>
-                            <p>
-                              {format(new Date(request.created_at), "PPP 'at' p")}
-                            </p>
-                          </div>
-
-                          {request.special_requirements && (
+                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Key Details</h4>
+                          
+                          {request.stage_of_journey && (
                             <div>
-                              <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                                Special Requirements
-                              </h4>
-                              <p className="text-sm bg-muted p-3 rounded-md">
-                                {request.special_requirements}
+                              <p className="text-xs text-muted-foreground mb-1">Stage of Journey</p>
+                              <p className="text-sm">{request.stage_of_journey}</p>
+                            </div>
+                          )}
+                          
+                          {request.due_date && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Due Date</p>
+                              <p className="text-sm flex items-center gap-2">
+                                <Baby className="h-4 w-4" />
+                                {format(new Date(request.due_date), "MMMM d, yyyy")}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {request.general_availability && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Availability</p>
+                              <p className="text-sm">{request.general_availability}</p>
+                            </div>
+                          )}
+                          
+                          {request.budget && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Budget</p>
+                              <p className="text-sm">{request.budget}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Column 2: Context & Preferences */}
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Context & Preferences</h4>
+                          
+                          {request.family_context && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Family Context</p>
+                              <p className="text-sm bg-muted/50 p-2 rounded">{request.family_context}</p>
+                            </div>
+                          )}
+                          
+                          {request.caregiver_preferences && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Caregiver Preferences</p>
+                              <p className="text-sm bg-muted/50 p-2 rounded">{request.caregiver_preferences}</p>
+                            </div>
+                          )}
+                          
+                          {request.specific_concerns && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Specific Concerns</p>
+                              <p className="text-sm bg-muted/50 p-2 rounded">{request.specific_concerns}</p>
+                            </div>
+                          )}
+                          
+                          {request.shared_identity_requests && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Identity Preferences</p>
+                              <p className="text-sm">{request.shared_identity_requests}</p>
+                            </div>
+                          )}
+                          
+                          {request.language && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1">Language</p>
+                              <p className="text-sm flex items-center gap-1">
+                                <Globe className="h-3 w-3" />
+                                {request.language}
                               </p>
                             </div>
                           )}
                         </div>
 
+                        {/* Column 3: Actions */}
                         <div className="space-y-4">
+                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Actions</h4>
+                          
+                          {/* Status buttons */}
                           <div>
-                            <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                              Update Status
-                            </h4>
+                            <p className="text-xs text-muted-foreground mb-2">Update Status</p>
                             <div className="flex flex-wrap gap-2">
                               {["new", "contacted", "matched", "closed"].map(
                                 (status) => (
@@ -795,7 +1004,27 @@ const AdminParentRequests = () => {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-2 pt-4">
+                          {/* Copy summary button - prominent */}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const summary = generateCaregiverSummary(request);
+                              navigator.clipboard.writeText(summary);
+                              toast({
+                                title: "Copied to clipboard",
+                                description: "Parent summary ready to share with caregivers via messages",
+                              });
+                            }}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Summary for Caregivers
+                          </Button>
+
+                          {/* Action buttons */}
+                          <div className="flex flex-wrap gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -817,7 +1046,7 @@ const AdminParentRequests = () => {
                               }}
                             >
                               <Eye className="h-4 w-4 mr-2" />
-                              View Messages
+                              Messages
                             </Button>
                             <Button
                               variant="outline"
@@ -831,6 +1060,9 @@ const AdminParentRequests = () => {
                               <Send className="h-4 w-4 mr-2" />
                               Quick Message
                             </Button>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
                             <Button
                               size="sm"
                               variant={request.matched_caregiver_id ? "secondary" : "outline"}
