@@ -88,83 +88,49 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Extract just the parent's responses from Formless transcripts (removes bot questions)
-const extractResponsesOnly = (text: string | null): string | null => {
-  if (!text) return null;
+// Generate a clean summary showing only the parent's actual responses (not the transcript)
+const generateResponsesSummary = (request: ParentRequest): { label: string; value: string }[] => {
+  const responses: { label: string; value: string }[] = [];
   
-  // Common Formless bot question patterns to filter out
-  const questionPatterns = [
-    /Tell me a little about[^,]*[.,]/gi,
-    /I'll gather the essentials[^,]*[.,]/gi,
-    /Great to hear you're ready![^?]*\?/gi,
-    /What's your name\?/gi,
-    /Lovely to meet you[^.]*\./gi,
-    /What type of support[^?]*\?/gi,
-    /For example[^?]*\?/gi,
-    /Thank you[^.]*\./gi,
-    /Thanks[^.]*\./gi,
-    /How long postpartum[^?]*\?/gi,
-    /If you feel comfortable[^?]*\?/gi,
-    /Could you tell me[^?]*\?/gi,
-    /do you have any preferences[^?]*\?/gi,
-    /would you prefer[^?]*\?/gi,
-    /Would it be important[^?]*\?/gi,
-    /What communication style[^?]*\?/gi,
-    /Would you like your caregiver[^?]*\?/gi,
-    /If yes, please tell me[^.]*\./gi,
-    /Or if not interested[^.]*\./gi,
-    /What budget range[^?]*\?/gi,
-    /What days and times[^?]*\?/gi,
-    /Are there any specific concerns[^?]*\?/gi,
-    /Could you please share[^?]*\?/gi,
-    /And finally[^?]*\?/gi,
-    /Understood[^.]*\./gi,
-    /It sounds like[^.]*\./gi,
-  ];
-  
-  let cleaned = text;
-  
-  // Remove all question patterns
-  for (const pattern of questionPatterns) {
-    cleaned = cleaned.replace(pattern, '');
+  // These fields contain actual answers, not the full transcript
+  if (request.stage_of_journey) {
+    responses.push({ label: "Stage", value: request.stage_of_journey });
   }
   
-  // Clean up extra commas and whitespace
-  cleaned = cleaned
-    .replace(/,\s*,/g, ',')
-    .replace(/\s+/g, ' ')
-    .replace(/^\s*,\s*/g, '')
-    .replace(/\s*,\s*$/g, '')
-    .trim();
+  if (request.family_context) {
+    responses.push({ label: "Family context", value: request.family_context });
+  }
   
-  // If nothing meaningful left, return null
-  if (cleaned.length < 5) return null;
+  if (request.caregiver_preferences) {
+    responses.push({ label: "Caregiver preferences", value: request.caregiver_preferences });
+  }
   
-  return cleaned;
-};
-
-// Generate a clean responses-only summary for display
-const generateResponsesSummary = (request: ParentRequest): string[] => {
-  const responses: string[] = [];
+  if (request.preferred_communication) {
+    responses.push({ label: "Preferred communication", value: request.preferred_communication });
+  }
   
-  // Extract and clean each field
-  const fields = [
-    { label: "Support needed", value: extractResponsesOnly(request.support_type) },
-    { label: "Stage", value: request.stage_of_journey },
-    { label: "Family context", value: request.family_context },
-    { label: "Preferences", value: request.caregiver_preferences },
-    { label: "Concerns", value: request.specific_concerns },
-    { label: "Availability", value: request.general_availability },
-    { label: "Budget", value: request.budget },
-    { label: "Language", value: request.language },
-    { label: "Identity preferences", value: request.shared_identity_requests },
-    { label: "Location", value: request.location },
-  ];
+  if (request.shared_identity_requests) {
+    responses.push({ label: "Identity preferences", value: request.shared_identity_requests });
+  }
   
-  for (const field of fields) {
-    if (field.value && field.value.trim().length > 0) {
-      responses.push(`**${field.label}:** ${field.value.trim()}`);
-    }
+  if (request.budget) {
+    responses.push({ label: "Budget", value: request.budget });
+  }
+  
+  if (request.general_availability) {
+    responses.push({ label: "Availability", value: request.general_availability });
+  }
+  
+  if (request.specific_concerns) {
+    responses.push({ label: "Concerns", value: request.specific_concerns });
+  }
+  
+  if (request.location) {
+    responses.push({ label: "Location", value: request.location });
+  }
+  
+  if (request.language) {
+    responses.push({ label: "Language", value: request.language });
   }
   
   return responses;
@@ -173,12 +139,6 @@ const generateResponsesSummary = (request: ParentRequest): string[] => {
 // Generate a brief summary snippet for at-a-glance view
 const generateSummarySnippet = (request: ParentRequest): string => {
   const parts: string[] = [];
-  
-  // Try to get clean support type
-  const cleanSupport = extractResponsesOnly(request.support_type);
-  if (cleanSupport && cleanSupport.length < 60) {
-    parts.push(cleanSupport);
-  }
   
   if (request.stage_of_journey && request.stage_of_journey.length < 40) {
     parts.push(request.stage_of_journey);
@@ -1087,10 +1047,11 @@ const AdminParentRequests = () => {
                           {/* Show cleaned responses only */}
                           <div className="bg-muted/30 p-4 rounded-lg space-y-3 text-sm max-h-[400px] overflow-y-auto">
                             {generateResponsesSummary(request).length > 0 ? (
-                              generateResponsesSummary(request).map((response, index) => (
-                                <p key={index} className="text-foreground" dangerouslySetInnerHTML={{ 
-                                  __html: response.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>') 
-                                }} />
+                              generateResponsesSummary(request).map((item, index) => (
+                                <div key={index} className="text-foreground">
+                                  <span className="font-medium">{item.label}:</span>{" "}
+                                  <span className="text-muted-foreground">{item.value}</span>
+                                </div>
                               ))
                             ) : (
                               <p className="text-muted-foreground italic">No responses recorded</p>
