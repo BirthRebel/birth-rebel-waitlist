@@ -242,25 +242,26 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     
-    // Create client with user's auth token to verify identity
+    // Verify authorization header
     const authHeader = req.headers.get("Authorization")
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: "Missing authorization header" }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Use anon key client with user token to properly verify the JWT
+    // Use anon key client with user token to verify JWT via getClaims
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: { Authorization: authHeader },
       },
     })
     
-    const { data: { user }, error: authError } = await userClient.auth.getUser()
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: authError } = await userClient.auth.getClaims(token)
     
-    if (authError || !user) {
+    if (authError || !claimsData?.claims) {
       console.error("Auth error:", authError)
       return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
         status: 401,
@@ -268,12 +269,14 @@ Deno.serve(async (req) => {
       })
     }
     
+    const userId = claimsData.claims.sub
+    
     // Create service role client for database operations
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     // Check if user is admin
     const { data: hasAdminRole, error: roleError } = await supabase
-      .rpc("has_role", { _user_id: user.id, _role: "admin" })
+      .rpc("has_role", { _user_id: userId, _role: "admin" })
 
     if (roleError || !hasAdminRole) {
       console.log("Admin access denied for user:", user.id)
