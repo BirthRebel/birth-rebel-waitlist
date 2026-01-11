@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const VONAGE_API_KEY = Deno.env.get("VONAGE_API_KEY");
+const VONAGE_API_SECRET = Deno.env.get("VONAGE_API_SECRET");
+const VONAGE_FROM_NUMBER = Deno.env.get("VONAGE_FROM_NUMBER");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +28,52 @@ function generateTempPassword(): string {
   return password;
 }
 
+// Send SMS via Vonage
+async function sendSMS(to: string, message: string): Promise<boolean> {
+  if (!VONAGE_API_KEY || !VONAGE_API_SECRET || !VONAGE_FROM_NUMBER) {
+    console.log("Vonage credentials not configured, skipping SMS");
+    return false;
+  }
+
+  // Clean phone number - ensure it has country code
+  let cleanedPhone = to.replace(/\s+/g, "").replace(/[^\d+]/g, "");
+  if (!cleanedPhone.startsWith("+")) {
+    if (cleanedPhone.startsWith("0")) {
+      cleanedPhone = "+44" + cleanedPhone.substring(1);
+    } else {
+      cleanedPhone = "+" + cleanedPhone;
+    }
+  }
+
+  try {
+    const response = await fetch("https://rest.nexmo.com/sms/json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: VONAGE_API_KEY,
+        api_secret: VONAGE_API_SECRET,
+        from: VONAGE_FROM_NUMBER,
+        to: cleanedPhone,
+        text: message,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("Vonage SMS response:", result);
+
+    if (result.messages && result.messages[0]?.status === "0") {
+      console.log(`SMS sent successfully to ${cleanedPhone}`);
+      return true;
+    } else {
+      console.error("SMS sending failed:", result.messages?.[0]?.["error-text"]);
+      return false;
+    }
+  } catch (error) {
+    console.error("Error sending SMS:", error);
+    return false;
+  }
+}
+
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,7 +88,7 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Processing notification for conversation ${conversationId}, sender: ${senderType}`);
 
-    // Fetch conversation details
+    // Fetch conversation details including caregiver phone
     const { data: conversation, error: convError } = await supabase
       .from("conversations")
       .select(`
@@ -51,7 +100,8 @@ serve(async (req: Request): Promise<Response> => {
           id,
           email,
           first_name,
-          user_id
+          user_id,
+          phone
         )
       `)
       .eq("id", conversationId)
@@ -67,13 +117,14 @@ serve(async (req: Request): Promise<Response> => {
     // Determine recipient based on sender type
     let recipientEmail: string;
     let recipientName: string;
+    let recipientPhone: string | null = null;
     let senderName: string;
     let tempPassword: string | null = null;
     let isNewAccount = false;
 
     if (senderType === "admin") {
       // Admin sent the message, notify the caregiver
-      const caregiver = conversation.caregivers as { id: string; email: string; first_name: string; user_id: string | null } | null;
+      const caregiver = conversation.caregivers as { id: string; email: string; first_name: string; user_id: string | null; phone: string | null } | null;
       if (!caregiver?.email) {
         console.log("No caregiver email found, skipping notification");
         return new Response(JSON.stringify({ success: true, skipped: true }), {
@@ -83,6 +134,7 @@ serve(async (req: Request): Promise<Response> => {
       
       recipientEmail = caregiver.email;
       recipientName = caregiver.first_name || "Caregiver";
+      recipientPhone = caregiver.phone;
       senderName = "Birth Rebel Team";
 
       // Check if caregiver already has an account
@@ -272,7 +324,18 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Email notification sent successfully to ${recipientEmail}`);
 
-    return new Response(JSON.stringify({ success: true, isNewAccount }), {
+    // Send SMS notification to caregiver if admin sent the message and phone is available
+    let smsSent = false;
+    if (senderType === "admin" && recipientPhone) {
+      const smsMessage = isNewAccount && tempPassword
+        ? `Hi ${recipientName}! You have a new message on Birth Rebel. Your login details have been sent to your email. Log in to view: https://birthrebel.com/caregiver-auth - Birth Rebel`
+        : `Hi ${recipientName}! You have a new message on Birth Rebel. Log in to view and reply: https://birthrebel.com/caregiver-auth - Birth Rebel`;
+      
+      smsSent = await sendSMS(recipientPhone, smsMessage);
+      console.log(`SMS notification ${smsSent ? 'sent' : 'failed'} to ${recipientPhone}`);
+    }
+
+    return new Response(JSON.stringify({ success: true, isNewAccount, smsSent }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
