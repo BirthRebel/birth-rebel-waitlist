@@ -328,8 +328,8 @@ serve(async (req: Request): Promise<Response> => {
     // Send SMS notification to caregiver if admin sent the message and phone is available
     let smsSent = false;
     if (senderType === "admin" && recipientPhone) {
-      // Keep SMS under 160 chars for single-part delivery
-      const smsMessage = `Hi ${recipientName}! New match on Birth Rebel. Log in for details: https://birthrebel.com/caregiver-auth`;
+      // No URLs - they trigger spam filters. Direct to email for login details.
+      const smsMessage = `Hi ${recipientName}! New family match on Birth Rebel. Check your email for login details.`;
       
       smsSent = await sendSMS(recipientPhone, smsMessage);
       console.log(`SMS notification ${smsSent ? 'sent' : 'failed'} to ${recipientPhone}`);
