@@ -129,11 +129,10 @@ serve(async (req) => {
               <div class="content">
                 <p>Hi ${caregiverFirstName || "there"},</p>
                 
-                <p>Great news! You've been matched with a family looking for <strong>${supportType}</strong> support.</p>
+                <p>Great news! You've been matched with a family on Birth Rebel.</p>
                 
                 <div class="highlight-box">
                   <p><strong>Parent:</strong> ${parentFirstName}</p>
-                  <p><strong>Support Type:</strong> ${supportType}</p>
                 </div>
                 
                 <p>${parentFirstName} is now reviewing their match. Once they approve, we'll connect you via the platform to start your journey together.</p>
@@ -194,7 +193,7 @@ serve(async (req) => {
               <div class="content">
                 <p>Hi ${parentFirstName},</p>
                 
-                <p>Exciting news! We've found a caregiver match for your <strong>${supportType}</strong> support request. Please log in to your dashboard to review and approve your match.</p>
+                <p>Exciting news! We've found a caregiver match for you. Please log in to your dashboard to review and approve your match.</p>
                 
                 <a href="${PARENT_DASHBOARD_URL}" class="cta-button">Review Your Match</a>
                 
