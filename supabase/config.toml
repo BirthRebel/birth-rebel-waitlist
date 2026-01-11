@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.generate-request-synopsis]
 verify_jwt = true
+
+[functions.send-match-notifications]
+verify_jwt = true
