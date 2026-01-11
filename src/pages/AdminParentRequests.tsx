@@ -525,13 +525,16 @@ const AdminParentRequests = () => {
         conversationId = existingConv.id;
       } else {
         // Create a new conversation linking the caregiver to this parent request
+        // Use a clean subject - just the parent name
+        const cleanSubject = `Match: ${request.first_name}${request.last_name ? ` ${request.last_name}` : ""}`;
+        
         const { data: newConv, error: convError } = await supabase
           .from("conversations")
           .insert({
             caregiver_id: request.matched_caregiver_id,
             parent_request_id: request.id,
             parent_email: request.email,
-            subject: `New match: ${request.first_name} - ${request.support_type || "Support request"}`,
+            subject: cleanSubject,
             status: "open",
           })
           .select()
@@ -539,6 +542,19 @@ const AdminParentRequests = () => {
 
         if (convError) throw convError;
         conversationId = newConv.id;
+      }
+
+      // Generate AI synopsis for the SMS
+      let synopsis: string | null = null;
+      try {
+        const { data: synopsisData, error: synopsisError } = await supabase.functions.invoke("generate-request-synopsis", {
+          body: { requestId: request.id },
+        });
+        if (!synopsisError && synopsisData?.synopsis) {
+          synopsis = synopsisData.synopsis;
+        }
+      } catch (synopsisErr) {
+        console.error("Error generating synopsis:", synopsisErr);
       }
 
       // Generate and send the summary as a message
@@ -555,7 +571,7 @@ const AdminParentRequests = () => {
 
       if (msgError) throw msgError;
 
-      // Send email notification to caregiver
+      // Send email + SMS notification to caregiver
       const { error: emailError } = await supabase.functions.invoke(
         "send-message-notification",
         {
@@ -563,6 +579,7 @@ const AdminParentRequests = () => {
             conversationId: conversationId,
             messageContent: messageContent,
             senderType: "admin",
+            synopsis: synopsis,
           },
         }
       );
