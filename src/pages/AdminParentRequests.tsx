@@ -43,7 +43,8 @@ import {
   Copy,
   Clock,
   Baby,
-  Globe
+  Globe,
+  Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 import { MatchCaregiverDialog } from "@/components/admin/MatchCaregiverDialog";
@@ -248,6 +249,8 @@ const AdminParentRequests = () => {
   const [isSharingWithCaregiver, setIsSharingWithCaregiver] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [messagePanelRequest, setMessagePanelRequest] = useState<ParentRequest | null>(null);
+  const [synopses, setSynopses] = useState<Record<string, string>>({});
+  const [loadingSynopsis, setLoadingSynopsis] = useState<string | null>(null);
   const [newRequest, setNewRequest] = useState({
     first_name: "",
     last_name: "",
@@ -610,6 +613,38 @@ const AdminParentRequests = () => {
     }
     setIsLoading(false);
   };
+
+  const fetchSynopsis = async (request: ParentRequest) => {
+    // Don't fetch if we already have it
+    if (synopses[request.id]) return;
+    
+    setLoadingSynopsis(request.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-request-synopsis", {
+        body: { request },
+      });
+
+      if (error) throw error;
+
+      if (data?.synopsis) {
+        setSynopses((prev) => ({ ...prev, [request.id]: data.synopsis }));
+      }
+    } catch (error: any) {
+      console.error("Error generating synopsis:", error);
+      // Silently fail - we still have the raw data
+    }
+    setLoadingSynopsis(null);
+  };
+
+  // Fetch synopsis when a card is expanded
+  useEffect(() => {
+    if (expandedId) {
+      const request = requests.find((r) => r.id === expandedId);
+      if (request) {
+        fetchSynopsis(request);
+      }
+    }
+  }, [expandedId]);
 
   const handleMatchCreated = (requestId: string, caregiverId: string) => {
     setRequests((prev) =>
@@ -1040,23 +1075,58 @@ const AdminParentRequests = () => {
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Column 1: Responses Summary (cleaned, no questions) */}
+                        {/* Column 1: AI Synopsis */}
                         <div className="space-y-4">
-                          <h4 className="font-medium text-sm text-foreground border-b pb-2">Parent's Responses</h4>
+                          <h4 className="font-medium text-sm text-foreground border-b pb-2 flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            Synopsis
+                          </h4>
                           
-                          {/* Show cleaned responses only */}
-                          <div className="bg-muted/30 p-4 rounded-lg space-y-3 text-sm max-h-[400px] overflow-y-auto">
-                            {generateResponsesSummary(request).length > 0 ? (
-                              generateResponsesSummary(request).map((item, index) => (
-                                <div key={index} className="text-foreground">
-                                  <span className="font-medium">{item.label}:</span>{" "}
-                                  <span className="text-muted-foreground">{item.value}</span>
-                                </div>
-                              ))
+                          {/* AI-generated synopsis */}
+                          <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg text-sm">
+                            {loadingSynopsis === request.id ? (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                Generating synopsis...
+                              </div>
+                            ) : synopses[request.id] ? (
+                              <p className="text-foreground leading-relaxed">{synopses[request.id]}</p>
                             ) : (
-                              <p className="text-muted-foreground italic">No responses recorded</p>
+                              <div className="space-y-2">
+                                <p className="text-muted-foreground italic">Synopsis not yet generated</p>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    fetchSynopsis(request);
+                                  }}
+                                >
+                                  <Sparkles className="h-3 w-3 mr-1" />
+                                  Generate
+                                </Button>
+                              </div>
                             )}
                           </div>
+
+                          {/* Collapsible raw data section */}
+                          <details className="text-sm">
+                            <summary className="cursor-pointer text-muted-foreground hover:text-foreground text-xs">
+                              View raw responses
+                            </summary>
+                            <div className="mt-2 bg-muted/30 p-3 rounded-lg space-y-2 max-h-[250px] overflow-y-auto">
+                              {generateResponsesSummary(request).length > 0 ? (
+                                generateResponsesSummary(request).map((item, index) => (
+                                  <div key={index} className="text-foreground text-xs">
+                                    <span className="font-medium">{item.label}:</span>{" "}
+                                    <span className="text-muted-foreground">{item.value}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-muted-foreground italic">No responses recorded</p>
+                              )}
+                            </div>
+                          </details>
                         </div>
 
                         {/* Column 2: Actions */}
