@@ -560,10 +560,9 @@ const AdminParentRequests = () => {
         "send-message-notification",
         {
           body: {
-            caregiverEmail: caregiver.email,
-            caregiverName: caregiver.first_name,
-            parentName: request.first_name,
-            messageContent: `You've been matched with ${request.first_name}. Log in to view the full details and next steps.`,
+            conversationId: conversationId,
+            messageContent: messageContent,
+            senderType: "admin",
           },
         }
       );
