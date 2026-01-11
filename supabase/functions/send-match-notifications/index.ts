@@ -160,9 +160,9 @@ serve(async (req) => {
       console.error("Failed to send caregiver email:", error);
     }
 
-    // 2. Send SMS to caregiver if phone available (no URL to avoid spam filters)
+    // 2. Send SMS to caregiver if phone available (simple message without support type to avoid corrupt data issues)
     if (caregiverPhone) {
-      const caregiverSMSMessage = `Hi ${caregiverFirstName || "there"}! Great news - you've been matched with a family on Birth Rebel for ${supportType} support. Check your email to set up your login. - Birth Rebel`;
+      const caregiverSMSMessage = `Hi ${caregiverFirstName || "there"}! Great news - you've been matched with a family on Birth Rebel. Check your email for details and to set up your login. - Birth Rebel`;
       results.caregiverSMS = await sendSMS(caregiverPhone, caregiverSMSMessage);
     }
 
@@ -216,9 +216,9 @@ serve(async (req) => {
       console.error("Failed to send parent email:", error);
     }
 
-    // 4. Send SMS to parent if phone available
+    // 4. Send SMS to parent if phone available (simple message without support type to avoid corrupt data issues)
     if (parentPhone) {
-      const parentSMSMessage = `Hi ${parentFirstName}! Great news - we found you a match on Birth Rebel for your ${supportType} support request. We'll be in touch with details soon. - Birth Rebel`;
+      const parentSMSMessage = `Hi ${parentFirstName}! Great news - we found you a match on Birth Rebel. Log in to your dashboard to review your match. - Birth Rebel`;
       results.parentSMS = await sendSMS(parentPhone, parentSMSMessage);
     }
 
