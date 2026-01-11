@@ -328,8 +328,8 @@ serve(async (req: Request): Promise<Response> => {
     // Send SMS notification to caregiver if admin sent the message and phone is available
     let smsSent = false;
     if (senderType === "admin" && recipientPhone) {
-      // Keep SMS short and simple - no synopsis (it was causing 8-part messages that get blocked)
-      const smsMessage = `Hi ${recipientName}! You've been matched with a new family on Birth Rebel. They are reviewing the match - we'll connect you once approved. Check your email for details. - Birth Rebel`;
+      // Keep SMS short and simple with login link
+      const smsMessage = `Hi ${recipientName}! You've been matched with a new family on Birth Rebel. They are reviewing the match - we'll connect you once approved. Log in: https://birthrebel.com/caregiver-auth - Birth Rebel`;
       
       smsSent = await sendSMS(recipientPhone, smsMessage);
       console.log(`SMS notification ${smsSent ? 'sent' : 'failed'} to ${recipientPhone}`);
