@@ -205,11 +205,13 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Sending notification to ${recipientEmail}, isNewAccount: ${isNewAccount}`);
 
-    // Build email content based on whether it's a new account
+    // Build simple, clean email content
     let emailContent: string;
+    let emailSubject: string;
     
-    if (isNewAccount && tempPassword) {
-      // New account email with temporary password
+    if (senderType === "admin") {
+      // Email to caregiver about a new match
+      emailSubject = "Birth Rebel: New Match";
       emailContent = `
         <!DOCTYPE html>
         <html>
@@ -220,28 +222,29 @@ serve(async (req: Request): Promise<Response> => {
             .header { background: linear-gradient(135deg, #D97757 0%, #C96A4A 100%); color: white; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
             .header h1 { margin: 0; font-size: 28px; }
             .content { background: #f9fafb; padding: 30px 20px; border: 1px solid #e5e7eb; border-top: none; }
-            .message-box { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #D97757; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-            .credentials-box { background: #FFF7ED; padding: 20px; border-radius: 8px; border: 2px solid #D97757; margin: 20px 0; }
-            .credentials-box h3 { margin: 0 0 15px 0; color: #D97757; }
-            .credential { background: white; padding: 10px 15px; border-radius: 4px; margin: 8px 0; font-family: monospace; font-size: 16px; }
             .button { display: inline-block; background: #D97757; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
             .footer { background: #f3f4f6; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; text-align: center; }
             .footer p { margin: 0; font-size: 12px; color: #6b7280; }
+            ${isNewAccount && tempPassword ? `
+            .credentials-box { background: #FFF7ED; padding: 20px; border-radius: 8px; border: 2px solid #D97757; margin: 20px 0; }
+            .credentials-box h3 { margin: 0 0 15px 0; color: #D97757; }
+            .credential { background: white; padding: 10px 15px; border-radius: 4px; margin: 8px 0; font-family: monospace; font-size: 16px; }
+            ` : ''}
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>Birth Rebel</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">Welcome! Your account is ready</p>
+              <h1>🎉 New Match!</h1>
             </div>
             <div class="content">
               <p>Hi ${recipientName},</p>
-              <p>Great news! We've set up your Birth Rebel caregiver account. You have a new message from <strong>${senderName}</strong>:</p>
-              <div class="message-box">
-                <p style="margin: 0; white-space: pre-wrap;">${messageContent.substring(0, 500)}${messageContent.length > 500 ? '...' : ''}</p>
-              </div>
               
+              <p>Great news! You've been matched with a new parent on Birth Rebel.</p>
+              
+              <p>They are currently reviewing the match. Once approved, we will connect you via the platform to start your journey together.</p>
+              
+              ${isNewAccount && tempPassword ? `
               <div class="credentials-box">
                 <h3>🔐 Your Login Details</h3>
                 <p style="margin: 0 0 10px 0;"><strong>Email:</strong></p>
@@ -250,21 +253,26 @@ serve(async (req: Request): Promise<Response> => {
                 <div class="credential">${tempPassword}</div>
                 <p style="margin: 15px 0 0 0; font-size: 14px; color: #666;">We recommend changing your password after your first login.</p>
               </div>
+              ` : ''}
               
               <p style="text-align: center;">
-                <a href="https://birthrebel.com/caregiver/auth" class="button">Log In to Your Dashboard</a>
+                <a href="https://birthrebel.com/caregiver-auth" class="button">Log In to Your Dashboard</a>
               </p>
+              
+              <p>We're excited to have you on this journey!</p>
+              
+              <p>Warm regards,<br><strong>The Birth Rebel Team</strong></p>
             </div>
             <div class="footer">
-              <p>This is an automated notification from Birth Rebel.</p>
-              <p>Please do not reply directly to this email.</p>
+              <p>© ${new Date().getFullYear()} Birth Rebel. All rights reserved.</p>
             </div>
           </div>
         </body>
         </html>
       `;
     } else {
-      // Existing account email - just login link
+      // Caregiver sent a message, notify parent/admin
+      emailSubject = `Birth Rebel: Message from ${senderName}`;
       emailContent = `
         <!DOCTYPE html>
         <html>
@@ -276,7 +284,6 @@ serve(async (req: Request): Promise<Response> => {
             .header h1 { margin: 0; font-size: 28px; }
             .content { background: #f9fafb; padding: 30px 20px; border: 1px solid #e5e7eb; border-top: none; }
             .message-box { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #D97757; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-            .button { display: inline-block; background: #D97757; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
             .footer { background: #f3f4f6; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; text-align: center; }
             .footer p { margin: 0; font-size: 12px; color: #6b7280; }
           </style>
@@ -284,8 +291,7 @@ serve(async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Birth Rebel</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">You have a new message</p>
+              <h1>New Message</h1>
             </div>
             <div class="content">
               <p>Hi ${recipientName},</p>
@@ -293,14 +299,10 @@ serve(async (req: Request): Promise<Response> => {
               <div class="message-box">
                 <p style="margin: 0; white-space: pre-wrap;">${messageContent.substring(0, 500)}${messageContent.length > 500 ? '...' : ''}</p>
               </div>
-              <p>To view this message and reply, please log in to your Birth Rebel caregiver dashboard.</p>
-              <p style="text-align: center;">
-                <a href="https://birthrebel.com/caregiver/auth?email=${encodeURIComponent(recipientEmail)}" class="button">Log In to Dashboard</a>
-              </p>
+              <p>Warm regards,<br><strong>The Birth Rebel Team</strong></p>
             </div>
             <div class="footer">
-              <p>This is an automated notification from Birth Rebel.</p>
-              <p>Please do not reply directly to this email.</p>
+              <p>© ${new Date().getFullYear()} Birth Rebel. All rights reserved.</p>
             </div>
           </div>
         </body>
@@ -312,9 +314,7 @@ serve(async (req: Request): Promise<Response> => {
     const { error: emailError } = await resend.emails.send({
       from: "Birth Rebel <hello@notifications.birthrebel.com>",
       to: [recipientEmail],
-      subject: isNewAccount 
-        ? `Welcome to Birth Rebel - Your account is ready!`
-        : `New message: ${conversation.subject || "Birth Rebel Conversation"}`,
+      subject: emailSubject,
       html: emailContent,
     });
 
