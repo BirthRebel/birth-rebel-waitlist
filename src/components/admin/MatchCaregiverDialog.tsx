@@ -131,7 +131,7 @@ export const MatchCaregiverDialog = ({
         console.error("Error generating synopsis:", synopsisErr);
       }
 
-      // Create the match record
+      // Create the match record with synopsis
       const { error: matchError } = await supabase
         .from("matches")
         .insert({
@@ -140,6 +140,7 @@ export const MatchCaregiverDialog = ({
           parent_first_name: parentRequest.first_name,
           support_type: parentRequest.support_type || "general",
           status: "matched",
+          caregiver_synopsis: synopsis,
         });
 
       if (matchError) throw matchError;
