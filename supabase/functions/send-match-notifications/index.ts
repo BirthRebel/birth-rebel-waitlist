@@ -20,7 +20,7 @@ interface MatchNotificationRequest {
   parentPhone: string | null;
   supportType: string;
   synopsis: string | null;
-  caregiverLoginUrl: string;
+  // caregiverLoginUrl is no longer needed - using hardcoded production URL
 }
 
 async function sendSMS(to: string, message: string): Promise<boolean> {
@@ -71,6 +71,11 @@ async function sendSMS(to: string, message: string): Promise<boolean> {
   }
 }
 
+// Production URLs - hardcoded to avoid preview URL issues
+const CAREGIVER_LOGIN_URL = "https://birthrebel.com/caregiver-auth";
+const PARENT_LOGIN_URL = "https://birthrebel.com/auth";
+const PARENT_DASHBOARD_URL = "https://birthrebel.com/parent-dashboard";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -86,7 +91,6 @@ serve(async (req) => {
       parentPhone,
       supportType,
       synopsis,
-      caregiverLoginUrl,
     }: MatchNotificationRequest = await req.json();
 
     const results = {
@@ -96,7 +100,7 @@ serve(async (req) => {
       parentSMS: false,
     };
 
-    // 1. Send email to caregiver
+    // 1. Send email to caregiver with login link
     try {
       const caregiverEmailResult = await resend.emails.send({
         from: "Birth Rebel <hello@birthrebel.co.uk>",
@@ -132,9 +136,11 @@ serve(async (req) => {
                   <p><strong>Support Type:</strong> ${supportType}</p>
                 </div>
                 
-                <p>A member of our team will be in touch shortly with more details about this match and next steps.</p>
+                <p>${parentFirstName} is now reviewing their match. Once they approve, we'll connect you via the platform to start your journey together.</p>
                 
-                <p>In the meantime, please ensure your availability is up to date.</p>
+                <p>In the meantime, please set up your login to access your dashboard:</p>
+                
+                <a href="${CAREGIVER_LOGIN_URL}" class="cta-button">Set Up Your Login</a>
                 
                 <p>Thank you for being part of the Birth Rebel community!</p>
                 
@@ -154,15 +160,13 @@ serve(async (req) => {
       console.error("Failed to send caregiver email:", error);
     }
 
-    // 2. Send SMS to caregiver if phone available
+    // 2. Send SMS to caregiver if phone available (no URL to avoid spam filters)
     if (caregiverPhone) {
-      const synopsisText = synopsis ? `\n\nBrief: ${synopsis}` : "";
-      const caregiverSMSMessage = `Hi ${caregiverFirstName || "there"}! Great news - you've been matched with a family on Birth Rebel!${synopsisText}\n\n${parentFirstName} is now reviewing their match. Once approved, we'll connect you via the platform to start your journey together.\n\nSet up your login: ${caregiverLoginUrl}\n\n- Birth Rebel`;
+      const caregiverSMSMessage = `Hi ${caregiverFirstName || "there"}! Great news - you've been matched with a family on Birth Rebel for ${supportType} support. Check your email to set up your login. - Birth Rebel`;
       results.caregiverSMS = await sendSMS(caregiverPhone, caregiverSMSMessage);
     }
 
     // 3. Send email to parent with dashboard link
-    const parentDashboardUrl = "https://birthrebel.com/parent-dashboard";
     try {
       const parentEmailResult = await resend.emails.send({
         from: "Birth Rebel <hello@birthrebel.co.uk>",
@@ -192,7 +196,7 @@ serve(async (req) => {
                 
                 <p>Exciting news! We've found a caregiver match for your <strong>${supportType}</strong> support request. Please log in to your dashboard to review and approve your match.</p>
                 
-                <a href="${parentDashboardUrl}" class="cta-button">Review Your Match</a>
+                <a href="${PARENT_DASHBOARD_URL}" class="cta-button">Review Your Match</a>
                 
                 <p>If you haven't created your account yet, you'll be able to set up your login credentials when you click the link above.</p>
                 
