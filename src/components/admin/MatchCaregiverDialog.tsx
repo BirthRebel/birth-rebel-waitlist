@@ -118,17 +118,17 @@ export const MatchCaregiverDialog = ({
         console.error("Error fetching parent phone:", parentError);
       }
 
-      // Generate synopsis for the caregiver SMS
+      // Generate synopsis about the caregiver for the parent to see
       let synopsis: string | null = null;
       try {
-        const { data: synopsisData, error: synopsisError } = await supabase.functions.invoke("generate-request-synopsis", {
-          body: { requestId: parentRequest.id },
+        const { data: synopsisData, error: synopsisError } = await supabase.functions.invoke("generate-caregiver-synopsis", {
+          body: { caregiverId: selectedCaregiver.id },
         });
         if (!synopsisError && synopsisData?.synopsis) {
           synopsis = synopsisData.synopsis;
         }
       } catch (synopsisErr) {
-        console.error("Error generating synopsis:", synopsisErr);
+        console.error("Error generating caregiver synopsis:", synopsisErr);
       }
 
       // Create the match record with synopsis
