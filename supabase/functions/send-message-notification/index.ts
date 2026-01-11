@@ -17,6 +17,7 @@ interface NotificationRequest {
   messageContent: string;
   senderType: "admin" | "caregiver";
   synopsis?: string | null;
+  notificationType?: "match" | "message"; // "match" for new matches, "message" for regular messages
 }
 
 // Generate a random temporary password
@@ -85,9 +86,12 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { conversationId, messageContent, senderType, synopsis }: NotificationRequest = await req.json();
+    const { conversationId, messageContent, senderType, synopsis, notificationType }: NotificationRequest = await req.json();
 
-    console.log(`Processing notification for conversation ${conversationId}, sender: ${senderType}`);
+    // Default to "message" for regular messages, unless explicitly set to "match"
+    const isMatchNotification = notificationType === "match";
+
+    console.log(`Processing notification for conversation ${conversationId}, sender: ${senderType}, type: ${notificationType || 'message'}`);
 
     // Fetch conversation details including caregiver phone
     const { data: conversation, error: convError } = await supabase
@@ -210,66 +214,111 @@ serve(async (req: Request): Promise<Response> => {
     let emailSubject: string;
     
     if (senderType === "admin") {
-      // Email to caregiver about a new match
-      emailSubject = "Birth Rebel: New Match";
-      emailContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #D97757 0%, #C96A4A 100%); color: white; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
-            .header h1 { margin: 0; font-size: 28px; }
-            .content { background: #f9fafb; padding: 30px 20px; border: 1px solid #e5e7eb; border-top: none; }
-            .button { display: inline-block; background: #D97757; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
-            .footer { background: #f3f4f6; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; text-align: center; }
-            .footer p { margin: 0; font-size: 12px; color: #6b7280; }
-            ${isNewAccount && tempPassword ? `
-            .credentials-box { background: #FFF7ED; padding: 20px; border-radius: 8px; border: 2px solid #D97757; margin: 20px 0; }
-            .credentials-box h3 { margin: 0 0 15px 0; color: #D97757; }
-            .credential { background: white; padding: 10px 15px; border-radius: 4px; margin: 8px 0; font-family: monospace; font-size: 16px; }
-            ` : ''}
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 New Match!</h1>
-            </div>
-            <div class="content">
-              <p>Hi ${recipientName},</p>
-              
-              <p>Great news! You've been matched with a new parent on Birth Rebel.</p>
-              
-              <p>They are currently reviewing the match. Once approved, we will connect you via the platform to start your journey together.</p>
-              
+      if (isMatchNotification) {
+        // Email to caregiver about a new match
+        emailSubject = "Birth Rebel: New Match";
+        emailContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #D97757 0%, #C96A4A 100%); color: white; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .content { background: #f9fafb; padding: 30px 20px; border: 1px solid #e5e7eb; border-top: none; }
+              .button { display: inline-block; background: #D97757; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
+              .footer { background: #f3f4f6; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; text-align: center; }
+              .footer p { margin: 0; font-size: 12px; color: #6b7280; }
               ${isNewAccount && tempPassword ? `
-              <div class="credentials-box">
-                <h3>🔐 Your Login Details</h3>
-                <p style="margin: 0 0 10px 0;"><strong>Email:</strong></p>
-                <div class="credential">${recipientEmail}</div>
-                <p style="margin: 10px 0 10px 0;"><strong>Temporary Password:</strong></p>
-                <div class="credential">${tempPassword}</div>
-                <p style="margin: 15px 0 0 0; font-size: 14px; color: #666;">We recommend changing your password after your first login.</p>
-              </div>
+              .credentials-box { background: #FFF7ED; padding: 20px; border-radius: 8px; border: 2px solid #D97757; margin: 20px 0; }
+              .credentials-box h3 { margin: 0 0 15px 0; color: #D97757; }
+              .credential { background: white; padding: 10px 15px; border-radius: 4px; margin: 8px 0; font-family: monospace; font-size: 16px; }
               ` : ''}
-              
-              <p style="text-align: center;">
-                <a href="https://birthrebel.com/caregiver/auth" class="button">Log In to Your Dashboard</a>
-              </p>
-              
-              <p>We're excited to have you on this journey!</p>
-              
-              <p>Warm regards,<br><strong>The Birth Rebel Team</strong></p>
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 New Match!</h1>
+              </div>
+              <div class="content">
+                <p>Hi ${recipientName},</p>
+                
+                <p>Great news! You've been matched with a new parent on Birth Rebel.</p>
+                
+                <p>They are currently reviewing the match. Once approved, we will connect you via the platform to start your journey together.</p>
+                
+                ${isNewAccount && tempPassword ? `
+                <div class="credentials-box">
+                  <h3>🔐 Your Login Details</h3>
+                  <p style="margin: 0 0 10px 0;"><strong>Email:</strong></p>
+                  <div class="credential">${recipientEmail}</div>
+                  <p style="margin: 10px 0 10px 0;"><strong>Temporary Password:</strong></p>
+                  <div class="credential">${tempPassword}</div>
+                  <p style="margin: 15px 0 0 0; font-size: 14px; color: #666;">We recommend changing your password after your first login.</p>
+                </div>
+                ` : ''}
+                
+                <p style="text-align: center;">
+                  <a href="https://birthrebel.com/caregiver/auth" class="button">Log In to Your Dashboard</a>
+                </p>
+                
+                <p>We're excited to have you on this journey!</p>
+                
+                <p>Warm regards,<br><strong>The Birth Rebel Team</strong></p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Birth Rebel. All rights reserved.</p>
+              </div>
             </div>
-            <div class="footer">
-              <p>© ${new Date().getFullYear()} Birth Rebel. All rights reserved.</p>
+          </body>
+          </html>
+        `;
+      } else {
+        // Regular message from admin - simple notification
+        emailSubject = "Birth Rebel: New Message";
+        emailContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #D97757 0%, #C96A4A 100%); color: white; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .content { background: #f9fafb; padding: 30px 20px; border: 1px solid #e5e7eb; border-top: none; }
+              .button { display: inline-block; background: #D97757; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: 600; }
+              .footer { background: #f3f4f6; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; text-align: center; }
+              .footer p { margin: 0; font-size: 12px; color: #6b7280; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>💬 New Message</h1>
+              </div>
+              <div class="content">
+                <p>Hi ${recipientName},</p>
+                
+                <p>You have a new message from the Birth Rebel team waiting for you.</p>
+                
+                <p>Log in to your dashboard to read and reply.</p>
+                
+                <p style="text-align: center;">
+                  <a href="https://birthrebel.com/caregiver/auth" class="button">View Message</a>
+                </p>
+                
+                <p>Warm regards,<br><strong>The Birth Rebel Team</strong></p>
+              </div>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Birth Rebel. All rights reserved.</p>
+              </div>
             </div>
-          </div>
-        </body>
-        </html>
-      `;
+          </body>
+          </html>
+        `;
+      }
     } else {
       // Caregiver sent a message, notify parent/admin
       emailSubject = `Birth Rebel: Message from ${senderName}`;
@@ -328,8 +377,12 @@ serve(async (req: Request): Promise<Response> => {
     // Send SMS notification to caregiver if admin sent the message and phone is available
     let smsSent = false;
     if (senderType === "admin" && recipientPhone) {
-      // No URLs - they trigger spam filters. Direct to email for login details.
-      const smsMessage = `Hi ${recipientName}! You have a new family match on Birth Rebel. Check your email for more details.`;
+      let smsMessage: string;
+      if (isMatchNotification) {
+        smsMessage = `Hi ${recipientName}! You have a new family match on Birth Rebel. Check your email for more details.`;
+      } else {
+        smsMessage = `Hi ${recipientName}! You have a new message on Birth Rebel. Log in to your dashboard to view it.`;
+      }
       
       smsSent = await sendSMS(recipientPhone, smsMessage);
       console.log(`SMS notification ${smsSent ? 'sent' : 'failed'} to ${recipientPhone}`);
