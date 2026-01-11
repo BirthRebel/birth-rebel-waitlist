@@ -127,12 +127,11 @@ export const MatchCard = ({ match, parentRequest }: MatchCardProps) => {
             <div className="space-y-1">
               <h4 className="text-sm font-semibold text-[#36454F] mb-3">Parent Request Details</h4>
               
-              <InfoRow icon={MapPin} label="Location" value={parentRequest.location} />
               <InfoRow icon={Phone} label="Phone" value={parentRequest.phone} />
-              <InfoRow icon={Mail} label="Email" value={parentRequest.email} />
+              <InfoRow icon={Mail} label="Email" value={match.parent_email} />
               <InfoRow icon={Calendar} label="Stage of Journey" value={parentRequest.stage_of_journey} />
               <InfoRow icon={User} label="Family Context" value={parentRequest.family_context} />
-              <InfoRow icon={MessageSquare} label="What They're Looking For" value={parentRequest.support_type} />
+              <InfoRow icon={MessageSquare} label="Support Type" value={match.support_type} />
               <InfoRow icon={User} label="Caregiver Preferences" value={parentRequest.caregiver_preferences} />
               <InfoRow icon={MessageSquare} label="Preferred Communication" value={parentRequest.preferred_communication} />
               <InfoRow icon={User} label="Shared Identity Requests" value={parentRequest.shared_identity_requests} />
