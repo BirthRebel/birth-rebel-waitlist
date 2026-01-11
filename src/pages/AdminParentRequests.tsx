@@ -1112,18 +1112,13 @@ const AdminParentRequests = () => {
                           {/* Collapsible raw data section */}
                           <details className="text-sm">
                             <summary className="cursor-pointer text-muted-foreground hover:text-foreground text-xs">
-                              View raw responses
+                              View full transcript
                             </summary>
-                            <div className="mt-2 bg-muted/30 p-3 rounded-lg space-y-2 max-h-[250px] overflow-y-auto">
-                              {generateResponsesSummary(request).length > 0 ? (
-                                generateResponsesSummary(request).map((item, index) => (
-                                  <div key={index} className="text-foreground text-xs">
-                                    <span className="font-medium">{item.label}:</span>{" "}
-                                    <span className="text-muted-foreground">{item.value}</span>
-                                  </div>
-                                ))
+                            <div className="mt-2 bg-muted/30 p-3 rounded-lg max-h-[300px] overflow-y-auto">
+                              {request.support_type ? (
+                                <p className="text-foreground text-xs whitespace-pre-wrap">{request.support_type}</p>
                               ) : (
-                                <p className="text-muted-foreground italic">No responses recorded</p>
+                                <p className="text-muted-foreground italic text-xs">No transcript available</p>
                               )}
                             </div>
                           </details>
