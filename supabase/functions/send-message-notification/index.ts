@@ -256,7 +256,7 @@ serve(async (req: Request): Promise<Response> => {
               ` : ''}
               
               <p style="text-align: center;">
-                <a href="https://birthrebel.com/caregiver-auth" class="button">Log In to Your Dashboard</a>
+                <a href="https://birthrebel.com/caregiver/auth" class="button">Log In to Your Dashboard</a>
               </p>
               
               <p>We're excited to have you on this journey!</p>
