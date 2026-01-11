@@ -126,7 +126,7 @@ Guidelines:
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "openai/gpt-5-mini",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
           { 
@@ -134,7 +134,7 @@ Guidelines:
             content: `Please create a synopsis for this caregiver to show to a parent:\n\n${JSON.stringify(caregiverProfile, null, 2)}` 
           },
         ],
-        max_completion_tokens: 300,
+        max_tokens: 300,
         temperature: 0.7,
       }),
     });
