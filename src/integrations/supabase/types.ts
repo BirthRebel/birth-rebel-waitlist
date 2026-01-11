@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string | null
+          message: string
+          parent_email: string | null
+          read_at: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          message: string
+          parent_email?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          message?: string
+          parent_email?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caregivers: {
         Row: {
           active: boolean
@@ -404,28 +445,37 @@ export type Database = {
       matches: {
         Row: {
           caregiver_id: string
+          caregiver_synopsis: string | null
           created_at: string
+          decline_reason: string | null
           id: string
           parent_email: string
           parent_first_name: string
+          reviewed_at: string | null
           status: string
           support_type: string
         }
         Insert: {
           caregiver_id: string
+          caregiver_synopsis?: string | null
           created_at?: string
+          decline_reason?: string | null
           id?: string
           parent_email: string
           parent_first_name: string
+          reviewed_at?: string | null
           status?: string
           support_type: string
         }
         Update: {
           caregiver_id?: string
+          caregiver_synopsis?: string | null
           created_at?: string
+          decline_reason?: string | null
           id?: string
           parent_email?: string
           parent_first_name?: string
+          reviewed_at?: string | null
           status?: string
           support_type?: string
         }

@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
+import { AdminNotificationsPanel } from "@/components/admin/AdminNotificationsPanel";
 
 interface Match {
   id: string;
@@ -35,6 +36,9 @@ interface Match {
   status: string;
   created_at: string;
   caregiver_id: string;
+  decline_reason?: string | null;
+  caregiver_synopsis?: string | null;
+  reviewed_at?: string | null;
   caregiver?: {
     id: string;
     first_name: string | null;
@@ -210,6 +214,10 @@ const AdminMatches = () => {
     switch (status) {
       case "matched":
         return "bg-yellow-100 text-yellow-800";
+      case "approved":
+        return "bg-blue-100 text-blue-800";
+      case "declined":
+        return "bg-red-100 text-red-800";
       case "booked":
         return "bg-green-100 text-green-800";
       case "closed":
@@ -396,6 +404,11 @@ const AdminMatches = () => {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
+          </div>
+
+          {/* Admin Notifications Panel */}
+          <div className="mb-8">
+            <AdminNotificationsPanel />
           </div>
 
           {loading && matches.length === 0 ? (

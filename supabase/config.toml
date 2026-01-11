@@ -47,3 +47,9 @@ verify_jwt = true
 
 [functions.send-match-notifications]
 verify_jwt = true
+
+[functions.get-parent-matches]
+verify_jwt = false
+
+[functions.parent-match-response]
+verify_jwt = false

@@ -161,7 +161,8 @@ serve(async (req) => {
       results.caregiverSMS = await sendSMS(caregiverPhone, caregiverSMSMessage);
     }
 
-    // 3. Send email to parent
+    // 3. Send email to parent with dashboard link
+    const parentDashboardUrl = "https://birthrebel.com/parent-dashboard";
     try {
       const parentEmailResult = await resend.emails.send({
         from: "Birth Rebel <hello@birthrebel.co.uk>",
@@ -177,7 +178,6 @@ serve(async (req) => {
               .header { background: linear-gradient(135deg, #E2725B 0%, #C7624F 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0; }
               .header h1 { color: white; margin: 0; font-size: 28px; }
               .content { background: #FFFAF5; padding: 30px; border-radius: 0 0 12px 12px; }
-              .highlight-box { background: white; border-left: 4px solid #E2725B; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
               .cta-button { display: inline-block; background: #E2725B; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
               .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
             </style>
@@ -190,13 +190,11 @@ serve(async (req) => {
               <div class="content">
                 <p>Hi ${parentFirstName},</p>
                 
-                <p>Exciting news! We've found a caregiver match for your <strong>${supportType}</strong> support request.</p>
+                <p>Exciting news! We've found a caregiver match for your <strong>${supportType}</strong> support request. Please log in to your dashboard to review and approve your match.</p>
                 
-                <div class="highlight-box">
-                  <p>A member of our team will be reaching out to you shortly to introduce you to your matched caregiver and discuss next steps.</p>
-                </div>
+                <a href="${parentDashboardUrl}" class="cta-button">Review Your Match</a>
                 
-                <p>We're so excited to connect you with the right support for your journey!</p>
+                <p>If you haven't created your account yet, you'll be able to set up your login credentials when you click the link above.</p>
                 
                 <p>Warm regards,<br><strong>The Birth Rebel Team</strong></p>
               </div>

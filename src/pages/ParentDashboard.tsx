@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Heart } from "lucide-react";
 import { format } from "date-fns";
 import { ParentMessagesPanel } from "@/components/messaging/ParentMessagesPanel";
+import { PendingMatchesCard } from "@/components/parent/PendingMatchesCard";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface ParentRequest {
@@ -142,7 +143,12 @@ const ParentDashboard = () => {
             </Button>
           </div>
 
-          {/* Messages Section - Similar to Caregiver Dashboard */}
+          {/* Pending Matches Section - Priority */}
+          {user?.email && (
+            <PendingMatchesCard parentEmail={user.email} />
+          )}
+
+          {/* Messages Section */}
           {user?.email && (
             <div className="mb-8">
               <ParentMessagesPanel parentEmail={user.email} />
