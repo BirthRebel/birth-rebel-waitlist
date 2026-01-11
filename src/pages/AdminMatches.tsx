@@ -24,6 +24,7 @@ import {
   MessageSquare,
   CreditCard,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { AdminNotificationsPanel } from "@/components/admin/AdminNotificationsPanel";
@@ -237,6 +238,28 @@ const AdminMatches = () => {
       if (error) throw error;
 
       toast({ title: "Status updated" });
+      fetchMatches();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteMatch = async (matchId: string) => {
+    if (!confirm("Are you sure you want to delete this match?")) return;
+    
+    try {
+      const { error } = await supabase
+        .from("matches")
+        .delete()
+        .eq("id", matchId);
+
+      if (error) throw error;
+
+      toast({ title: "Match deleted" });
       fetchMatches();
     } catch (error: any) {
       toast({
@@ -662,20 +685,30 @@ const AdminMatches = () => {
                         )}
 
                         {/* Status Actions */}
-                        <div className="mt-6 pt-4 border-t flex flex-wrap gap-2">
-                          <span className="text-sm font-medium mr-2 self-center">Update status:</span>
-                          {["matched", "booked", "closed"].map((status) => (
-                            <Button
-                              key={status}
-                              size="sm"
-                              variant={match.status === status ? "default" : "outline"}
-                              onClick={() => updateStatus(match.id, status)}
-                              disabled={match.status === status}
-                              className="capitalize"
-                            >
-                              {status}
-                            </Button>
-                          ))}
+                        <div className="mt-6 pt-4 border-t flex flex-wrap gap-2 items-center justify-between">
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <span className="text-sm font-medium mr-2 self-center">Update status:</span>
+                            {["matched", "booked", "closed"].map((status) => (
+                              <Button
+                                key={status}
+                                size="sm"
+                                variant={match.status === status ? "default" : "outline"}
+                                onClick={() => updateStatus(match.id, status)}
+                                disabled={match.status === status}
+                                className="capitalize"
+                              >
+                                {status}
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => deleteMatch(match.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Match
+                          </Button>
                         </div>
                       </div>
                     </CollapsibleContent>
