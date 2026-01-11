@@ -163,7 +163,7 @@ export const MatchCaregiverDialog = ({
         {parentRequest && (
           <div className="bg-muted/50 rounded-lg p-3 mb-4">
             <p className="text-sm text-muted-foreground">
-              Looking for: <span className="font-medium text-foreground">{parentRequest.support_type || "General support"}</span>
+              Matching caregiver for: <span className="font-medium text-foreground">{parentRequest.first_name} {parentRequest.last_name || ""}</span>
             </p>
           </div>
         )}
