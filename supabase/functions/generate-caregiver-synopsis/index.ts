@@ -134,7 +134,7 @@ Guidelines:
             content: `Please create a synopsis for this caregiver to show to a parent:\n\n${JSON.stringify(caregiverProfile, null, 2)}` 
           },
         ],
-        max_tokens: 300,
+        max_completion_tokens: 300,
         temperature: 0.7,
       }),
     });
