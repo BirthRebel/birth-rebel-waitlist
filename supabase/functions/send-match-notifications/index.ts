@@ -103,7 +103,7 @@ serve(async (req) => {
     // 1. Send email to caregiver with login link
     try {
       const caregiverEmailResult = await resend.emails.send({
-        from: "Birth Rebel <hello@birthrebel.co.uk>",
+        from: "Birth Rebel <onboarding@resend.dev>",
         to: caregiverEmail,
         subject: "🎉 You have a new match on Birth Rebel!",
         html: `
@@ -169,7 +169,7 @@ serve(async (req) => {
     // 3. Send email to parent with dashboard link
     try {
       const parentEmailResult = await resend.emails.send({
-        from: "Birth Rebel <hello@birthrebel.co.uk>",
+        from: "Birth Rebel <onboarding@resend.dev>",
         to: parentEmail,
         subject: "🎉 We found you a match! Review now",
         html: `
