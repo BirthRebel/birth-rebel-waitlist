@@ -72,9 +72,9 @@ async function sendSMS(to: string, message: string): Promise<boolean> {
 }
 
 // Production URLs - hardcoded to avoid preview URL issues
-const CAREGIVER_LOGIN_URL = "https://birthrebel.com/caregiver-auth";
+const CAREGIVER_LOGIN_URL = "https://birthrebel.com/caregiver/auth";
 const PARENT_LOGIN_URL = "https://birthrebel.com/auth";
-const PARENT_DASHBOARD_URL = "https://birthrebel.com/parent-dashboard";
+const PARENT_DASHBOARD_URL = "https://birthrebel.com/parent/dashboard";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
