@@ -96,6 +96,28 @@ export const MatchCaregiverDialog = ({
 
     setIsMatching(true);
     try {
+      // First fetch full caregiver details including phone
+      const { data: caregiverData, error: caregiverError } = await supabase
+        .from("caregivers")
+        .select("phone")
+        .eq("id", selectedCaregiver.id)
+        .single();
+
+      if (caregiverError) {
+        console.error("Error fetching caregiver phone:", caregiverError);
+      }
+
+      // Fetch parent phone from parent_requests
+      const { data: parentData, error: parentError } = await supabase
+        .from("parent_requests")
+        .select("phone")
+        .eq("id", parentRequest.id)
+        .single();
+
+      if (parentError) {
+        console.error("Error fetching parent phone:", parentError);
+      }
+
       // Create the match record
       const { error: matchError } = await supabase
         .from("matches")
@@ -120,10 +142,40 @@ export const MatchCaregiverDialog = ({
 
       if (updateError) throw updateError;
 
-      toast({
-        title: "Match created",
-        description: `${parentRequest.first_name} has been matched with ${selectedCaregiver.first_name || selectedCaregiver.email}. No notification sent - you control communications.`,
-      });
+      // Send automatic notifications (email + SMS)
+      try {
+        const { error: notifyError } = await supabase.functions.invoke("send-match-notifications", {
+          body: {
+            caregiverEmail: selectedCaregiver.email,
+            caregiverFirstName: selectedCaregiver.first_name,
+            caregiverPhone: caregiverData?.phone || null,
+            parentEmail: parentRequest.email,
+            parentFirstName: parentRequest.first_name,
+            parentPhone: parentData?.phone || null,
+            supportType: parentRequest.support_type || "general support",
+          },
+        });
+
+        if (notifyError) {
+          console.error("Error sending notifications:", notifyError);
+          toast({
+            title: "Match created",
+            description: `Match created but notifications may have failed. Check logs.`,
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Match created & notifications sent!",
+            description: `${parentRequest.first_name} matched with ${selectedCaregiver.first_name || selectedCaregiver.email}. Email/SMS notifications sent to both.`,
+          });
+        }
+      } catch (notifyErr) {
+        console.error("Notification error:", notifyErr);
+        toast({
+          title: "Match created",
+          description: `Match created but notifications failed to send.`,
+        });
+      }
 
       onMatchCreated(parentRequest.id, selectedCaregiver.id);
       onOpenChange(false);
