@@ -329,7 +329,7 @@ serve(async (req: Request): Promise<Response> => {
     let smsSent = false;
     if (senderType === "admin" && recipientPhone) {
       // No URLs - they trigger spam filters. Direct to email for login details.
-      const smsMessage = `Hi ${recipientName}! New family match on Birth Rebel. Check your email for login details.`;
+      const smsMessage = `Hi ${recipientName}! You have a new family match on Birth Rebel. Check your email for more details.`;
       
       smsSent = await sendSMS(recipientPhone, smsMessage);
       console.log(`SMS notification ${smsSent ? 'sent' : 'failed'} to ${recipientPhone}`);
