@@ -148,17 +148,27 @@ function mapToParentRequest(data: Record<string, string>) {
     
     // Email - specifically look for email-related questions
     if (q.includes('email address') || q.includes('your email') || q === 'email') {
-      // Validate it looks like an email
+      // Validate it looks like an email (contains @)
       if (answer.includes('@')) {
         result.email = answer;
+      } else {
+        console.log(`Skipping invalid email value: "${answer}" - does not contain @`);
       }
     }
     
     // Phone - specifically look for phone-related questions
-    if (q.includes('phone number') || q.includes('contact you') || q.includes('telephone') || q === 'phone') {
+    if (q.includes('phone number') || q.includes('contact you') || q.includes('telephone') || q.includes('reach you') || q === 'phone') {
       // Basic phone validation (contains digits)
       if (/\d{6,}/.test(answer.replace(/\D/g, ''))) {
         result.phone = answer;
+      }
+    }
+    
+    // Also check if "email address" field actually contains a phone number and store it as phone
+    if ((q.includes('email address') || q.includes('your email')) && !answer.includes('@') && /\d{6,}/.test(answer.replace(/\D/g, ''))) {
+      if (!result.phone) {
+        result.phone = answer;
+        console.log(`Email field contained phone number, storing as phone: ${answer}`);
       }
     }
     
