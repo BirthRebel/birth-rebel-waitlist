@@ -69,15 +69,19 @@ serve(async (req) => {
 
     const systemPrompt = `You are a helpful assistant for Birth Rebel, a platform that matches parents with birth caregivers (doulas, midwives, lactation consultants, etc.).
 
-Your task is to create a clear, warm synopsis of a parent's support request. Write in third person about the parent, as if briefing a caregiver.
+Your task is to create a comprehensive, warm synopsis of a parent's support request. Write in third person about the parent, as if briefing a caregiver who needs to understand the full picture.
 
 Guidelines:
-- Write 2-4 sentences maximum
-- Start with their name and what stage of their journey they're at
-- Highlight the most important details: type of support needed, family situation, any specific preferences or concerns
-- Use warm, professional language
+- Write 4-6 sentences with good detail
+- Start with their name and what stage of their journey they're at (pregnant, postpartum, how far along, etc.)
+- Include their family situation (partner, other children, support network)
+- Describe the type of support they're looking for and why
+- Mention any specific preferences, concerns, or special requirements
+- Note practical details like location, availability, budget if mentioned
+- Include any identity/cultural preferences they've expressed
+- Use warm, professional language that feels personal
 - If data seems incomplete or contains form artifacts, extract the meaningful information and ignore the noise
-- Focus on what a caregiver would need to know at a glance`;
+- Paint a complete picture so a caregiver can decide if they're a good match`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
