@@ -116,32 +116,19 @@ export const MatchCard = ({ match, parentRequest }: MatchCardProps) => {
 
       {isExpanded && (
         <CardContent className="bg-gray-50 border-t border-gray-100">
-          {match.caregiver_synopsis && (
-            <div className="mb-4 p-4 bg-[#E2725B]/5 rounded-lg border border-[#E2725B]/20">
+          {match.caregiver_synopsis ? (
+            <div className="p-4 bg-[#E2725B]/5 rounded-lg border border-[#E2725B]/20">
               <h4 className="text-sm font-semibold text-[#E2725B] mb-2">Match Summary</h4>
-              <p className="text-sm text-gray-700">{match.caregiver_synopsis}</p>
-            </div>
-          )}
-
-          {parentRequest ? (
-            <div className="space-y-1">
-              <h4 className="text-sm font-semibold text-[#36454F] mb-3">Parent Request Details</h4>
-              
-              <InfoRow icon={Phone} label="Phone" value={parentRequest.phone} />
-              <InfoRow icon={Calendar} label="Stage of Journey" value={parentRequest.stage_of_journey} />
-              <InfoRow icon={User} label="Family Context" value={parentRequest.family_context} />
-              <InfoRow icon={User} label="Caregiver Preferences" value={parentRequest.caregiver_preferences} />
-              <InfoRow icon={MessageSquare} label="Preferred Communication" value={parentRequest.preferred_communication} />
-              <InfoRow icon={User} label="Shared Identity Requests" value={parentRequest.shared_identity_requests} />
-              <InfoRow icon={Clock} label="General Availability" value={parentRequest.general_availability} />
-              <InfoRow icon={MessageSquare} label="Budget" value={parentRequest.budget} />
-              <InfoRow icon={MessageSquare} label="Specific Concerns" value={parentRequest.specific_concerns} />
-              <InfoRow icon={MessageSquare} label="Special Requirements" value={parentRequest.special_requirements} />
-              <InfoRow icon={Calendar} label="Due Date" value={parentRequest.due_date} />
-              <InfoRow icon={MessageSquare} label="Language" value={parentRequest.language} />
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{match.caregiver_synopsis}</p>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 italic">No additional details available for this match.</p>
+            <p className="text-sm text-gray-500 italic">No summary available for this match.</p>
+          )}
+          
+          {match.status === "matched" && (
+            <p className="text-xs text-gray-500 mt-3 italic">
+              Contact details will be shared once the parent confirms the match.
+            </p>
           )}
         </CardContent>
       )}
