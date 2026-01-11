@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,11 +12,35 @@ serve(async (req) => {
   }
 
   try {
-    const { request } = await req.json();
+    const body = await req.json();
+    
+    // Support both { request: {...} } and { requestId: "..." }
+    let request = body.request;
+    
+    if (!request && body.requestId) {
+      // Fetch the request from database
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      const { data, error } = await supabase
+        .from("parent_requests")
+        .select("*")
+        .eq("id", body.requestId)
+        .single();
+      
+      if (error || !data) {
+        return new Response(
+          JSON.stringify({ error: "Parent request not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      request = data;
+    }
     
     if (!request) {
       return new Response(
-        JSON.stringify({ error: "Request data is required" }),
+        JSON.stringify({ error: "Request data or requestId is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
