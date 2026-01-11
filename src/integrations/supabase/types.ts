@@ -533,7 +533,7 @@ export type Database = {
           caregiver_preferences: string | null
           created_at: string
           due_date: string | null
-          email: string
+          email: string | null
           family_context: string | null
           first_name: string
           general_availability: string | null
@@ -557,7 +557,7 @@ export type Database = {
           caregiver_preferences?: string | null
           created_at?: string
           due_date?: string | null
-          email: string
+          email?: string | null
           family_context?: string | null
           first_name: string
           general_availability?: string | null
@@ -581,7 +581,7 @@ export type Database = {
           caregiver_preferences?: string | null
           created_at?: string
           due_date?: string | null
-          email?: string
+          email?: string | null
           family_context?: string | null
           first_name?: string
           general_availability?: string | null
