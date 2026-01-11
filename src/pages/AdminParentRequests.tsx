@@ -571,7 +571,7 @@ const AdminParentRequests = () => {
 
       if (msgError) throw msgError;
 
-      // Send email + SMS notification to caregiver
+      // Send email + SMS notification to caregiver (this is a match notification)
       const { error: emailError } = await supabase.functions.invoke(
         "send-message-notification",
         {
@@ -580,6 +580,7 @@ const AdminParentRequests = () => {
             messageContent: messageContent,
             senderType: "admin",
             synopsis: synopsis,
+            notificationType: "match", // This is a new match notification
           },
         }
       );
