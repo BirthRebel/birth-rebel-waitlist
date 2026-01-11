@@ -16,6 +16,7 @@ interface NotificationRequest {
   conversationId: string;
   messageContent: string;
   senderType: "admin" | "caregiver";
+  synopsis?: string | null;
 }
 
 // Generate a random temporary password
@@ -84,7 +85,7 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { conversationId, messageContent, senderType }: NotificationRequest = await req.json();
+    const { conversationId, messageContent, senderType, synopsis }: NotificationRequest = await req.json();
 
     console.log(`Processing notification for conversation ${conversationId}, sender: ${senderType}`);
 
@@ -327,9 +328,11 @@ serve(async (req: Request): Promise<Response> => {
     // Send SMS notification to caregiver if admin sent the message and phone is available
     let smsSent = false;
     if (senderType === "admin" && recipientPhone) {
+      // Build SMS with synopsis if available
+      const synopsisText = synopsis ? `\n\nBrief: ${synopsis}` : "";
       const smsMessage = isNewAccount && tempPassword
-        ? `Hi ${recipientName}! You have a new message on Birth Rebel. Your login details have been sent to your email. Log in to view: https://birthrebel.com/caregiver-auth - Birth Rebel`
-        : `Hi ${recipientName}! You have a new message on Birth Rebel. Log in to view and reply: https://birthrebel.com/caregiver-auth - Birth Rebel`;
+        ? `Hi ${recipientName}! You've been matched with a family on Birth Rebel.${synopsisText}\n\nYour login details have been sent to your email. Log in: https://birthrebel.com/caregiver-auth - Birth Rebel`
+        : `Hi ${recipientName}! You've been matched with a family on Birth Rebel.${synopsisText}\n\nLog in to view details and reply: https://birthrebel.com/caregiver-auth - Birth Rebel`;
       
       smsSent = await sendSMS(recipientPhone, smsMessage);
       console.log(`SMS notification ${smsSent ? 'sent' : 'failed'} to ${recipientPhone}`);
