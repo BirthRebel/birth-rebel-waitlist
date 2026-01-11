@@ -19,122 +19,21 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload = await req.json();
-    console.log('Received Formless webhook payload:', JSON.stringify(payload, null, 2));
+    console.log('=== FORMLESS WEBHOOK RECEIVED ===');
+    console.log('Full payload:', JSON.stringify(payload, null, 2));
 
-    // Extract data from Formless payload
-    // Formless typically sends data in 'answers' array or flat object
+    // Formless by Typeform uses similar structure to Typeform webhooks
+    // Check for form_response structure (Typeform/Formless style)
+    if (payload.form_response) {
+      console.log('Processing Typeform/Formless style payload');
+      return await processTypeformPayload(supabase, payload);
+    }
+
+    // Check for direct answers array or data object (alternative Formless format)
     const answers = payload.answers || payload.data || payload;
+    console.log('Processing alternative format, answers:', JSON.stringify(answers, null, 2));
     
-    // Map Formless fields to our parent_requests schema
-    // Based on user's Formless form questions:
-    // 1. First name
-    // 2. Stage of your journey
-    // 3. Due date
-    // 4. Location
-    // 5. Type of support
-    // 6. Preferences (caregiver preferences)
-    // 7. Family context
-    // 8. Shared identity requests
-    // 9. General availability
-    // 10. Specific concerns
-    // 11. Email & Phone
-    
-    const parentRequest = {
-      first_name: extractField(answers, [
-        'first_name', 'firstName', 'name', 'First Name', 'first name',
-        'What is your first name', 'Your name'
-      ]),
-      email: extractField(answers, [
-        'email', 'Email', 'email_address', 'emailAddress',
-        'Your email', 'Email address', 'e-mail'
-      ]),
-      phone: extractField(answers, [
-        'phone', 'Phone', 'phone_number', 'phoneNumber', 'telephone',
-        'Phone number', 'Contact number', 'mobile'
-      ]),
-      stage_of_journey: extractField(answers, [
-        'stage_of_journey', 'stageOfJourney', 'Stage of your journey',
-        'stage', 'journey stage', 'pregnancy stage', 'current stage',
-        'Where are you in your journey'
-      ]),
-      due_date: extractDateField(answers, [
-        'due_date', 'dueDate', 'Due Date', 'expected_date', 'expectedDate',
-        'due date', 'Expected due date', 'When is your due date',
-        'baby due date', 'delivery date'
-      ]),
-      location: extractField(answers, [
-        'location', 'Location', 'city', 'area', 'postcode', 'address',
-        'Where are you located', 'Your location', 'town', 'region'
-      ]),
-      support_type: extractField(answers, [
-        'support_type', 'supportType', 'Support Type', 'type_of_support',
-        'Type of support', 'What type of support', 'support needed',
-        'type of care', 'care type'
-      ]),
-      caregiver_preferences: extractField(answers, [
-        'caregiver_preferences', 'caregiverPreferences', 'Preferences',
-        'preferences', 'caregiver preferences', 'provider preferences',
-        'What are your preferences', 'Important qualities'
-      ]),
-      family_context: extractField(answers, [
-        'family_context', 'familyContext', 'Family context',
-        'family situation', 'household', 'family details',
-        'Tell us about your family', 'family background'
-      ]),
-      shared_identity_requests: extractField(answers, [
-        'shared_identity_requests', 'sharedIdentityRequests',
-        'Shared identity requests', 'shared identity', 'identity preferences',
-        'community', 'cultural preferences', 'identity',
-        'Shared identity or community'
-      ]),
-      general_availability: extractField(answers, [
-        'general_availability', 'generalAvailability', 'General availability',
-        'availability', 'schedule', 'available times', 'preferred times',
-        'Days and times', 'weekdays', 'weekends', 'When are you available'
-      ]),
-      specific_concerns: extractField(answers, [
-        'specific_concerns', 'specificConcerns', 'Specific concerns',
-        'concerns', 'challenges', 'worries', 'issues',
-        'Concerns or challenges', 'pregnancy concerns', 'parenthood concerns'
-      ]),
-      status: 'new'
-    };
-
-    console.log('Parsed parent request:', parentRequest);
-
-    // Validate required fields
-    if (!parentRequest.email || !parentRequest.first_name) {
-      console.error('Missing required fields: email or first_name');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Missing required fields: email and first_name are required',
-          received_fields: Object.keys(parentRequest).filter(k => parentRequest[k as keyof typeof parentRequest])
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Insert into parent_requests table
-    const { data, error } = await supabase
-      .from('parent_requests')
-      .insert(parentRequest)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error inserting parent request:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Successfully created parent request:', data);
-
-    return new Response(
-      JSON.stringify({ success: true, id: data.id }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return await processSimplePayload(supabase, answers, payload);
 
   } catch (error) {
     console.error('Webhook error:', error);
@@ -145,70 +44,202 @@ serve(async (req) => {
   }
 });
 
-// Helper function to extract field value from various possible field names
-function extractField(answers: any, possibleNames: string[]): string | null {
-  if (!answers) return null;
+// Process Typeform-style payload (form_response with definition and answers)
+async function processTypeformPayload(supabase: any, payload: any) {
+  const formResponse = payload.form_response;
+  const answers = formResponse.answers || [];
+  const definition = formResponse.definition || {};
+  const fields = definition.fields || [];
   
-  // If answers is an array (common Formless format)
-  if (Array.isArray(answers)) {
-    for (const answer of answers) {
-      const fieldId = answer.field_id || answer.fieldId || answer.id || answer.name;
-      const value = answer.value || answer.answer || answer.text || answer.response;
-      const title = answer.title || answer.question || answer.label;
-      
-      // Check if any possible name matches the field ID or title
-      if (possibleNames.some(name => {
-        const nameLower = name.toLowerCase();
-        return (
-          fieldId?.toLowerCase().includes(nameLower) ||
-          fieldId?.toLowerCase() === nameLower ||
-          title?.toLowerCase().includes(nameLower) ||
-          title?.toLowerCase() === nameLower
-        );
-      })) {
-        // Handle array values (multiple choice)
-        if (Array.isArray(value)) {
-          return value.join(', ');
-        }
-        return value;
-      }
+  // Build a map of field ID -> field title
+  const fieldMap: Record<string, string> = {};
+  for (const field of fields) {
+    if (field.id && field.title) {
+      fieldMap[field.id] = field.title.toLowerCase();
     }
   }
+  console.log('Field map:', JSON.stringify(fieldMap, null, 2));
+
+  // Extract answers by matching field titles
+  const extractedData: Record<string, string> = {};
   
-  // If answers is an object
-  if (typeof answers === 'object') {
-    for (const name of possibleNames) {
-      // Direct match
-      if (answers[name] !== undefined && answers[name] !== null) {
-        const val = answers[name];
-        return Array.isArray(val) ? val.join(', ') : val;
-      }
-      
-      // Check case-insensitive
-      const key = Object.keys(answers).find(k => 
-        k.toLowerCase() === name.toLowerCase() ||
-        k.toLowerCase().includes(name.toLowerCase())
-      );
-      if (key && answers[key] !== undefined && answers[key] !== null) {
-        const val = answers[key];
-        return Array.isArray(val) ? val.join(', ') : val;
-      }
+  for (const answer of answers) {
+    const fieldId = answer.field?.id;
+    const fieldTitle = fieldMap[fieldId] || '';
+    
+    // Get the answer value based on type
+    let value = '';
+    if (answer.type === 'text') value = answer.text;
+    else if (answer.type === 'email') value = answer.email;
+    else if (answer.type === 'phone_number') value = answer.phone_number;
+    else if (answer.type === 'number') value = String(answer.number);
+    else if (answer.type === 'boolean') value = answer.boolean ? 'yes' : 'no';
+    else if (answer.type === 'choice') value = answer.choice?.label || '';
+    else if (answer.type === 'choices') value = answer.choices?.labels?.join(', ') || '';
+    else if (answer.type === 'date') value = answer.date;
+    
+    console.log(`Answer - field: ${fieldId}, title: "${fieldTitle}", type: ${answer.type}, value: "${value}"`);
+    
+    if (fieldTitle && value) {
+      extractedData[fieldTitle] = value;
     }
   }
+
+  console.log('Extracted data:', JSON.stringify(extractedData, null, 2));
+
+  // Map extracted data to parent_requests fields using intelligent matching
+  const parentRequest = mapToParentRequest(extractedData);
   
-  return null;
+  return await saveParentRequest(supabase, parentRequest);
 }
 
-// Helper function to extract and parse date fields
-function extractDateField(answers: any, possibleNames: string[]): string | null {
-  const value = extractField(answers, possibleNames);
+// Process simpler payload format
+async function processSimplePayload(supabase: any, answers: any, fullPayload: any) {
+  const extractedData: Record<string, string> = {};
+  
+  // If answers is an array (common conversational form format)
+  if (Array.isArray(answers)) {
+    for (const answer of answers) {
+      const question = (answer.question || answer.title || answer.field || answer.name || '').toLowerCase();
+      const value = answer.answer || answer.value || answer.text || answer.response || '';
+      if (question && value) {
+        extractedData[question] = value;
+      }
+    }
+  } 
+  // If answers is an object with key-value pairs
+  else if (typeof answers === 'object') {
+    for (const [key, val] of Object.entries(answers)) {
+      if (val && typeof val === 'string') {
+        extractedData[key.toLowerCase()] = val;
+      } else if (val && typeof val === 'object') {
+        // Handle nested objects
+        const value = (val as any).answer || (val as any).value || (val as any).text || '';
+        if (value) {
+          extractedData[key.toLowerCase()] = value;
+        }
+      }
+    }
+  }
+
+  console.log('Extracted data from simple format:', JSON.stringify(extractedData, null, 2));
+
+  const parentRequest = mapToParentRequest(extractedData);
+  
+  return await saveParentRequest(supabase, parentRequest);
+}
+
+// Intelligent mapping from extracted question/answer data to parent_requests fields
+function mapToParentRequest(data: Record<string, string>) {
+  const result: Record<string, any> = {
+    status: 'new'
+  };
+
+  for (const [question, answer] of Object.entries(data)) {
+    const q = question.toLowerCase();
+    
+    // First name
+    if (q.includes('your name') || q.includes('first name') || q === 'name') {
+      // Extract first name from answer if not already set
+      if (!result.first_name) {
+        result.first_name = answer.split(' ')[0]; // Take first word as first name
+      }
+    }
+    
+    // Email - specifically look for email-related questions
+    if (q.includes('email address') || q.includes('your email') || q === 'email') {
+      // Validate it looks like an email
+      if (answer.includes('@')) {
+        result.email = answer;
+      }
+    }
+    
+    // Phone - specifically look for phone-related questions
+    if (q.includes('phone number') || q.includes('contact you') || q.includes('telephone') || q === 'phone') {
+      // Basic phone validation (contains digits)
+      if (/\d{6,}/.test(answer.replace(/\D/g, ''))) {
+        result.phone = answer;
+      }
+    }
+    
+    // Stage of journey
+    if (q.includes('postpartum') || q.includes('pregnancy') || q.includes('how far along') || q.includes('stage')) {
+      result.stage_of_journey = answer;
+    }
+    
+    // Support type - look for specific question about type of support
+    if (q.includes('type of support') || q.includes('looking for') && (q.includes('doula') || q.includes('lactation') || q.includes('sleep') || q.includes('hypnobirthing'))) {
+      result.support_type = answer;
+    }
+    
+    // Family context
+    if (q.includes('birth') && q.includes('family') || q.includes('family context') || q.includes('relationship status') || q.includes('other children')) {
+      result.family_context = answer;
+    }
+    
+    // Caregiver preferences
+    if (q.includes('preferences') && (q.includes('caregiver') || q.includes('personality') || q.includes('experience'))) {
+      result.caregiver_preferences = answer;
+    }
+    
+    // Preferred communication
+    if (q.includes('communication') || q.includes('text') && q.includes('phone') && q.includes('video')) {
+      result.preferred_communication = answer;
+    }
+    
+    // Shared identity requests
+    if (q.includes('identity') || q.includes('ethnicity') || q.includes('gender') || q.includes('orientation')) {
+      result.shared_identity_requests = answer;
+    }
+    
+    // Budget
+    if (q.includes('budget')) {
+      result.budget = answer;
+    }
+    
+    // General availability
+    if (q.includes('availability') || q.includes('days and times') || q.includes('weekdays') || q.includes('weekends')) {
+      result.general_availability = answer;
+    }
+    
+    // Specific concerns
+    if (q.includes('concerns') || q.includes('challenges') || q.includes('issues')) {
+      result.specific_concerns = answer;
+    }
+    
+    // Due date
+    if (q.includes('due date') || q.includes('expected')) {
+      result.due_date = parseDateField(answer);
+    }
+    
+    // Location
+    if (q.includes('located') || q.includes('location') || q === 'city' || q === 'area') {
+      result.location = answer;
+    }
+    
+    // Language
+    if (q.includes('language') && !q.includes('cultural')) {
+      result.language = answer;
+    }
+    
+    // Special requirements
+    if (q.includes('special') && q.includes('requirement')) {
+      result.special_requirements = answer;
+    }
+  }
+
+  console.log('Mapped parent request:', JSON.stringify(result, null, 2));
+  return result;
+}
+
+// Parse date from various formats
+function parseDateField(value: string): string | null {
   if (!value) return null;
   
   try {
-    // Try parsing various date formats
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+      return date.toISOString().split('T')[0];
     }
     
     // Try UK format DD/MM/YYYY
@@ -227,4 +258,47 @@ function extractDateField(answers: any, possibleNames: string[]): string | null 
   }
   
   return null;
+}
+
+// Save parent request to database
+async function saveParentRequest(supabase: any, parentRequest: Record<string, any>) {
+  // Validate required fields
+  if (!parentRequest.email && !parentRequest.first_name) {
+    console.error('Missing required fields: email or first_name');
+    console.log('Parent request data:', JSON.stringify(parentRequest, null, 2));
+    return new Response(
+      JSON.stringify({ 
+        error: 'Missing required fields: email or first_name are required',
+        received_data: parentRequest
+      }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // If we have first_name but no valid email, use a placeholder
+  if (!parentRequest.email && parentRequest.first_name) {
+    console.warn('No valid email found, parent request will need manual email update');
+  }
+
+  // Insert into parent_requests table
+  const { data, error } = await supabase
+    .from('parent_requests')
+    .insert(parentRequest)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error inserting parent request:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('Successfully created parent request:', data);
+
+  return new Response(
+    JSON.stringify({ success: true, id: data.id }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 }
