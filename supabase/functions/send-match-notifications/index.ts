@@ -19,6 +19,8 @@ interface MatchNotificationRequest {
   parentFirstName: string;
   parentPhone: string | null;
   supportType: string;
+  synopsis: string | null;
+  caregiverLoginUrl: string;
 }
 
 async function sendSMS(to: string, message: string): Promise<boolean> {
@@ -83,6 +85,8 @@ serve(async (req) => {
       parentFirstName,
       parentPhone,
       supportType,
+      synopsis,
+      caregiverLoginUrl,
     }: MatchNotificationRequest = await req.json();
 
     const results = {
@@ -152,7 +156,8 @@ serve(async (req) => {
 
     // 2. Send SMS to caregiver if phone available
     if (caregiverPhone) {
-      const caregiverSMSMessage = `Hi ${caregiverFirstName || "there"}! Great news - you have a new match on Birth Rebel with ${parentFirstName} for ${supportType} support. We'll be in touch with details. - Birth Rebel`;
+      const synopsisText = synopsis ? `\n\nBrief: ${synopsis}` : "";
+      const caregiverSMSMessage = `Hi ${caregiverFirstName || "there"}! Great news - you've been matched with a family on Birth Rebel!${synopsisText}\n\n${parentFirstName} is now reviewing their match. Once approved, we'll connect you via the platform to start your journey together.\n\nSet up your login: ${caregiverLoginUrl}\n\n- Birth Rebel`;
       results.caregiverSMS = await sendSMS(caregiverPhone, caregiverSMSMessage);
     }
 
