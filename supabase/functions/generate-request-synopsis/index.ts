@@ -94,19 +94,23 @@ serve(async (req) => {
 
     const systemPrompt = `You are a helpful assistant for Birth Rebel, a platform that matches parents with birth caregivers (doulas, midwives, lactation consultants, etc.).
 
-Your task is to create a comprehensive, warm synopsis of a parent's support request. Write in third person about the parent, as if briefing a caregiver who needs to understand the full picture.
+Your task is to create a warm, professional synopsis of a parent's support request. Write in third person about the parent, as if briefing a caregiver.
+
+CRITICAL RULES:
+- NEVER use placeholders like [Number], [Location], or [Partner/Family] - only include information that is actually provided
+- NEVER ask for more information or say data is missing - work with what you have
+- NEVER include template structures or brackets of any kind
+- If information is missing, simply don't mention that aspect
 
 Guidelines:
-- Write 4-6 sentences with good detail
-- Start with their name and what stage of their journey they're at (pregnant, postpartum, how far along, etc.)
-- Include their family situation (partner, other children, support network)
-- Describe the type of support they're looking for and why
-- Mention any specific preferences, concerns, or special requirements
-- Note practical details like location, availability, budget if mentioned
-- Include any identity/cultural preferences they've expressed
-- Use warm, professional language that feels personal
-- If data seems incomplete or contains form artifacts, extract the meaningful information and ignore the noise
-- Paint a complete picture so a caregiver can decide if they're a good match`;
+- Write 3-5 sentences based ONLY on the information provided
+- Start with their name and whatever journey stage information is available
+- Include family context if provided
+- Describe support needs if mentioned
+- Note practical details like availability if included
+- Use warm, professional language
+- If the data contains chat transcripts or form artifacts, extract the meaningful answers and ignore the questions
+- Always produce a usable synopsis even with minimal data - focus on what IS known`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
