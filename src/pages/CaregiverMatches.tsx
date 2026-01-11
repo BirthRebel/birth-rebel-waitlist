@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CaregiverMessagesPanel } from "@/components/messaging/CaregiverMessagesPanel";
+import { MatchCard } from "@/components/caregiver/MatchCard";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -15,12 +16,35 @@ interface Match {
   support_type: string;
   status: "matched" | "booked" | "closed";
   created_at: string;
+  caregiver_synopsis?: string | null;
+}
+
+interface ParentRequest {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  email: string;
+  phone: string | null;
+  location: string | null;
+  support_type: string | null;
+  stage_of_journey: string | null;
+  family_context: string | null;
+  caregiver_preferences: string | null;
+  preferred_communication: string | null;
+  shared_identity_requests: string | null;
+  budget: string | null;
+  general_availability: string | null;
+  specific_concerns: string | null;
+  special_requirements: string | null;
+  due_date: string | null;
+  language: string | null;
 }
 
 const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [parentRequests, setParentRequests] = useState<Record<string, ParentRequest>>({});
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -131,17 +155,37 @@ const CaregiverMatches = () => {
 
       setCaregiverId(caregiver.id);
 
-      // Fetch matches for this caregiver
+      // Fetch matches for this caregiver (including caregiver_synopsis)
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
-        .select("*")
+        .select("id, parent_first_name, parent_email, support_type, status, created_at, caregiver_synopsis")
         .eq("caregiver_id", caregiver.id)
         .order("created_at", { ascending: false });
 
       if (matchesError) {
         console.error("Matches fetch error:", matchesError);
       } else {
-        setMatches((matchesData || []) as Match[]);
+        const typedMatches = (matchesData || []) as Match[];
+        setMatches(typedMatches);
+
+        // Fetch parent requests for each match by email
+        if (typedMatches.length > 0) {
+          const emails = typedMatches.map(m => m.parent_email);
+          const { data: requestsData, error: requestsError } = await supabase
+            .from("parent_requests")
+            .select("*")
+            .in("email", emails);
+
+          if (requestsError) {
+            console.error("Parent requests fetch error:", requestsError);
+          } else if (requestsData) {
+            const requestsMap: Record<string, ParentRequest> = {};
+            requestsData.forEach((req) => {
+              requestsMap[req.email] = req as ParentRequest;
+            });
+            setParentRequests(requestsMap);
+          }
+        }
       }
     } catch (error: any) {
       console.error("Error fetching data:", error);
@@ -155,18 +199,6 @@ const CaregiverMatches = () => {
     navigate("/");
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "matched":
-        return "bg-yellow-100 text-yellow-800";
-      case "booked":
-        return "bg-green-100 text-green-800";
-      case "closed":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-blue-100 text-blue-800";
-    }
-  };
 
   if (loading) {
     return (
@@ -209,37 +241,14 @@ const CaregiverMatches = () => {
               <p style={{ color: '#36454F' }}>No matches yet. Check back soon!</p>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead style={{ backgroundColor: '#DED9CD' }}>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Parent</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Support Type</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold" style={{ color: '#36454F' }}>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matches.map((match) => (
-                    <tr key={match.id} className="border-t border-gray-200">
-                      <td className="px-4 py-4" style={{ color: '#36454F' }}>
-                        {match.parent_first_name}
-                      </td>
-                      <td className="px-4 py-4 capitalize" style={{ color: '#36454F' }}>
-                        {match.support_type}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadgeColor(match.status)}`}>
-                          {match.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4" style={{ color: '#36454F' }}>
-                        {new Date(match.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {matches.map((match) => (
+                <MatchCard 
+                  key={match.id} 
+                  match={match} 
+                  parentRequest={parentRequests[match.parent_email] || null}
+                />
+              ))}
             </div>
           )}
         </div>
