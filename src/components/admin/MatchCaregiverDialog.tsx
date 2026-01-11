@@ -158,8 +158,6 @@ export const MatchCaregiverDialog = ({
 
       // Send automatic notifications (email + SMS)
       try {
-        const caregiverLoginUrl = `${window.location.origin}/caregiver-auth`;
-        
         const { error: notifyError } = await supabase.functions.invoke("send-match-notifications", {
           body: {
             caregiverEmail: selectedCaregiver.email,
@@ -170,7 +168,6 @@ export const MatchCaregiverDialog = ({
             parentPhone: parentData?.phone || null,
             supportType: parentRequest.support_type || "general support",
             synopsis: synopsis,
-            caregiverLoginUrl: caregiverLoginUrl,
           },
         });
 
