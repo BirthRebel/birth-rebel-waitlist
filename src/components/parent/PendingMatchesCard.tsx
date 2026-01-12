@@ -7,6 +7,7 @@ import { Heart, CheckCircle, XCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { DeclineMatchDialog } from "./DeclineMatchDialog";
+import { MatchMessaging } from "@/components/messaging/MatchMessaging";
 
 interface Match {
   id: string;
@@ -16,6 +17,7 @@ interface Match {
   caregiver_synopsis: string | null;
   decline_reason: string | null;
   reviewed_at: string | null;
+  meeting_link?: string | null;
 }
 
 interface PendingMatchesCardProps {
@@ -134,7 +136,8 @@ export function PendingMatchesCard({ parentEmail }: PendingMatchesCardProps) {
   }
 
   const pendingMatches = matches.filter(m => m.status === "matched");
-  const otherMatches = matches.filter(m => m.status !== "matched");
+  const bookedMatches = matches.filter(m => m.status === "booked");
+  const otherMatches = matches.filter(m => m.status !== "matched" && m.status !== "booked");
 
   return (
     <>
@@ -197,6 +200,51 @@ export function PendingMatchesCard({ parentEmail }: PendingMatchesCardProps) {
                     {actionLoading === match.id ? "Processing..." : "Approve Match"}
                   </Button>
                 </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Booked Matches - with messaging */}
+      {bookedMatches.length > 0 && (
+        <Card className="border-2 border-green-500/20 mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-green-600" />
+              Your Matched Caregiver{bookedMatches.length > 1 ? "s" : ""}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {bookedMatches.map((match) => (
+              <div key={match.id} className="border rounded-lg p-4 bg-white">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="font-semibold capitalize">{match.support_type} Support</p>
+                    <p className="text-sm text-muted-foreground">
+                      Confirmed on {format(new Date(match.reviewed_at || match.created_at), "PPP")}
+                    </p>
+                  </div>
+                  {getStatusBadge(match.status)}
+                </div>
+
+                {match.caregiver_synopsis && (
+                  <div className="bg-green-50 rounded-lg p-4 mb-4 border border-green-100">
+                    <p className="text-sm font-medium mb-2">Your Caregiver</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {match.caregiver_synopsis}
+                    </p>
+                  </div>
+                )}
+
+                {/* Messaging and Video Call */}
+                <MatchMessaging
+                  matchId={match.id}
+                  senderEmail={parentEmail}
+                  senderType="parent"
+                  matchStatus={match.status}
+                  initialMeetingLink={match.meeting_link}
+                />
               </div>
             ))}
           </CardContent>

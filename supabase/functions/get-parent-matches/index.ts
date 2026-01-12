@@ -35,7 +35,8 @@ serve(async (req) => {
         created_at,
         caregiver_synopsis,
         decline_reason,
-        reviewed_at
+        reviewed_at,
+        meeting_link
       `)
       .eq("parent_email", email.toLowerCase())
       .order("created_at", { ascending: false });
