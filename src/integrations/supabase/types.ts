@@ -449,6 +449,7 @@ export type Database = {
           created_at: string
           decline_reason: string | null
           id: string
+          meeting_link: string | null
           parent_email: string
           parent_first_name: string
           reviewed_at: string | null
@@ -461,6 +462,7 @@ export type Database = {
           created_at?: string
           decline_reason?: string | null
           id?: string
+          meeting_link?: string | null
           parent_email: string
           parent_first_name: string
           reviewed_at?: string | null
@@ -473,6 +475,7 @@ export type Database = {
           created_at?: string
           decline_reason?: string | null
           id?: string
+          meeting_link?: string | null
           parent_email?: string
           parent_first_name?: string
           reviewed_at?: string | null

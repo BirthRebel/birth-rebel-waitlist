@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Calendar, User, MapPin, Phone, Mail, MessageSquare, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { MatchMessaging } from "@/components/messaging/MatchMessaging";
 
 interface ParentRequest {
   id: string;
@@ -33,11 +34,13 @@ interface MatchCardProps {
     status: "matched" | "booked" | "closed";
     created_at: string;
     caregiver_synopsis?: string | null;
+    meeting_link?: string | null;
   };
   parentRequest?: ParentRequest | null;
+  caregiverEmail?: string;
 }
 
-export const MatchCard = ({ match, parentRequest }: MatchCardProps) => {
+export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const getStatusBadgeColor = (status: string) => {
@@ -129,6 +132,17 @@ export const MatchCard = ({ match, parentRequest }: MatchCardProps) => {
             <p className="text-xs text-gray-500 mt-3 italic">
               Contact details will be shared once the parent confirms the match.
             </p>
+          )}
+
+          {/* Messaging and Video Call - only for booked matches */}
+          {match.status === "booked" && caregiverEmail && (
+            <MatchMessaging
+              matchId={match.id}
+              senderEmail={caregiverEmail}
+              senderType="caregiver"
+              matchStatus={match.status}
+              initialMeetingLink={match.meeting_link}
+            />
           )}
         </CardContent>
       )}

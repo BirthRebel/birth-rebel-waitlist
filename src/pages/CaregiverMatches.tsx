@@ -17,6 +17,7 @@ interface Match {
   status: "matched" | "booked" | "closed";
   created_at: string;
   caregiver_synopsis?: string | null;
+  meeting_link?: string | null;
 }
 
 interface ParentRequest {
@@ -43,6 +44,7 @@ interface ParentRequest {
 const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
+  const [caregiverEmail, setCaregiverEmail] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [parentRequests, setParentRequests] = useState<Record<string, ParentRequest>>({});
   const [loading, setLoading] = useState(true);
@@ -133,7 +135,7 @@ const CaregiverMatches = () => {
       // Query with explicit user_id filter
       const { data: caregiver, error: caregiverError } = await supabase
         .from("caregivers")
-        .select("id")
+        .select("id, email")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -154,11 +156,12 @@ const CaregiverMatches = () => {
       }
 
       setCaregiverId(caregiver.id);
+      setCaregiverEmail(caregiver.email);
 
-      // Fetch matches for this caregiver (including caregiver_synopsis)
+      // Fetch matches for this caregiver (including caregiver_synopsis and meeting_link)
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
-        .select("id, parent_first_name, parent_email, support_type, status, created_at, caregiver_synopsis")
+        .select("id, parent_first_name, parent_email, support_type, status, created_at, caregiver_synopsis, meeting_link")
         .eq("caregiver_id", caregiver.id)
         .order("created_at", { ascending: false });
 
@@ -247,6 +250,7 @@ const CaregiverMatches = () => {
                   key={match.id} 
                   match={match} 
                   parentRequest={parentRequests[match.parent_email] || null}
+                  caregiverEmail={caregiverEmail || undefined}
                 />
               ))}
             </div>
