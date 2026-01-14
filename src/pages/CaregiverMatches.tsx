@@ -286,7 +286,7 @@ const CaregiverMatches = () => {
 
           {/* Messages Section */}
           <div className="mb-8">
-            <CaregiverMessagesPanel />
+            <CaregiverMessagesPanel caregiverId={caregiverId || undefined} />
           </div>
 
           {/* Matches Section - Collapsible */}

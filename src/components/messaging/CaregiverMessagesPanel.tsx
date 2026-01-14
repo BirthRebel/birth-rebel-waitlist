@@ -21,7 +21,11 @@ interface Message {
   read_at: string | null;
 }
 
-export const CaregiverMessagesPanel = () => {
+interface CaregiverMessagesPanelProps {
+  caregiverId?: string;
+}
+
+export const CaregiverMessagesPanel = ({ caregiverId }: CaregiverMessagesPanelProps) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,8 +35,12 @@ export const CaregiverMessagesPanel = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchConversations();
-  }, []);
+    if (caregiverId) {
+      fetchConversations();
+    } else {
+      setLoading(false);
+    }
+  }, [caregiverId]);
 
   // Real-time subscription for messages
   useEffect(() => {
@@ -64,10 +72,14 @@ export const CaregiverMessagesPanel = () => {
   }, [selectedConversation?.id]);
 
   const fetchConversations = async () => {
+    if (!caregiverId) return;
+    
     try {
+      // Only fetch conversations where this caregiver is a participant
       const { data, error } = await supabase
         .from("conversations")
         .select("*")
+        .eq("caregiver_id", caregiverId)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
