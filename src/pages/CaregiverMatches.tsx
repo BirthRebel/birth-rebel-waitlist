@@ -256,9 +256,14 @@ const CaregiverMatches = () => {
             <h1 className="text-3xl font-bold" style={{ color: '#E2725B' }}>
               My Dashboard
             </h1>
-            <Button variant="outline" onClick={handleLogout}>
-              Log Out
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate("/caregiver/profile")}>
+                My Profile
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>
+                Log Out
+              </Button>
+            </div>
           </div>
 
           {/* Messages Section */}

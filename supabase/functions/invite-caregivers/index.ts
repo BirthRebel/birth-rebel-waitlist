@@ -97,7 +97,7 @@ serve(async (req) => {
       try {
         console.log(`Inviting caregiver: ${caregiver.email}`);
         
-        // Use inviteUserByEmail to send invite
+        // Use inviteUserByEmail to send invite - redirect to profile page
         const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
           caregiver.email,
           {
@@ -106,7 +106,7 @@ serve(async (req) => {
               last_name: caregiver.last_name,
               caregiver_id: caregiver.id,
             },
-            redirectTo: `${supabaseUrl.replace('.supabase.co', '')}/caregiver/matches`,
+            redirectTo: `https://birth-rebel-waitlist.lovable.app/caregiver/profile`,
           }
         );
 

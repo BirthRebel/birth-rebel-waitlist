@@ -1,0 +1,584 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Upload, User, Calendar, FileText, CreditCard, Check } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+
+interface CaregiverProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  phone: string | null;
+  pronouns: string | null;
+  city_town: string | null;
+  country: string | null;
+  bio: string | null;
+  hourly_rate: number | null;
+  doula_package_rate: number | null;
+  profile_photo_url: string | null;
+  insurance_certificate_expires: string | null;
+  insurance_certificate_url: string | null;
+  training_certificate_url: string | null;
+  training_certificate_expires: string | null;
+  dbs_certificate_url: string | null;
+  dbs_certificate_expires: string | null;
+  is_doula: boolean | null;
+  is_private_midwife: boolean | null;
+  is_lactation_consultant: boolean | null;
+  is_sleep_consultant: boolean | null;
+  is_hypnobirthing_coach: boolean | null;
+  is_bereavement_councillor: boolean | null;
+  years_practicing: string | null;
+  births_supported: string | null;
+  profile_completed_at: string | null;
+}
+
+const CaregiverProfilePage = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<CaregiverProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Form state
+  const [bio, setBio] = useState("");
+  const [hourlyRate, setHourlyRate] = useState("");
+  const [doulaPackageRate, setDoulaPackageRate] = useState("");
+  const [insuranceExpires, setInsuranceExpires] = useState("");
+
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+      } else {
+        navigate("/caregiver/auth", { replace: true });
+      }
+    };
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        navigate("/caregiver/auth", { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("caregivers")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error loading profile",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data) {
+        toast({
+          title: "No caregiver profile found",
+          description: "Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setProfile(data as CaregiverProfile);
+      setBio(data.bio || "");
+      setHourlyRate(data.hourly_rate?.toString() || "");
+      setDoulaPackageRate(data.doula_package_rate?.toString() || "");
+      setInsuranceExpires(data.insurance_certificate_expires || "");
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile) return;
+
+    // Validate file type and size
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${profile.id}/profile.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("caregiver-photos")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("caregiver-photos")
+        .getPublicUrl(filePath);
+
+      // Update profile with new photo URL
+      const { error: updateError } = await supabase
+        .from("caregivers")
+        .update({ profile_photo_url: publicUrl })
+        .eq("id", profile.id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, profile_photo_url: publicUrl });
+      toast({
+        title: "Photo uploaded!",
+        description: "Your profile photo has been updated.",
+      });
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      toast({
+        title: "Upload failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+
+    // Validate required fields
+    if (!bio.trim()) {
+      toast({
+        title: "Bio required",
+        description: "Please add a short bio about yourself.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hourlyRate || parseFloat(hourlyRate) <= 0) {
+      toast({
+        title: "Hourly rate required",
+        description: "Please enter your hourly rate.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (profile.is_doula && (!doulaPackageRate || parseFloat(doulaPackageRate) <= 0)) {
+      toast({
+        title: "Doula package rate required",
+        description: "As a doula, please enter your full support package rate.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!insuranceExpires) {
+      toast({
+        title: "Insurance expiry required",
+        description: "Please enter your insurance certificate expiry date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profile.profile_photo_url) {
+      toast({
+        title: "Profile photo required",
+        description: "Please upload a profile photo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updateData: Record<string, unknown> = {
+        bio: bio.trim(),
+        hourly_rate: parseFloat(hourlyRate),
+        insurance_certificate_expires: insuranceExpires,
+        profile_completed_at: new Date().toISOString(),
+      };
+
+      if (profile.is_doula) {
+        updateData.doula_package_rate = parseFloat(doulaPackageRate);
+      }
+
+      const { error } = await supabase
+        .from("caregivers")
+        .update(updateData)
+        .eq("id", profile.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile saved!",
+        description: "Your profile has been updated successfully.",
+      });
+
+      // Navigate to matches page
+      navigate("/caregiver/matches");
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast({
+        title: "Error saving profile",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
+  const getRoles = () => {
+    if (!profile) return [];
+    const roles = [];
+    if (profile.is_doula) roles.push("Doula");
+    if (profile.is_private_midwife) roles.push("Private Midwife");
+    if (profile.is_lactation_consultant) roles.push("Lactation Consultant");
+    if (profile.is_sleep_consultant) roles.push("Sleep Consultant");
+    if (profile.is_hypnobirthing_coach) roles.push("Hypnobirthing Coach");
+    if (profile.is_bereavement_councillor) roles.push("Bereavement Counsellor");
+    return roles;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center pt-32">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center pt-32">
+          <p className="text-muted-foreground">No profile found.</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const isProfileComplete = profile.profile_completed_at;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1 pt-32 pb-16 px-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-primary">
+                {isProfileComplete ? "My Profile" : "Complete Your Profile"}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                {isProfileComplete 
+                  ? "Update your information anytime" 
+                  : "Please add the following information to complete your profile"}
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              Log Out
+            </Button>
+          </div>
+
+          {/* Pre-populated info card */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-600" />
+                Your Information (from intake)
+              </CardTitle>
+              <CardDescription>This information was populated from your registration</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground text-sm">Name</Label>
+                  <p className="font-medium">{profile.first_name} {profile.last_name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Email</Label>
+                  <p className="font-medium">{profile.email}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Phone</Label>
+                  <p className="font-medium">{profile.phone || "Not provided"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Location</Label>
+                  <p className="font-medium">{[profile.city_town, profile.country].filter(Boolean).join(", ") || "Not provided"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Experience</Label>
+                  <p className="font-medium">{profile.years_practicing || "Not specified"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Births Supported</Label>
+                  <p className="font-medium">{profile.births_supported || "Not specified"}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground text-sm">Roles</Label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {getRoles().map((role) => (
+                    <Badge key={role} variant="secondary">{role}</Badge>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Required fields */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Required Information
+              </CardTitle>
+              <CardDescription>Please complete all fields below</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Photo */}
+              <div>
+                <Label className="flex items-center gap-2 mb-2">
+                  <User className="h-4 w-4" />
+                  Profile Photo *
+                </Label>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={profile.profile_photo_url || undefined} />
+                    <AvatarFallback className="text-lg">
+                      {profile.first_name?.[0]}{profile.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <label htmlFor="photo-upload">
+                      <Button 
+                        variant="outline" 
+                        asChild 
+                        disabled={uploadingPhoto}
+                        className="cursor-pointer"
+                      >
+                        <span>
+                          {uploadingPhoto ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          {profile.profile_photo_url ? "Change Photo" : "Upload Photo"}
+                        </span>
+                      </Button>
+                    </label>
+                    <input
+                      id="photo-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Max 5MB, JPG or PNG</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <Label htmlFor="bio" className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4" />
+                  Short Bio *
+                </Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell parents a bit about yourself, your approach to care, and what makes you passionate about supporting families..."
+                  className="min-h-[120px]"
+                  maxLength={500}
+                />
+                <p className="text-xs text-muted-foreground mt-1">{bio.length}/500 characters</p>
+              </div>
+
+              {/* Hourly Rate */}
+              <div>
+                <Label htmlFor="hourly-rate" className="flex items-center gap-2 mb-2">
+                  <CreditCard className="h-4 w-4" />
+                  Hourly Rate (£) *
+                </Label>
+                <Input
+                  id="hourly-rate"
+                  type="number"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  placeholder="e.g. 45"
+                  min="0"
+                  step="0.01"
+                  className="max-w-[200px]"
+                />
+              </div>
+
+              {/* Doula Package Rate - only show if they are a doula */}
+              {profile.is_doula && (
+                <div>
+                  <Label htmlFor="doula-rate" className="flex items-center gap-2 mb-2">
+                    <CreditCard className="h-4 w-4" />
+                    Full Birth Support Package Rate (£) *
+                  </Label>
+                  <Input
+                    id="doula-rate"
+                    type="number"
+                    value={doulaPackageRate}
+                    onChange={(e) => setDoulaPackageRate(e.target.value)}
+                    placeholder="e.g. 1500"
+                    min="0"
+                    step="0.01"
+                    className="max-w-[200px]"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Your rate for full birth support package</p>
+                </div>
+              )}
+
+              {/* Insurance Expiry */}
+              <div>
+                <Label htmlFor="insurance-expires" className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4" />
+                  Insurance Certificate Expiry Date *
+                </Label>
+                <Input
+                  id="insurance-expires"
+                  type="date"
+                  value={insuranceExpires}
+                  onChange={(e) => setInsuranceExpires(e.target.value)}
+                  className="max-w-[200px]"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Certifications */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Certificates on File</CardTitle>
+              <CardDescription>These were uploaded during your intake</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {profile.training_certificate_url && (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <span>Training Certificate</span>
+                    {profile.training_certificate_expires && (
+                      <Badge variant="outline" className="text-xs">
+                        Expires: {new Date(profile.training_certificate_expires).toLocaleDateString()}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                {profile.insurance_certificate_url && (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <span>Insurance Certificate</span>
+                  </div>
+                )}
+                {profile.dbs_certificate_url && (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-600" />
+                    <span>DBS Certificate</span>
+                  </div>
+                )}
+                {!profile.training_certificate_url && !profile.insurance_certificate_url && !profile.dbs_certificate_url && (
+                  <p className="text-muted-foreground text-sm">No certificates on file. Contact admin to upload.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Save Button */}
+          <div className="flex gap-4">
+            <Button 
+              onClick={handleSaveProfile} 
+              disabled={saving}
+              size="lg"
+              className="flex-1"
+            >
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isProfileComplete ? "Save Changes" : "Complete Profile & Continue"}
+            </Button>
+            {isProfileComplete && (
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/caregiver/matches")}
+                size="lg"
+              >
+                Go to Matches
+              </Button>
+            )}
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default CaregiverProfilePage;
