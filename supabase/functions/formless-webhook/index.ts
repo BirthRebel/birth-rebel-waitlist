@@ -42,16 +42,10 @@ serve(async (req) => {
   }
 
   try {
-    // Verify webhook token
-    if (!verifyWebhookToken(req)) {
-      console.error('Invalid or missing webhook token');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    console.log('Webhook token verified successfully');
+    // Note: Formless doesn't support adding token parameters to webhook URLs,
+    // so we rely on endpoint obscurity for basic security.
+    // For additional security, consider IP whitelisting at the infrastructure level.
+    console.log('Formless webhook received');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
