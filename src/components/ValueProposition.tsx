@@ -1,4 +1,4 @@
-import { Globe, Users, Calendar, Shield, MessageCircle } from "lucide-react";
+import { Globe, Users, Calendar, Shield, MessageCircle, Heart } from "lucide-react";
 
 export const ValueProposition = () => {
   const features = [
@@ -26,13 +26,18 @@ export const ValueProposition = () => {
       icon: MessageCircle,
       title: "On-platform messaging",
       description: "Stay connected with your care team through secure, convenient messaging"
+    },
+    {
+      icon: Heart,
+      title: "Doula, sleep & lactation",
+      description: "Access a range of specialists — from birth doulas to sleep consultants and lactation experts"
     }
   ];
 
   return (
     <section className="py-20 bg-value-bg">
       <div className="max-w-5xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
