@@ -40,8 +40,8 @@ serve(async (req) => {
       console.log("Found existing customer:", customerId);
     }
 
-    // Get origin from request or use default
-    const origin = req.headers.get("origin") || "https://birthrebel.com";
+    // Always use the published domain for redirects
+    const origin = "https://birth-rebel-waitlist.lovable.app";
 
     // Create a checkout session for the subscription
     const session = await stripe.checkout.sessions.create({
