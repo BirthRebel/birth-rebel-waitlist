@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -247,6 +248,7 @@ const generateCaregiverSummary = (request: ParentRequest): string => {
 };
 
 const AdminParentRequests = () => {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<ParentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1125,15 +1127,22 @@ const AdminParentRequests = () => {
                             <p className="text-xs text-muted-foreground mb-2">Match Status:</p>
                             <div className="flex flex-wrap gap-2">
                               {matchesByEmail[request.email].map((match) => (
-                                <div 
+                                <button 
                                   key={match.id}
-                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Navigate to caregivers page with search for this caregiver
+                                    const caregiverName = match.caregiver_first_name || '';
+                                    navigate(`/admin/caregivers?search=${encodeURIComponent(caregiverName)}`);
+                                  }}
+                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs cursor-pointer hover:opacity-80 transition-opacity ${
                                     match.status === 'approved' || match.status === 'booked'
                                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                       : match.status === 'declined'
                                       ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                   }`}
+                                  title={`Click to view ${match.caregiver_first_name || 'caregiver'}'s profile`}
                                 >
                                   {match.status === 'approved' || match.status === 'booked' ? (
                                     <CheckCircle className="h-3 w-3" />
@@ -1142,7 +1151,7 @@ const AdminParentRequests = () => {
                                   ) : (
                                     <AlertCircle className="h-3 w-3" />
                                   )}
-                                  <span className="font-medium">
+                                  <span className="font-medium underline">
                                     {match.caregiver_first_name || 'Caregiver'}
                                   </span>
                                   <span>
@@ -1155,7 +1164,7 @@ const AdminParentRequests = () => {
                                       ({match.decline_reason})
                                     </span>
                                   )}
-                                </div>
+                                </button>
                               ))}
                             </div>
                           </div>
