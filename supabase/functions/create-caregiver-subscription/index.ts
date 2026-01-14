@@ -6,7 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const CAREGIVER_SUBSCRIPTION_PRICE_ID = "price_1ScZg23ga4Czi574xacMfjl7";
+// Test price: £1/month (change back to price_1ScZg23ga4Czi574xacMfjl7 for production £25/month)
+const CAREGIVER_SUBSCRIPTION_PRICE_ID = "price_1SpXA23ga4Czi574gkmXMlkO";
 
 serve(async (req) => {
   // Handle CORS preflight requests
