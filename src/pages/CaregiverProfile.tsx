@@ -262,7 +262,7 @@ const CaregiverProfilePage = () => {
         births_supported: birthsSupported.trim() || null,
         bio: bio.trim(),
         hourly_rate: parseFloat(hourlyRate),
-        insurance_certificate_expires: insuranceExpires,
+        insurance_certificate_expires: insuranceExpires || null,
         profile_completed_at: new Date().toISOString(),
       };
 
