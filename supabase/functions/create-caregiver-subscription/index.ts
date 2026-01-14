@@ -54,8 +54,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/caregiver-matches?subscription=success`,
-      cancel_url: `${origin}/caregiver-matches?subscription=cancelled`,
+      success_url: `${origin}/caregiver/matches?subscription=success`,
+      cancel_url: `${origin}/caregiver/matches?subscription=cancelled`,
       metadata: {
         caregiver_email,
         caregiver_name: caregiver_name || "",
