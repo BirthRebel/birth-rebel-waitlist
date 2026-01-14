@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Upload, User, Calendar, FileText, CreditCard, Check } from "lucide-react";
+import { Loader2, Upload, User, Calendar, FileText, CreditCard, Check, ExternalLink } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface CaregiverProfile {
@@ -33,6 +33,10 @@ interface CaregiverProfile {
   training_certificate_expires: string | null;
   dbs_certificate_url: string | null;
   dbs_certificate_expires: string | null;
+  additional_certificate_1_url: string | null;
+  additional_certificate_1_expires: string | null;
+  additional_certificate_2_url: string | null;
+  additional_certificate_2_expires: string | null;
   is_doula: boolean | null;
   is_private_midwife: boolean | null;
   is_lactation_consultant: boolean | null;
@@ -51,7 +55,14 @@ const CaregiverProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Form state
+  // Form state - editable fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [cityTown, setCityTown] = useState("");
+  const [country, setCountry] = useState("");
+  const [yearsPracticing, setYearsPracticing] = useState("");
+  const [birthsSupported, setBirthsSupported] = useState("");
   const [bio, setBio] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
   const [doulaPackageRate, setDoulaPackageRate] = useState("");
@@ -116,6 +127,13 @@ const CaregiverProfilePage = () => {
       }
 
       setProfile(data as CaregiverProfile);
+      setFirstName(data.first_name || "");
+      setLastName(data.last_name || "");
+      setPhone(data.phone || "");
+      setCityTown(data.city_town || "");
+      setCountry(data.country || "");
+      setYearsPracticing(data.years_practicing || "");
+      setBirthsSupported(data.births_supported || "");
       setBio(data.bio || "");
       setHourlyRate(data.hourly_rate?.toString() || "");
       setDoulaPackageRate(data.doula_package_rate?.toString() || "");
@@ -242,6 +260,13 @@ const CaregiverProfilePage = () => {
     setSaving(true);
     try {
       const updateData: Record<string, unknown> = {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        phone: phone.trim() || null,
+        city_town: cityTown.trim() || null,
+        country: country.trim() || null,
+        years_practicing: yearsPracticing.trim() || null,
+        births_supported: birthsSupported.trim() || null,
         bio: bio.trim(),
         hourly_rate: parseFloat(hourlyRate),
         insurance_certificate_expires: insuranceExpires,
@@ -342,49 +367,93 @@ const CaregiverProfilePage = () => {
             </Button>
           </div>
 
-          {/* Pre-populated info card */}
+          {/* Personal Information - Editable */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Check className="h-5 w-5 text-green-600" />
-                Your Information (from intake)
+                <User className="h-5 w-5 text-primary" />
+                Personal Information
               </CardTitle>
-              <CardDescription>This information was populated from your registration</CardDescription>
+              <CardDescription>Update your contact details and experience</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground text-sm">Name</Label>
-                  <p className="font-medium">{profile.first_name} {profile.last_name}</p>
+                  <Label htmlFor="first-name">First Name *</Label>
+                  <Input
+                    id="first-name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Your first name"
+                  />
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-sm">Email</Label>
-                  <p className="font-medium">{profile.email}</p>
+                  <Label htmlFor="last-name">Last Name *</Label>
+                  <Input
+                    id="last-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Your last name"
+                  />
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-sm">Phone</Label>
-                  <p className="font-medium">{profile.phone || "Not provided"}</p>
+                  <Label className="text-muted-foreground text-sm">Email (read-only)</Label>
+                  <p className="font-medium text-sm py-2">{profile.email}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-sm">Location</Label>
-                  <p className="font-medium">{[profile.city_town, profile.country].filter(Boolean).join(", ") || "Not provided"}</p>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Your phone number"
+                  />
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-sm">Experience</Label>
-                  <p className="font-medium">{profile.years_practicing || "Not specified"}</p>
+                  <Label htmlFor="city-town">City/Town</Label>
+                  <Input
+                    id="city-town"
+                    value={cityTown}
+                    onChange={(e) => setCityTown(e.target.value)}
+                    placeholder="Your city or town"
+                  />
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-sm">Births Supported</Label>
-                  <p className="font-medium">{profile.births_supported || "Not specified"}</p>
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="Your country"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="years-practicing">Years Practicing</Label>
+                  <Input
+                    id="years-practicing"
+                    value={yearsPracticing}
+                    onChange={(e) => setYearsPracticing(e.target.value)}
+                    placeholder="e.g. 5 years"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="births-supported">Births Supported</Label>
+                  <Input
+                    id="births-supported"
+                    value={birthsSupported}
+                    onChange={(e) => setBirthsSupported(e.target.value)}
+                    placeholder="e.g. 50+"
+                  />
                 </div>
               </div>
               <div>
-                <Label className="text-muted-foreground text-sm">Roles</Label>
+                <Label className="text-muted-foreground text-sm">Your Roles</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {getRoles().map((role) => (
                     <Badge key={role} variant="secondary">{role}</Badge>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">Contact admin to update your roles</p>
               </div>
             </CardContent>
           </Card>
@@ -518,35 +587,136 @@ const CaregiverProfilePage = () => {
           {/* Certifications */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Certificates on File</CardTitle>
-              <CardDescription>These were uploaded during your intake</CardDescription>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Documents on File
+              </CardTitle>
+              <CardDescription>Documents uploaded during your intake. Contact admin to update.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {profile.training_certificate_url && (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span>Training Certificate</span>
-                    {profile.training_certificate_expires && (
-                      <Badge variant="outline" className="text-xs">
-                        Expires: {new Date(profile.training_certificate_expires).toLocaleDateString()}
-                      </Badge>
-                    )}
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Training Certificate</span>
+                      {profile.training_certificate_expires && (
+                        <Badge variant="outline" className="text-xs">
+                          Expires: {new Date(profile.training_certificate_expires).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                    <a
+                      href={profile.training_certificate_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
                   </div>
                 )}
                 {profile.insurance_certificate_url && (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span>Insurance Certificate</span>
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Insurance Certificate</span>
+                      {profile.insurance_certificate_expires && (
+                        <Badge variant="outline" className="text-xs">
+                          Expires: {new Date(profile.insurance_certificate_expires).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                    <a
+                      href={profile.insurance_certificate_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
                   </div>
                 )}
                 {profile.dbs_certificate_url && (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span>DBS Certificate</span>
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">DBS Certificate</span>
+                      {profile.dbs_certificate_expires && (
+                        <Badge variant="outline" className="text-xs">
+                          Expires: {new Date(profile.dbs_certificate_expires).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                    <a
+                      href={profile.dbs_certificate_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
                   </div>
                 )}
-                {!profile.training_certificate_url && !profile.insurance_certificate_url && !profile.dbs_certificate_url && (
+                {profile.additional_certificate_1_url && (
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Additional Certificate 1</span>
+                      {profile.additional_certificate_1_expires && (
+                        <Badge variant="outline" className="text-xs">
+                          Expires: {new Date(profile.additional_certificate_1_expires).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                    <a
+                      href={profile.additional_certificate_1_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+                {profile.additional_certificate_2_url && (
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Additional Certificate 2</span>
+                      {profile.additional_certificate_2_expires && (
+                        <Badge variant="outline" className="text-xs">
+                          Expires: {new Date(profile.additional_certificate_2_expires).toLocaleDateString()}
+                        </Badge>
+                      )}
+                    </div>
+                    <a
+                      href={profile.additional_certificate_2_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+                {profile.profile_photo_url && (
+                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Profile Photo</span>
+                    </div>
+                    <a
+                      href={profile.profile_photo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                    >
+                      View <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+                {!profile.training_certificate_url && !profile.insurance_certificate_url && !profile.dbs_certificate_url && !profile.additional_certificate_1_url && !profile.additional_certificate_2_url && (
                   <p className="text-muted-foreground text-sm">No certificates on file. Contact admin to upload.</p>
                 )}
               </div>
