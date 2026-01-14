@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -326,9 +327,10 @@ const FilterPopover = ({
 };
 
 const AdminCaregivers = () => {
+  const [searchParams] = useSearchParams();
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<FilterState>({});
   const [inviting, setInviting] = useState(false);
