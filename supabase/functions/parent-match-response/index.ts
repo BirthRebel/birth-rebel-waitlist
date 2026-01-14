@@ -18,6 +18,7 @@ interface MatchResponseRequest {
   action: "approve" | "decline";
   declineReason?: string;
   parentEmail: string;
+  accessToken?: string;
 }
 
 async function sendSMS(to: string, message: string): Promise<boolean> {
@@ -71,10 +72,10 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { matchId, action, declineReason, parentEmail }: MatchResponseRequest = await req.json();
+    const { matchId, action, declineReason, parentEmail, accessToken }: MatchResponseRequest = await req.json();
 
     if (!matchId || !action || !parentEmail) {
       return new Response(
@@ -88,6 +89,55 @@ serve(async (req) => {
         JSON.stringify({ error: "declineReason is required when declining" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Try JWT auth first (for logged-in users)
+    const authHeader = req.headers.get("Authorization");
+    let isAuthenticated = false;
+    let authenticatedEmail: string | null = null;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+
+      if (!claimsError && claimsData?.claims?.email) {
+        authenticatedEmail = claimsData.claims.email as string;
+        if (authenticatedEmail.toLowerCase() === parentEmail.toLowerCase()) {
+          isAuthenticated = true;
+        }
+      }
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // If not authenticated via JWT, require accessToken
+    if (!isAuthenticated) {
+      if (!accessToken) {
+        return new Response(
+          JSON.stringify({ error: "Authentication required - provide accessToken or log in" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify the access token
+      const { data: parentRequest, error: authError } = await supabase
+        .from("parent_requests")
+        .select("id, email")
+        .eq("email", parentEmail.toLowerCase())
+        .eq("access_token", accessToken)
+        .maybeSingle();
+
+      if (authError || !parentRequest) {
+        console.error("Token verification failed:", authError);
+        return new Response(
+          JSON.stringify({ error: "Unauthorized - invalid token" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Fetch the match with caregiver details

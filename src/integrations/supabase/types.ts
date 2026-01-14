@@ -547,6 +547,7 @@ export type Database = {
       }
       parent_requests: {
         Row: {
+          access_token: string | null
           budget: string | null
           caregiver_preferences: string | null
           created_at: string
@@ -571,6 +572,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_token?: string | null
           budget?: string | null
           caregiver_preferences?: string | null
           created_at?: string
@@ -595,6 +597,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_token?: string | null
           budget?: string | null
           caregiver_preferences?: string | null
           created_at?: string
