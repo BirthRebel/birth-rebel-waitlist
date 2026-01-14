@@ -1,26 +1,16 @@
-import { DollarSign, Video, Globe, Users, Calendar, Shield, MessageCircle, Clock } from "lucide-react";
+import { Globe, Users, Calendar, Shield, MessageCircle } from "lucide-react";
 
 export const ValueProposition = () => {
   const features = [
     {
-      icon: DollarSign,
-      title: "More affordable",
-      description: "Affordable, continuous care at a fraction of in-person support prices"
-    },
-    {
-      icon: Video,
-      title: "Video and messaging",
-      description: "Fully virtual: video calls, scheduling, and secure messaging all in-platform"
-    },
-    {
       icon: Globe,
       title: "No geographical barriers",
-      description: "Accessible anywhere, anytime — breaking down location constraints"
+      description: "Accessible anywhere, anytime — breaking down location constraints with fully virtual care"
     },
     {
       icon: Users,
       title: "Expert matching",
-      description: "Intelligent pairing with certified doulas and specialists for your needs"
+      description: "Intelligent pairing with certified doulas and specialists tailored to your unique needs"
     },
     {
       icon: Calendar,
@@ -34,29 +24,15 @@ export const ValueProposition = () => {
     },
     {
       icon: MessageCircle,
-      title: "Continuous support",
-      description: "Stay connected with your care team throughout your maternal journey"
-    },
-    {
-      icon: Clock,
-      title: "24/7 availability",
-      description: "Access support when you need it most, day or night"
+      title: "On-platform messaging",
+      description: "Stay connected with your care team through secure, convenient messaging"
     }
   ];
 
   return (
     <section className="py-20 bg-value-bg">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            What's Coming soon.
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            We're building a fully virtual end-to-end maternity care platform, making quality maternal care accessible, affordable, and available to every mother.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
