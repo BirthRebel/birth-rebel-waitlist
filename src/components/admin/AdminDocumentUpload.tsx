@@ -5,7 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, Check, ExternalLink, FileText } from "lucide-react";
+import { Upload, Loader2, Check, ExternalLink, FileText, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type ExpiryStatus = "expired" | "expiring_soon" | "valid" | "no_date";
+
+const getExpiryStatus = (expiryDate: string | null): ExpiryStatus => {
+  if (!expiryDate) return "no_date";
+  
+  const now = new Date();
+  const expires = new Date(expiryDate);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  if (expires < now) return "expired";
+  if (expires <= endOfMonth) return "expiring_soon";
+  return "valid";
+};
 
 interface AdminDocumentUploadProps {
   caregiverId: string;
@@ -128,16 +143,36 @@ export const AdminDocumentUpload = ({
     }
   };
 
+  const expiryStatus = getExpiryStatus(expiryDate);
+
   return (
-    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50 gap-2">
+    <div className={cn(
+      "flex items-center justify-between p-2 rounded-lg gap-2 border",
+      expiryStatus === "expired" && "bg-red-100 dark:bg-red-950/30 border-red-300 dark:border-red-800",
+      expiryStatus === "expiring_soon" && "bg-amber-100 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800",
+      expiryStatus === "valid" && "bg-muted/50 border-transparent",
+      expiryStatus === "no_date" && "bg-muted/50 border-transparent"
+    )}>
       <div className="flex flex-col min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {currentUrl ? (
-            <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+            expiryStatus === "expired" ? (
+              <AlertTriangle className="h-3 w-3 text-red-600 flex-shrink-0" />
+            ) : expiryStatus === "expiring_soon" ? (
+              <AlertTriangle className="h-3 w-3 text-amber-600 flex-shrink-0" />
+            ) : (
+              <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+            )
           ) : (
             <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
           )}
           <span className="text-xs font-medium truncate">{label}</span>
+          {expiryStatus === "expired" && (
+            <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4">Expired</Badge>
+          )}
+          {expiryStatus === "expiring_soon" && (
+            <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[10px] px-1 py-0 h-4">Expiring</Badge>
+          )}
         </div>
         {currentUrl && (
           <a
@@ -156,7 +191,11 @@ export const AdminDocumentUpload = ({
           type="date"
           value={localExpiry}
           onChange={(e) => setLocalExpiry(e.target.value)}
-          className="h-7 text-xs w-28"
+          className={cn(
+            "h-7 text-xs w-28",
+            expiryStatus === "expired" && "border-red-400 dark:border-red-600",
+            expiryStatus === "expiring_soon" && "border-amber-400 dark:border-amber-600"
+          )}
           onBlur={handleExpiryUpdate}
         />
         <label>
