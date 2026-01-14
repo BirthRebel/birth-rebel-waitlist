@@ -31,7 +31,7 @@ interface MatchCardProps {
     parent_first_name: string;
     parent_email: string;
     support_type: string;
-    status: "matched" | "booked" | "closed";
+    status: string;
     created_at: string;
     caregiver_synopsis?: string | null;
     meeting_link?: string | null;
@@ -134,8 +134,8 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
             </p>
           )}
 
-          {/* Messaging and Video Call - only for booked matches */}
-          {match.status === "booked" && caregiverEmail && (
+          {/* Messaging and Video Call - for booked or approved matches */}
+          {["booked", "approved"].includes(match.status) && caregiverEmail && (
             <MatchMessaging
               matchId={match.id}
               senderEmail={caregiverEmail}

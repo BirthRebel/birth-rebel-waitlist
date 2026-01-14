@@ -78,7 +78,7 @@ serve(async (req) => {
         JSON.stringify({ 
           messages: [], 
           meeting_link: match.meeting_link,
-          can_message: match.status === "booked"
+          can_message: ["booked", "approved"].includes(match.status)
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -103,7 +103,7 @@ serve(async (req) => {
       JSON.stringify({ 
         messages: messages || [], 
         meeting_link: match.meeting_link,
-        can_message: match.status === "booked"
+        can_message: ["booked", "approved"].includes(match.status)
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

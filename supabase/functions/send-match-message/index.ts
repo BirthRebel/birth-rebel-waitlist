@@ -48,10 +48,10 @@ serve(async (req) => {
       );
     }
 
-    // Only allow messaging for booked matches
-    if (match.status !== "booked") {
+    // Only allow messaging for booked or approved matches
+    if (!["booked", "approved"].includes(match.status)) {
       return new Response(
-        JSON.stringify({ error: "Messaging is only available for confirmed (booked) matches" }),
+        JSON.stringify({ error: "Messaging is only available for confirmed matches" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
