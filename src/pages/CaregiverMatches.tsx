@@ -52,22 +52,54 @@ const CaregiverMatches = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check for subscription success/cancel from URL params
+  // Check for subscription success/cancel from URL params and auto-book matches
   useEffect(() => {
     const subscription = searchParams.get("subscription");
-    if (subscription === "success") {
-      toast({
-        title: "Subscription activated!",
-        description: "Thank you for subscribing. You can now receive matches.",
-      });
-    } else if (subscription === "cancelled") {
-      toast({
-        title: "Subscription cancelled",
-        description: "Your subscription was not completed.",
-        variant: "destructive",
-      });
-    }
-  }, [searchParams, toast]);
+    
+    const autoBookMatches = async () => {
+      if (subscription === "success" && caregiverEmail) {
+        try {
+          const { data, error } = await supabase.functions.invoke("auto-book-matches", {
+            body: { caregiver_email: caregiverEmail },
+          });
+
+          if (error) {
+            console.error("Auto-book error:", error);
+            toast({
+              title: "Subscription activated!",
+              description: "Thank you for subscribing. You can now receive matches.",
+            });
+          } else if (data?.booked_count > 0) {
+            toast({
+              title: "You're all set! 🎉",
+              description: `Your subscription is active and ${data.booked_count} match(es) have been confirmed. You can now message your matched parent(s).`,
+            });
+            // Refresh matches to show updated status
+            fetchCaregiverData();
+          } else {
+            toast({
+              title: "Subscription activated!",
+              description: "Thank you for subscribing. You can now receive matches.",
+            });
+          }
+        } catch (err) {
+          console.error("Auto-book error:", err);
+          toast({
+            title: "Subscription activated!",
+            description: "Thank you for subscribing. You can now receive matches.",
+          });
+        }
+      } else if (subscription === "cancelled") {
+        toast({
+          title: "Subscription cancelled",
+          description: "Your subscription was not completed.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    autoBookMatches();
+  }, [searchParams, caregiverEmail, toast]);
 
   useEffect(() => {
     let isMounted = true;
