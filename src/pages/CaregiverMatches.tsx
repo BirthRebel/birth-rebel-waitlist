@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { CaregiverMessagesPanel } from "@/components/messaging/CaregiverMessagesPanel";
+
 import { MatchCard } from "@/components/caregiver/MatchCard";
 import { Users, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -283,11 +283,6 @@ const CaregiverMatches = () => {
               <ChevronDown className="h-5 w-5 text-muted-foreground rotate-[-90deg]" />
             </div>
           </button>
-
-          {/* Messages Section */}
-          <div className="mb-8">
-            <CaregiverMessagesPanel caregiverId={caregiverId || undefined} />
-          </div>
 
           {/* Matches Section - Collapsible */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
