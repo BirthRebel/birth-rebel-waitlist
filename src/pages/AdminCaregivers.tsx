@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+// Accordion not currently used but may be needed for future features
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar, Save, Loader2, ExternalLink, PoundSterling } from "lucide-react";
 import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
+import { AdminDocumentUpload } from "@/components/admin/AdminDocumentUpload";
 
 interface Caregiver {
   id: string;
@@ -935,39 +936,53 @@ const AdminCaregivers = () => {
                           </div>
                         )}
 
-                        {/* Documents Section */}
+                        {/* Documents Section - Admin Upload */}
                         <div className="col-span-full border-t pt-4 mt-4">
                           <h4 className="font-medium text-sm flex items-center gap-2 text-foreground mb-3">
                             <FileCheck className="h-4 w-4 text-primary" />
-                            Documents & Certifications
+                            Documents & Certifications (Admin Upload)
                           </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {documentConfig.map((doc) => {
-                              const url = caregiver[doc.urlField as keyof Caregiver] as string | null;
-                              const expires = caregiver[doc.expiresField as keyof Caregiver] as string | null;
-                              const status = getDocumentStatus(url, expires);
-                              
-                              return (
-                                <div key={doc.key} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                                  <div className="flex flex-col">
-                                    <span className="text-sm font-medium">{doc.label}</span>
-                                    {expires && (
-                                      <span className="text-xs text-muted-foreground">
-                                        Expires: {new Date(expires).toLocaleDateString()}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {url && (
-                                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
-                                        View <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    )}
-                                    {getDocumentStatusBadge(status, expires)}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            <AdminDocumentUpload
+                              caregiverId={caregiver.id}
+                              documentType="training"
+                              label="Training"
+                              currentUrl={caregiver.training_certificate_url}
+                              expiryDate={caregiver.training_certificate_expires}
+                              onUploadComplete={fetchCaregivers}
+                            />
+                            <AdminDocumentUpload
+                              caregiverId={caregiver.id}
+                              documentType="insurance"
+                              label="Insurance"
+                              currentUrl={caregiver.insurance_certificate_url}
+                              expiryDate={caregiver.insurance_certificate_expires}
+                              onUploadComplete={fetchCaregivers}
+                            />
+                            <AdminDocumentUpload
+                              caregiverId={caregiver.id}
+                              documentType="dbs"
+                              label="DBS"
+                              currentUrl={caregiver.dbs_certificate_url}
+                              expiryDate={caregiver.dbs_certificate_expires}
+                              onUploadComplete={fetchCaregivers}
+                            />
+                            <AdminDocumentUpload
+                              caregiverId={caregiver.id}
+                              documentType="additional1"
+                              label="Additional 1"
+                              currentUrl={caregiver.additional_certificate_1_url}
+                              expiryDate={caregiver.additional_certificate_1_expires}
+                              onUploadComplete={fetchCaregivers}
+                            />
+                            <AdminDocumentUpload
+                              caregiverId={caregiver.id}
+                              documentType="additional2"
+                              label="Additional 2"
+                              currentUrl={caregiver.additional_certificate_2_url}
+                              expiryDate={caregiver.additional_certificate_2_expires}
+                              onUploadComplete={fetchCaregivers}
+                            />
                           </div>
                         </div>
                         <div className="pt-4 border-t mt-4">
