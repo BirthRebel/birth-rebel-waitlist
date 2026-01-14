@@ -18,11 +18,8 @@ export const HeroSection = () => {
         </p>
         
         <div className="mb-8 max-w-2xl mx-auto">
-          <p className="text-2xl md:text-3xl font-semibold mb-3" style={{ color: '#DED9CD' }}>
-            We're in pilot
-          </p>
           <p className="text-lg md:text-xl" style={{ color: '#36454F' }}>
-            We're building out the full platform, but in the meantime, use our matching tool, to find and connect with a caregiver. We'll ask you a few questions which will take about 5 minutes. This will help us to understand what you are looking for. Our current roster includes doulas, lactation consultants, hypnobirthing teachers and sleep experts.
+            Click the button below to connect with a caregiver. We'll ask you a few questions which will take about 5 minutes. This will help us to understand what you are looking for. Our current roster includes doulas, lactation consultants, hypnobirthing teachers and sleep experts.
           </p>
         </div>
         
