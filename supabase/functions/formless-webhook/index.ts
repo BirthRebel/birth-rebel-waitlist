@@ -42,10 +42,16 @@ serve(async (req) => {
   }
 
   try {
-    // Note: Formless doesn't support adding token parameters to webhook URLs,
-    // so we rely on endpoint obscurity for basic security.
-    // For additional security, consider IP whitelisting at the infrastructure level.
-    console.log('Formless webhook received');
+    // Verify webhook token
+    if (!verifyWebhookToken(req)) {
+      console.error('Invalid or missing webhook token');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Webhook token verified successfully');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -304,7 +310,7 @@ function parseDateField(value: string): string | null {
   return null;
 }
 
-// Save parent request to database with deduplication
+// Save parent request to database
 async function saveParentRequest(supabase: any, parentRequest: Record<string, any>) {
   // Validate required fields
   if (!parentRequest.email && !parentRequest.first_name) {
@@ -322,37 +328,6 @@ async function saveParentRequest(supabase: any, parentRequest: Record<string, an
   // If we have first_name but no valid email, use a placeholder
   if (!parentRequest.email && parentRequest.first_name) {
     console.warn('No valid email found, parent request will need manual email update');
-  }
-
-  // Deduplication: Check for existing requests with same first_name and email within last 10 minutes
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-  
-  let duplicateQuery = supabase
-    .from('parent_requests')
-    .select('id, created_at')
-    .eq('first_name', parentRequest.first_name)
-    .gte('created_at', tenMinutesAgo);
-  
-  // If email exists, also match on email for stronger dedup
-  if (parentRequest.email) {
-    duplicateQuery = duplicateQuery.eq('email', parentRequest.email);
-  }
-  
-  const { data: existingRequests, error: checkError } = await duplicateQuery;
-  
-  if (checkError) {
-    console.error('Error checking for duplicates:', checkError);
-    // Continue with insert even if duplicate check fails
-  } else if (existingRequests && existingRequests.length > 0) {
-    console.log('Duplicate request detected, skipping insert. Existing request:', existingRequests[0]);
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        id: existingRequests[0].id, 
-        message: 'Duplicate request detected, returning existing entry' 
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   }
 
   // Insert into parent_requests table
