@@ -84,12 +84,20 @@ serve(async (req) => {
       );
     }
 
-    // Fetch messages
-    const { data: messages, error: messagesError } = await supabase
+    // Fetch messages - filter out admin messages for caregivers
+    // Caregivers should only see caregiver and parent messages, not admin messages
+    let messagesQuery = supabase
       .from("messages")
       .select("id, content, sender_type, created_at, read_at")
       .eq("conversation_id", conversation.id)
       .order("created_at", { ascending: true });
+
+    // If sender is a caregiver, exclude admin messages
+    if (sender_type === "caregiver") {
+      messagesQuery = messagesQuery.in("sender_type", ["caregiver", "parent"]);
+    }
+
+    const { data: messages, error: messagesError } = await messagesQuery;
 
     if (messagesError) {
       console.error("Error fetching messages:", messagesError);
