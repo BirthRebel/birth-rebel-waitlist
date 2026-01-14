@@ -44,7 +44,10 @@ import {
   Clock,
   Baby,
   Globe,
-  Sparkles
+  Sparkles,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { MatchCaregiverDialog } from "@/components/admin/MatchCaregiverDialog";
@@ -72,6 +75,17 @@ interface ParentRequest {
   budget: string | null;
   general_availability: string | null;
   specific_concerns: string | null;
+}
+
+interface Match {
+  id: string;
+  caregiver_id: string;
+  parent_email: string;
+  status: string;
+  decline_reason: string | null;
+  reviewed_at: string | null;
+  caregiver_first_name?: string;
+  caregiver_last_name?: string;
 }
 
 const getStatusColor = (status: string) => {
@@ -251,6 +265,7 @@ const AdminParentRequests = () => {
   const [messagePanelRequest, setMessagePanelRequest] = useState<ParentRequest | null>(null);
   const [synopses, setSynopses] = useState<Record<string, string>>({});
   const [loadingSynopsis, setLoadingSynopsis] = useState<string | null>(null);
+  const [matchesByEmail, setMatchesByEmail] = useState<Record<string, Match[]>>({});
   const [newRequest, setNewRequest] = useState({
     first_name: "",
     last_name: "",
@@ -620,6 +635,42 @@ const AdminParentRequests = () => {
       if (error) throw error;
 
       setRequests(data || []);
+      
+      // Fetch matches for all parent emails
+      if (data && data.length > 0) {
+        const emails = data.map(r => r.email).filter(Boolean);
+        const { data: matchesData, error: matchesError } = await supabase
+          .from("matches")
+          .select("id, caregiver_id, parent_email, status, decline_reason, reviewed_at")
+          .in("parent_email", emails);
+        
+        if (!matchesError && matchesData) {
+          // Get caregiver names
+          const caregiverIds = [...new Set(matchesData.map(m => m.caregiver_id))];
+          const { data: caregivers } = await supabase
+            .from("caregivers")
+            .select("id, first_name, last_name")
+            .in("id", caregiverIds);
+          
+          const caregiverMap = new Map(caregivers?.map(c => [c.id, c]) || []);
+          
+          // Group matches by parent email
+          const grouped: Record<string, Match[]> = {};
+          matchesData.forEach(match => {
+            const caregiver = caregiverMap.get(match.caregiver_id);
+            const enrichedMatch: Match = {
+              ...match,
+              caregiver_first_name: caregiver?.first_name || undefined,
+              caregiver_last_name: caregiver?.last_name || undefined,
+            };
+            if (!grouped[match.parent_email]) {
+              grouped[match.parent_email] = [];
+            }
+            grouped[match.parent_email].push(enrichedMatch);
+          });
+          setMatchesByEmail(grouped);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching parent requests:", error);
       toast({
@@ -1067,6 +1118,48 @@ const AdminParentRequests = () => {
                             </span>
                           )}
                         </div>
+
+                        {/* Match Status Display */}
+                        {matchesByEmail[request.email] && matchesByEmail[request.email].length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <p className="text-xs text-muted-foreground mb-2">Match Status:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {matchesByEmail[request.email].map((match) => (
+                                <div 
+                                  key={match.id}
+                                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+                                    match.status === 'approved' || match.status === 'booked'
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                      : match.status === 'declined'
+                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  }`}
+                                >
+                                  {match.status === 'approved' || match.status === 'booked' ? (
+                                    <CheckCircle className="h-3 w-3" />
+                                  ) : match.status === 'declined' ? (
+                                    <XCircle className="h-3 w-3" />
+                                  ) : (
+                                    <AlertCircle className="h-3 w-3" />
+                                  )}
+                                  <span className="font-medium">
+                                    {match.caregiver_first_name || 'Caregiver'}
+                                  </span>
+                                  <span>
+                                    {match.status === 'approved' ? 'Confirmed' : 
+                                     match.status === 'booked' ? 'Booked' :
+                                     match.status === 'declined' ? 'Declined' : 'Pending'}
+                                  </span>
+                                  {match.status === 'declined' && match.decline_reason && (
+                                    <span className="text-red-600 dark:text-red-400 truncate max-w-[100px]" title={match.decline_reason}>
+                                      ({match.decline_reason})
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
