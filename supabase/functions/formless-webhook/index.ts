@@ -6,6 +6,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Verify webhook token from URL query parameter
+function verifyWebhookToken(req: Request): boolean {
+  const url = new URL(req.url);
+  const token = url.searchParams.get('token');
+  const expectedToken = Deno.env.get('FORMLESS_WEBHOOK_TOKEN');
+  
+  if (!expectedToken) {
+    console.error('FORMLESS_WEBHOOK_TOKEN not configured');
+    return false;
+  }
+  
+  if (!token) {
+    console.error('No token provided in request URL');
+    return false;
+  }
+  
+  // Constant-time comparison to prevent timing attacks
+  if (token.length !== expectedToken.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < token.length; i++) {
+    result |= token.charCodeAt(i) ^ expectedToken.charCodeAt(i);
+  }
+  
+  return result === 0;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,6 +42,17 @@ serve(async (req) => {
   }
 
   try {
+    // Verify webhook token
+    if (!verifyWebhookToken(req)) {
+      console.error('Invalid or missing webhook token');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Webhook token verified successfully');
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
