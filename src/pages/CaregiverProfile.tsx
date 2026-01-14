@@ -239,14 +239,7 @@ const CaregiverProfilePage = () => {
       return;
     }
 
-    if (!insuranceExpires) {
-      toast({
-        title: "Insurance expiry required",
-        description: "Please enter your insurance certificate expiry date.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Insurance is optional - no validation needed
 
     if (!profile.profile_photo_url) {
       toast({
@@ -397,7 +390,7 @@ const CaregiverProfilePage = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-sm">Email (read-only)</Label>
+                  <Label className="text-muted-foreground text-sm">Email</Label>
                   <p className="font-medium text-sm py-2">{profile.email}</p>
                 </div>
                 <div>
@@ -571,7 +564,7 @@ const CaregiverProfilePage = () => {
               <div>
                 <Label htmlFor="insurance-expires" className="flex items-center gap-2 mb-2">
                   <Calendar className="h-4 w-4" />
-                  Insurance Certificate Expiry Date *
+                  Insurance Certificate Expiry Date (as applicable)
                 </Label>
                 <Input
                   id="insurance-expires"
