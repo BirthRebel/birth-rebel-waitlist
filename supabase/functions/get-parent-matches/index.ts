@@ -13,16 +13,65 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email } = await req.json();
+    const { email, access_token } = await req.json();
 
     if (!email) {
       return new Response(
-        JSON.stringify({ error: "Email is required" }),
+        JSON.stringify({ error: "email is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Try JWT auth first (for logged-in users)
+    const authHeader = req.headers.get("Authorization");
+    let isAuthenticated = false;
+    let authenticatedEmail: string | null = null;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+
+      if (!claimsError && claimsData?.claims?.email) {
+        authenticatedEmail = claimsData.claims.email as string;
+        if (authenticatedEmail.toLowerCase() === email.toLowerCase()) {
+          isAuthenticated = true;
+        }
+      }
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // If not authenticated via JWT, require access_token
+    if (!isAuthenticated) {
+      if (!access_token) {
+        return new Response(
+          JSON.stringify({ error: "Authentication required - provide access_token or log in" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify the access token
+      const { data: parentRequest, error: authError } = await supabase
+        .from("parent_requests")
+        .select("id, email")
+        .eq("email", email.toLowerCase())
+        .eq("access_token", access_token)
+        .maybeSingle();
+
+      if (authError || !parentRequest) {
+        console.error("Token verification failed:", authError);
+        return new Response(
+          JSON.stringify({ error: "Unauthorized - invalid token" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Fetch all matches for this parent email
