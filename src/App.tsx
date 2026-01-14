@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Auth from "./pages/Auth";
 import CaregiverAuth from "./pages/CaregiverAuth";
 import CaregiverMatches from "./pages/CaregiverMatches";
+import CaregiverProfile from "./pages/CaregiverProfile";
 import ParentDashboard from "./pages/ParentDashboard";
 import AdminImport from "./pages/AdminImport";
 import AdminCaregivers from "./pages/AdminCaregivers";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/caregiver/auth" element={<CaregiverAuth />} />
+          <Route path="/caregiver/profile" element={<CaregiverProfile />} />
           <Route path="/caregiver/matches" element={<CaregiverMatches />} />
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/admin/import" element={<AdminImport />} />

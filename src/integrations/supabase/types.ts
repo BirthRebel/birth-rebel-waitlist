@@ -72,6 +72,7 @@ export type Database = {
           avail_weekends_evenings: boolean | null
           avail_weekends_mornings: boolean | null
           avail_weekends_overnight: boolean | null
+          bio: string | null
           births_supported: string | null
           care_antenatal_planning: boolean | null
           care_birth_support: boolean | null
@@ -88,9 +89,11 @@ export type Database = {
           created_at: string
           dbs_certificate_expires: string | null
           dbs_certificate_url: string | null
+          doula_package_rate: number | null
           email: string
           first_name: string | null
           gdpr_consent: boolean | null
+          hourly_rate: number | null
           id: string
           insurance_certificate_expires: string | null
           insurance_certificate_url: string | null
@@ -113,6 +116,8 @@ export type Database = {
           offers_nutrition_support: boolean | null
           offers_postnatal_support: boolean | null
           phone: string | null
+          profile_completed_at: string | null
+          profile_photo_url: string | null
           pronouns: string | null
           services_other: string | null
           speaks_arabic: boolean | null
@@ -167,6 +172,7 @@ export type Database = {
           avail_weekends_evenings?: boolean | null
           avail_weekends_mornings?: boolean | null
           avail_weekends_overnight?: boolean | null
+          bio?: string | null
           births_supported?: string | null
           care_antenatal_planning?: boolean | null
           care_birth_support?: boolean | null
@@ -183,9 +189,11 @@ export type Database = {
           created_at?: string
           dbs_certificate_expires?: string | null
           dbs_certificate_url?: string | null
+          doula_package_rate?: number | null
           email: string
           first_name?: string | null
           gdpr_consent?: boolean | null
+          hourly_rate?: number | null
           id?: string
           insurance_certificate_expires?: string | null
           insurance_certificate_url?: string | null
@@ -208,6 +216,8 @@ export type Database = {
           offers_nutrition_support?: boolean | null
           offers_postnatal_support?: boolean | null
           phone?: string | null
+          profile_completed_at?: string | null
+          profile_photo_url?: string | null
           pronouns?: string | null
           services_other?: string | null
           speaks_arabic?: boolean | null
@@ -262,6 +272,7 @@ export type Database = {
           avail_weekends_evenings?: boolean | null
           avail_weekends_mornings?: boolean | null
           avail_weekends_overnight?: boolean | null
+          bio?: string | null
           births_supported?: string | null
           care_antenatal_planning?: boolean | null
           care_birth_support?: boolean | null
@@ -278,9 +289,11 @@ export type Database = {
           created_at?: string
           dbs_certificate_expires?: string | null
           dbs_certificate_url?: string | null
+          doula_package_rate?: number | null
           email?: string
           first_name?: string | null
           gdpr_consent?: boolean | null
+          hourly_rate?: number | null
           id?: string
           insurance_certificate_expires?: string | null
           insurance_certificate_url?: string | null
@@ -303,6 +316,8 @@ export type Database = {
           offers_nutrition_support?: boolean | null
           offers_postnatal_support?: boolean | null
           phone?: string | null
+          profile_completed_at?: string | null
+          profile_photo_url?: string | null
           pronouns?: string | null
           services_other?: string | null
           speaks_arabic?: boolean | null
