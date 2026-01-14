@@ -12,6 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Upload, User, Calendar, FileText, CreditCard, Check, ExternalLink } from "lucide-react";
+import { DocumentUpload } from "@/components/DocumentUpload";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface CaregiverProfile {
@@ -577,140 +578,83 @@ const CaregiverProfilePage = () => {
             </CardContent>
           </Card>
 
-          {/* Certifications */}
+          {/* Documents - Upload Section */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
-                Documents on File
+                Your Documents
               </CardTitle>
-              <CardDescription>Documents uploaded during your intake. Contact admin to update.</CardDescription>
+              <CardDescription>Upload or update your certificates and documents</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {profile.training_certificate_url && (
-                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">Training Certificate</span>
-                      {profile.training_certificate_expires && (
-                        <Badge variant="outline" className="text-xs">
-                          Expires: {new Date(profile.training_certificate_expires).toLocaleDateString()}
-                        </Badge>
-                      )}
-                    </div>
-                    <a
-                      href={profile.training_certificate_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline text-sm"
-                    >
-                      View <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-                {profile.insurance_certificate_url && (
-                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">Insurance Certificate</span>
-                      {profile.insurance_certificate_expires && (
-                        <Badge variant="outline" className="text-xs">
-                          Expires: {new Date(profile.insurance_certificate_expires).toLocaleDateString()}
-                        </Badge>
-                      )}
-                    </div>
-                    <a
-                      href={profile.insurance_certificate_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline text-sm"
-                    >
-                      View <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-                {profile.dbs_certificate_url && (
-                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">DBS Certificate</span>
-                      {profile.dbs_certificate_expires && (
-                        <Badge variant="outline" className="text-xs">
-                          Expires: {new Date(profile.dbs_certificate_expires).toLocaleDateString()}
-                        </Badge>
-                      )}
-                    </div>
-                    <a
-                      href={profile.dbs_certificate_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline text-sm"
-                    >
-                      View <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-                {profile.additional_certificate_1_url && (
-                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">Additional Certificate 1</span>
-                      {profile.additional_certificate_1_expires && (
-                        <Badge variant="outline" className="text-xs">
-                          Expires: {new Date(profile.additional_certificate_1_expires).toLocaleDateString()}
-                        </Badge>
-                      )}
-                    </div>
-                    <a
-                      href={profile.additional_certificate_1_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline text-sm"
-                    >
-                      View <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-                {profile.additional_certificate_2_url && (
-                  <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">Additional Certificate 2</span>
-                      {profile.additional_certificate_2_expires && (
-                        <Badge variant="outline" className="text-xs">
-                          Expires: {new Date(profile.additional_certificate_2_expires).toLocaleDateString()}
-                        </Badge>
-                      )}
-                    </div>
-                    <a
-                      href={profile.additional_certificate_2_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline text-sm"
-                    >
-                      View <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
+                <DocumentUpload
+                  caregiverId={profile.id}
+                  documentType="training"
+                  label="Training Certificate"
+                  currentUrl={profile.training_certificate_url}
+                  expiryDate={profile.training_certificate_expires}
+                  onUploadComplete={(url) => setProfile({ ...profile, training_certificate_url: url })}
+                  onExpiryChange={(date) => setProfile({ ...profile, training_certificate_expires: date })}
+                />
+                
+                <DocumentUpload
+                  caregiverId={profile.id}
+                  documentType="insurance"
+                  label="Insurance Certificate"
+                  currentUrl={profile.insurance_certificate_url}
+                  expiryDate={profile.insurance_certificate_expires}
+                  onUploadComplete={(url) => setProfile({ ...profile, insurance_certificate_url: url })}
+                  onExpiryChange={(date) => setProfile({ ...profile, insurance_certificate_expires: date })}
+                />
+                
+                <DocumentUpload
+                  caregiverId={profile.id}
+                  documentType="dbs"
+                  label="DBS Certificate"
+                  currentUrl={profile.dbs_certificate_url}
+                  expiryDate={profile.dbs_certificate_expires}
+                  onUploadComplete={(url) => setProfile({ ...profile, dbs_certificate_url: url })}
+                  onExpiryChange={(date) => setProfile({ ...profile, dbs_certificate_expires: date })}
+                />
+                
+                <DocumentUpload
+                  caregiverId={profile.id}
+                  documentType="additional1"
+                  label="Additional Certificate 1"
+                  currentUrl={profile.additional_certificate_1_url}
+                  expiryDate={profile.additional_certificate_1_expires}
+                  onUploadComplete={(url) => setProfile({ ...profile, additional_certificate_1_url: url })}
+                  onExpiryChange={(date) => setProfile({ ...profile, additional_certificate_1_expires: date })}
+                />
+                
+                <DocumentUpload
+                  caregiverId={profile.id}
+                  documentType="additional2"
+                  label="Additional Certificate 2"
+                  currentUrl={profile.additional_certificate_2_url}
+                  expiryDate={profile.additional_certificate_2_expires}
+                  onUploadComplete={(url) => setProfile({ ...profile, additional_certificate_2_url: url })}
+                  onExpiryChange={(date) => setProfile({ ...profile, additional_certificate_2_expires: date })}
+                />
+
+                {/* Profile Photo - View Only */}
                 {profile.profile_photo_url && (
                   <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
                     <div className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">Profile Photo</span>
+                      <span className="font-medium text-sm">Profile Photo</span>
                     </div>
                     <a
                       href={profile.profile_photo_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline text-sm"
+                      className="flex items-center gap-1 text-primary hover:underline text-xs"
                     >
                       View <ExternalLink className="h-3 w-3" />
                     </a>
                   </div>
-                )}
-                {!profile.training_certificate_url && !profile.insurance_certificate_url && !profile.dbs_certificate_url && !profile.additional_certificate_1_url && !profile.additional_certificate_2_url && (
-                  <p className="text-muted-foreground text-sm">No certificates on file. Contact admin to upload.</p>
                 )}
               </div>
             </CardContent>
