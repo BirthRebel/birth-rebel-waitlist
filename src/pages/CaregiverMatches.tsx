@@ -47,7 +47,7 @@ const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [caregiverEmail, setCaregiverEmail] = useState<string | null>(null);
-  const [matchesExpanded, setMatchesExpanded] = useState(false);
+  const [matchesExpanded, setMatchesExpanded] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
   const [parentRequests, setParentRequests] = useState<Record<string, ParentRequest>>({});
   const [loading, setLoading] = useState(true);
