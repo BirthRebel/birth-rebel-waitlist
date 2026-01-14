@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CaregiverMessagesPanel } from "@/components/messaging/CaregiverMessagesPanel";
 import { MatchCard } from "@/components/caregiver/MatchCard";
-import { Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
 
@@ -259,15 +259,29 @@ const CaregiverMatches = () => {
             <h1 className="text-3xl font-bold" style={{ color: '#E2725B' }}>
               My Dashboard
             </h1>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate("/caregiver/profile")}>
-                My Profile
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                Log Out
-              </Button>
-            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              Log Out
+            </Button>
           </div>
+
+          {/* My Profile Section - Prominent Card */}
+          <button
+            onClick={() => navigate("/caregiver/profile")}
+            className="w-full mb-6 bg-white rounded-lg shadow overflow-hidden hover:bg-accent/50 transition-colors"
+          >
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <UserIcon className="h-5 w-5" style={{ color: "#E2725B" }} />
+                <h2 className="text-lg font-semibold" style={{ color: "#36454F" }}>
+                  My Profile
+                </h2>
+                <span className="text-sm text-muted-foreground">
+                  View and edit your details
+                </span>
+              </div>
+              <ChevronDown className="h-5 w-5 text-muted-foreground rotate-[-90deg]" />
+            </div>
+          </button>
 
           {/* Messages Section */}
           <div className="mb-8">
