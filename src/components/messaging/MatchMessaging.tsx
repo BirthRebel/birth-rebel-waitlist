@@ -42,7 +42,7 @@ export const MatchMessaging = ({
   const { toast } = useToast();
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const canMessage = matchStatus === "booked";
+  const canMessage = ["booked", "approved"].includes(matchStatus);
 
   useEffect(() => {
     if (canMessage) {
