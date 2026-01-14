@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar } from "lucide-react";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar, Save, Loader2, ExternalLink, PoundSterling } from "lucide-react";
 import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 
 interface Caregiver {
@@ -91,6 +93,10 @@ interface Caregiver {
   // Other
   years_practicing: string | null;
   births_supported: string | null;
+  bio: string | null;
+  hourly_rate: number | null;
+  doula_package_rate: number | null;
+  profile_photo_url: string | null;
   // Document URLs
   training_certificate_url: string | null;
   additional_certificate_1_url: string | null;
@@ -336,7 +342,78 @@ const AdminCaregivers = () => {
   const [inviting, setInviting] = useState(false);
   const [messagePanelCaregiver, setMessagePanelCaregiver] = useState<Caregiver | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<Record<string, { subscribed: boolean; subscription_end?: string }>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Caregiver>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const startEditing = (caregiver: Caregiver) => {
+    setEditingId(caregiver.id);
+    setEditForm({
+      first_name: caregiver.first_name,
+      last_name: caregiver.last_name,
+      phone: caregiver.phone,
+      city_town: caregiver.city_town,
+      country: caregiver.country,
+      years_practicing: caregiver.years_practicing,
+      births_supported: caregiver.births_supported,
+      bio: caregiver.bio,
+      hourly_rate: caregiver.hourly_rate,
+      doula_package_rate: caregiver.doula_package_rate,
+      insurance_certificate_expires: caregiver.insurance_certificate_expires,
+      training_certificate_expires: caregiver.training_certificate_expires,
+      dbs_certificate_expires: caregiver.dbs_certificate_expires,
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const saveCaregiver = async (caregiverId: string) => {
+    setSavingId(caregiverId);
+    try {
+      const { error } = await supabase
+        .from("caregivers")
+        .update({
+          first_name: editForm.first_name,
+          last_name: editForm.last_name,
+          phone: editForm.phone,
+          city_town: editForm.city_town,
+          country: editForm.country,
+          years_practicing: editForm.years_practicing,
+          births_supported: editForm.births_supported,
+          bio: editForm.bio,
+          hourly_rate: editForm.hourly_rate ? parseFloat(String(editForm.hourly_rate)) : null,
+          doula_package_rate: editForm.doula_package_rate ? parseFloat(String(editForm.doula_package_rate)) : null,
+          insurance_certificate_expires: editForm.insurance_certificate_expires || null,
+          training_certificate_expires: editForm.training_certificate_expires || null,
+          dbs_certificate_expires: editForm.dbs_certificate_expires || null,
+        })
+        .eq("id", caregiverId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Saved",
+        description: "Caregiver details updated successfully.",
+      });
+
+      // Refresh data
+      fetchCaregivers();
+      setEditingId(null);
+      setEditForm({});
+    } catch (err: any) {
+      toast({
+        title: "Error saving",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const fetchSubscriptionStatus = async (emails: string[]) => {
     try {
@@ -598,6 +675,213 @@ const AdminCaregivers = () => {
 
                   {expandedId === caregiver.id && (
                     <CardContent className="border-t pt-6">
+                      {/* Edit/View Toggle Button */}
+                      <div className="flex justify-end mb-4">
+                        {editingId === caregiver.id ? (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cancelEditing();
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                saveCaregiver(caregiver.id);
+                              }}
+                              disabled={savingId === caregiver.id}
+                            >
+                              {savingId === caregiver.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Save className="h-4 w-4 mr-2" />
+                              )}
+                              Save Changes
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditing(caregiver);
+                            }}
+                          >
+                            Edit Details
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Editable Personal Info Section */}
+                      {editingId === caregiver.id ? (
+                        <div className="bg-muted/30 rounded-lg p-4 mb-6">
+                          <h4 className="font-medium text-sm flex items-center gap-2 text-foreground mb-4">
+                            <User className="h-4 w-4 text-primary" />
+                            Personal Information
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor={`first_name_${caregiver.id}`}>First Name</Label>
+                              <Input
+                                id={`first_name_${caregiver.id}`}
+                                value={editForm.first_name || ""}
+                                onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`last_name_${caregiver.id}`}>Last Name</Label>
+                              <Input
+                                id={`last_name_${caregiver.id}`}
+                                value={editForm.last_name || ""}
+                                onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`phone_${caregiver.id}`}>Phone</Label>
+                              <Input
+                                id={`phone_${caregiver.id}`}
+                                value={editForm.phone || ""}
+                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`city_${caregiver.id}`}>City/Town</Label>
+                              <Input
+                                id={`city_${caregiver.id}`}
+                                value={editForm.city_town || ""}
+                                onChange={(e) => setEditForm({ ...editForm, city_town: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`country_${caregiver.id}`}>Country</Label>
+                              <Input
+                                id={`country_${caregiver.id}`}
+                                value={editForm.country || ""}
+                                onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`years_${caregiver.id}`}>Years Practicing</Label>
+                              <Input
+                                id={`years_${caregiver.id}`}
+                                value={editForm.years_practicing || ""}
+                                onChange={(e) => setEditForm({ ...editForm, years_practicing: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`births_${caregiver.id}`}>Births Supported</Label>
+                              <Input
+                                id={`births_${caregiver.id}`}
+                                value={editForm.births_supported || ""}
+                                onChange={(e) => setEditForm({ ...editForm, births_supported: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`hourly_${caregiver.id}`}>Hourly Rate (£)</Label>
+                              <Input
+                                id={`hourly_${caregiver.id}`}
+                                type="number"
+                                value={editForm.hourly_rate || ""}
+                                onChange={(e) => setEditForm({ ...editForm, hourly_rate: e.target.value ? parseFloat(e.target.value) : null })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`package_${caregiver.id}`}>Doula Package Rate (£)</Label>
+                              <Input
+                                id={`package_${caregiver.id}`}
+                                type="number"
+                                value={editForm.doula_package_rate || ""}
+                                onChange={(e) => setEditForm({ ...editForm, doula_package_rate: e.target.value ? parseFloat(e.target.value) : null })}
+                              />
+                            </div>
+                            <div className="col-span-full">
+                              <Label htmlFor={`bio_${caregiver.id}`}>Bio</Label>
+                              <Textarea
+                                id={`bio_${caregiver.id}`}
+                                value={editForm.bio || ""}
+                                onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                                className="min-h-[100px]"
+                              />
+                            </div>
+                          </div>
+                          {/* Document Expiry Dates */}
+                          <h4 className="font-medium text-sm flex items-center gap-2 text-foreground mt-6 mb-4">
+                            <Calendar className="h-4 w-4 text-primary" />
+                            Document Expiry Dates
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor={`insurance_exp_${caregiver.id}`}>Insurance Expires</Label>
+                              <Input
+                                id={`insurance_exp_${caregiver.id}`}
+                                type="date"
+                                value={editForm.insurance_certificate_expires || ""}
+                                onChange={(e) => setEditForm({ ...editForm, insurance_certificate_expires: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`training_exp_${caregiver.id}`}>Training Expires</Label>
+                              <Input
+                                id={`training_exp_${caregiver.id}`}
+                                type="date"
+                                value={editForm.training_certificate_expires || ""}
+                                onChange={(e) => setEditForm({ ...editForm, training_certificate_expires: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`dbs_exp_${caregiver.id}`}>DBS Expires</Label>
+                              <Input
+                                id={`dbs_exp_${caregiver.id}`}
+                                type="date"
+                                value={editForm.dbs_certificate_expires || ""}
+                                onChange={(e) => setEditForm({ ...editForm, dbs_certificate_expires: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* View Mode - Rates & Bio Display */
+                        <div className="bg-muted/30 rounded-lg p-4 mb-6">
+                          <h4 className="font-medium text-sm flex items-center gap-2 text-foreground mb-3">
+                            <PoundSterling className="h-4 w-4 text-primary" />
+                            Rates & Bio
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <span className="text-xs text-muted-foreground">Hourly Rate</span>
+                              <p className="font-medium">{caregiver.hourly_rate ? `£${caregiver.hourly_rate}` : "Not set"}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-muted-foreground">Doula Package Rate</span>
+                              <p className="font-medium">{caregiver.doula_package_rate ? `£${caregiver.doula_package_rate}` : "Not set"}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-muted-foreground">Profile Photo</span>
+                              <p className="font-medium">
+                                {caregiver.profile_photo_url ? (
+                                  <a href={caregiver.profile_photo_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                                    View <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                ) : "Not uploaded"}
+                              </p>
+                            </div>
+                          </div>
+                          {caregiver.bio && (
+                            <div>
+                              <span className="text-xs text-muted-foreground">Bio</span>
+                              <p className="text-sm mt-1">{caregiver.bio}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {Object.entries(fieldGroups).map(([key, group]) => {
                           const values = getTrueValues(caregiver, group.fields);
@@ -673,7 +957,14 @@ const AdminCaregivers = () => {
                                       </span>
                                     )}
                                   </div>
-                                  {getDocumentStatusBadge(status, expires)}
+                                  <div className="flex items-center gap-2">
+                                    {url && (
+                                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
+                                        View <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    )}
+                                    {getDocumentStatusBadge(status, expires)}
+                                  </div>
                                 </div>
                               );
                             })}
