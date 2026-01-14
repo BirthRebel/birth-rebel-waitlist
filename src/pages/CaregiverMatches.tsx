@@ -193,11 +193,12 @@ const CaregiverMatches = () => {
       setCaregiverId(caregiver.id);
       setCaregiverEmail(caregiver.email);
 
-      // Fetch matches for this caregiver (including caregiver_synopsis and meeting_link)
+      // Fetch matches for this caregiver - only show confirmed matches (not declined)
       const { data: matchesData, error: matchesError } = await supabase
         .from("matches")
         .select("id, parent_first_name, parent_email, support_type, status, created_at, caregiver_synopsis, meeting_link")
         .eq("caregiver_id", caregiver.id)
+        .in("status", ["matched", "booked", "approved"])
         .order("created_at", { ascending: false });
 
       if (matchesError) {
