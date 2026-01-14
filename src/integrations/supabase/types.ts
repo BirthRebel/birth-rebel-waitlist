@@ -688,6 +688,7 @@ export type Database = {
     }
     Functions: {
       get_current_caregiver_id: { Args: never; Returns: string }
+      get_current_user_email: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
