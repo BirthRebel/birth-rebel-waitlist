@@ -1,13 +1,19 @@
 import { Button } from "@/components/ui/button";
-import waterbirthHero from "@/assets/waterbirth-hero.jpg";
+import heroVideo from "@/assets/hero-video.mp4";
 
 export const HeroSection = () => {
   
   return (
-    <section 
-      className="relative h-full flex items-center justify-center overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: `url(${waterbirthHero})` }}
-    >
+    <section className="relative h-full flex items-center justify-center overflow-hidden">
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src={heroVideo} type="video/mp4" />
+      </video>
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight text-white">
