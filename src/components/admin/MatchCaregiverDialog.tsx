@@ -30,7 +30,7 @@ interface ParentRequest {
   id: string;
   first_name: string;
   last_name: string | null;
-  email: string;
+  email: string | null;
   support_type: string | null;
 }
 
@@ -94,7 +94,18 @@ export const MatchCaregiverDialog = ({
   const handleMatch = async () => {
     if (!parentRequest || !selectedCaregiver) return;
 
+    if (!parentRequest.email) {
+      toast({
+        title: "Missing email",
+        description: "Cannot create match: parent email is missing. Please edit the request to add an email first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsMatching(true);
+    const parentEmail = parentRequest.email; // Now validated as non-null
+
     try {
       // First fetch full caregiver details including phone
       const { data: caregiverData, error: caregiverError } = await supabase
@@ -136,7 +147,7 @@ export const MatchCaregiverDialog = ({
         .from("matches")
         .insert({
           caregiver_id: selectedCaregiver.id,
-          parent_email: parentRequest.email,
+          parent_email: parentEmail,
           parent_first_name: parentRequest.first_name,
           support_type: parentRequest.support_type || "general",
           status: "matched",
@@ -163,7 +174,7 @@ export const MatchCaregiverDialog = ({
             caregiverEmail: selectedCaregiver.email,
             caregiverFirstName: selectedCaregiver.first_name,
             caregiverPhone: caregiverData?.phone || null,
-            parentEmail: parentRequest.email,
+            parentEmail: parentEmail,
             parentFirstName: parentRequest.first_name,
             parentPhone: parentData?.phone || null,
             supportType: parentRequest.support_type || "general support",
