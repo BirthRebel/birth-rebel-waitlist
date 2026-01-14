@@ -1,8 +1,31 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createHmac } from 'node:crypto'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, typeform-signature',
+}
+
+// Verify Typeform webhook signature
+async function verifyTypeformSignature(payload: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature) {
+    console.error('No signature provided in request')
+    return false
+  }
+
+  // Typeform sends signature as "sha256=<hash>"
+  const expectedPrefix = 'sha256='
+  if (!signature.startsWith(expectedPrefix)) {
+    console.error('Invalid signature format')
+    return false
+  }
+
+  const receivedHash = signature.slice(expectedPrefix.length)
+  const computedHash = createHmac('sha256', secret)
+    .update(payload)
+    .digest('base64')
+
+  return receivedHash === computedHash
 }
 
 Deno.serve(async (req) => {
@@ -12,7 +35,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const payload = await req.json()
+    // Get raw body for signature verification
+    const rawBody = await req.text()
+    
+    // Verify webhook signature
+    const signature = req.headers.get('typeform-signature')
+    const webhookSecret = Deno.env.get('TYPEFORM_WEBHOOK_SECRET')
+    
+    if (!webhookSecret) {
+      console.error('TYPEFORM_WEBHOOK_SECRET not configured')
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const isValid = await verifyTypeformSignature(rawBody, signature, webhookSecret)
+    if (!isValid) {
+      console.error('Invalid webhook signature')
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    console.log('Webhook signature verified successfully')
+    
+    const payload = JSON.parse(rawBody)
     console.log('Typeform webhook received:', JSON.stringify(payload, null, 2))
 
     // Extract form response data
