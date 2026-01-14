@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CaregiverMessagesPanel } from "@/components/messaging/CaregiverMessagesPanel";
 import { MatchCard } from "@/components/caregiver/MatchCard";
+import { Users, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -45,6 +47,7 @@ const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [caregiverEmail, setCaregiverEmail] = useState<string | null>(null);
+  const [matchesExpanded, setMatchesExpanded] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [parentRequests, setParentRequests] = useState<Record<string, ParentRequest>>({});
   const [loading, setLoading] = useState(true);
@@ -271,27 +274,56 @@ const CaregiverMatches = () => {
             <CaregiverMessagesPanel />
           </div>
 
-          {/* Matches Section */}
-          <h2 className="text-xl font-semibold mb-4" style={{ color: '#36454F' }}>
-            My Matches
-          </h2>
+          {/* Matches Section - Collapsible */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            {/* Header */}
+            <button
+              onClick={() => setMatchesExpanded(!matchesExpanded)}
+              className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5" style={{ color: "#E2725B" }} />
+                <h2 className="text-lg font-semibold" style={{ color: "#36454F" }}>
+                  My Matches
+                </h2>
+                <span className="text-sm text-muted-foreground">
+                  ({matches.length})
+                </span>
+              </div>
+              {matchesExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </button>
 
-          {matches.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p style={{ color: '#36454F' }}>No matches yet. Check back soon!</p>
+            {/* Expandable Content */}
+            <div
+              className={cn(
+                "overflow-hidden transition-all duration-300",
+                matchesExpanded ? "max-h-[2000px]" : "max-h-0"
+              )}
+            >
+              <div className="border-t border-border p-4">
+                {matches.length === 0 ? (
+                  <p className="text-center py-4" style={{ color: '#36454F' }}>
+                    No matches yet. Check back soon!
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {matches.map((match) => (
+                      <MatchCard 
+                        key={match.id} 
+                        match={match} 
+                        parentRequest={parentRequests[match.parent_email] || null}
+                        caregiverEmail={caregiverEmail || undefined}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {matches.map((match) => (
-                <MatchCard 
-                  key={match.id} 
-                  match={match} 
-                  parentRequest={parentRequests[match.parent_email] || null}
-                  caregiverEmail={caregiverEmail || undefined}
-                />
-              ))}
-            </div>
-          )}
+          </div>
         </div>
       </main>
       <Footer />
