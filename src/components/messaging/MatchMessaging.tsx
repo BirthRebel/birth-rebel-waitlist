@@ -115,17 +115,24 @@ export const MatchMessaging = ({
   const handleSaveLink = async () => {
     setSavingLink(true);
     try {
+      // Normalize the link - add https:// if missing
+      let normalizedLink = linkInput.trim();
+      if (normalizedLink && !normalizedLink.startsWith("http://") && !normalizedLink.startsWith("https://")) {
+        normalizedLink = "https://" + normalizedLink;
+      }
+
       const { error } = await supabase.functions.invoke("update-meeting-link", {
         body: {
           match_id: matchId,
-          meeting_link: linkInput.trim() || null,
+          meeting_link: normalizedLink || null,
           caregiver_email: senderEmail,
         },
       });
 
       if (error) throw error;
 
-      setMeetingLink(linkInput.trim());
+      setMeetingLink(normalizedLink);
+      setLinkInput(normalizedLink);
       setEditingLink(false);
       toast({
         title: "Meeting link saved",
