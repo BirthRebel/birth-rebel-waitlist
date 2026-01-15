@@ -36,7 +36,7 @@ serve(async (req) => {
     // Verify match exists and is in a status that allows messaging (booked)
     const { data: match, error: matchError } = await supabase
       .from("matches")
-      .select("id, status, parent_email, caregiver_id")
+      .select("id, status, parent_email, parent_first_name, caregiver_id")
       .eq("id", match_id)
       .single();
 
@@ -56,6 +56,13 @@ serve(async (req) => {
       );
     }
 
+    // Get caregiver details for authorization and notifications
+    const { data: caregiver } = await supabase
+      .from("caregivers")
+      .select("id, email, first_name")
+      .eq("id", match.caregiver_id)
+      .single();
+
     // Verify sender is part of this match
     if (sender_type === "parent") {
       if (match.parent_email.toLowerCase() !== sender_email.toLowerCase()) {
@@ -65,13 +72,6 @@ serve(async (req) => {
         );
       }
     } else if (sender_type === "caregiver") {
-      // Verify caregiver by email
-      const { data: caregiver } = await supabase
-        .from("caregivers")
-        .select("id, email")
-        .eq("id", match.caregiver_id)
-        .single();
-
       if (!caregiver || caregiver.email.toLowerCase() !== sender_email.toLowerCase()) {
         return new Response(
           JSON.stringify({ error: "You are not authorized to send messages in this match" }),
@@ -139,6 +139,52 @@ serve(async (req) => {
       .from("conversations")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", conversationId);
+
+    // Send notification to the recipient
+    // If caregiver sent, notify parent; if parent sent, notify caregiver
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      
+      if (sender_type === "caregiver") {
+        // Caregiver sent message, notify parent
+        const caregiverName = caregiver?.first_name || "Your caregiver";
+        await fetch(`${supabaseUrl}/functions/v1/send-parent-message-notification`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({
+            parentEmail: match.parent_email,
+            parentName: match.parent_first_name || "there",
+            messageContent: `New message from ${caregiverName}: ${content}`,
+          }),
+        });
+        console.log("Parent notification triggered for caregiver message");
+      } else if (sender_type === "parent") {
+        // Parent sent message, notify caregiver
+        if (caregiver?.email) {
+          await fetch(`${supabaseUrl}/functions/v1/send-message-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseAnonKey}`,
+            },
+            body: JSON.stringify({
+              conversationId: conversationId,
+              messageContent: content,
+              senderType: "admin", // Use admin sender type to trigger caregiver notification
+              notificationType: "message",
+            }),
+          });
+          console.log("Caregiver notification triggered for parent message");
+        }
+      }
+    } catch (notifyError) {
+      // Don't fail the message send if notification fails
+      console.error("Failed to send notification:", notifyError);
+    }
 
     return new Response(
       JSON.stringify({ message, conversation_id: conversationId }),
