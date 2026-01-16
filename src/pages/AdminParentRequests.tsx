@@ -48,7 +48,9 @@ import {
   Sparkles,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  Archive
 } from "lucide-react";
 import { format } from "date-fns";
 import { MatchCaregiverDialog } from "@/components/admin/MatchCaregiverDialog";
@@ -99,6 +101,8 @@ const getStatusColor = (status: string) => {
       return "bg-green-500";
     case "closed":
       return "bg-gray-500";
+    case "archived":
+      return "bg-slate-400";
     default:
       return "bg-muted";
   }
@@ -752,6 +756,60 @@ const AdminParentRequests = () => {
     }
   };
 
+  const deleteRequest = async (id: string, firstName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete the request from ${firstName}? This cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from("parent_requests")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+
+      toast({
+        title: "Request deleted",
+        description: `Request from ${firstName} has been permanently deleted`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const archiveRequest = async (id: string, firstName: string) => {
+    try {
+      const { error } = await supabase
+        .from("parent_requests")
+        .update({ status: "archived" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: "archived" } : r))
+      );
+
+      toast({
+        title: "Request archived",
+        description: `Request from ${firstName} has been archived`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredRequests = requests.filter((r) => {
     const search = searchQuery.toLowerCase();
     return (
@@ -1375,6 +1433,34 @@ const AdminParentRequests = () => {
                                 Call
                               </Button>
                             )}
+                          </div>
+                          
+                          {/* Archive and Delete buttons */}
+                          <div className="flex flex-wrap gap-2 pt-2 border-t mt-2">
+                            {request.status !== "archived" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  archiveRequest(request.id, request.first_name);
+                                }}
+                              >
+                                <Archive className="h-4 w-4 mr-2" />
+                                Archive
+                              </Button>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteRequest(request.id, request.first_name);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </Button>
                           </div>
                         </div>
                       </div>
