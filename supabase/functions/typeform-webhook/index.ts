@@ -563,6 +563,24 @@ Deno.serve(async (req) => {
         console.log('Matched gdpr_consent:', caregiverData.gdpr_consent)
       }
 
+      // Pricing fields
+      if (fieldTitle === 'how much do you charge for a single 1 hour virtual session?') {
+        const textValue = answer.text || answer.number?.toString() || ''
+        const numericValue = parseFloat(textValue.replace(/[^0-9.]/g, ''))
+        if (!isNaN(numericValue)) {
+          caregiverData.hourly_rate = numericValue
+          console.log('Matched hourly_rate:', numericValue)
+        }
+      }
+      if (fieldTitle === 'for doulas only- how much do (or would) you charge for a virtual full-doula package?') {
+        const textValue = answer.text || answer.number?.toString() || ''
+        const numericValue = parseFloat(textValue.replace(/[^0-9.]/g, ''))
+        if (!isNaN(numericValue)) {
+          caregiverData.doula_package_rate = numericValue
+          console.log('Matched doula_package_rate:', numericValue)
+        }
+      }
+
       // Document expiration dates
       if (fieldTitle.includes('training') && fieldTitle.includes('expir')) {
         const expiryDate = parseDate(answer.text || answer.date)
