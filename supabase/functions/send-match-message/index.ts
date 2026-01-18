@@ -92,11 +92,11 @@ serve(async (req) => {
     if (existingConv) {
       conversationId = existingConv.id;
     } else {
-      // Create a new conversation for this match
+      // Create a new conversation for this match (normalize email to lowercase)
       const { data: newConv, error: convError } = await supabase
         .from("conversations")
         .insert({
-          parent_email: match.parent_email,
+          parent_email: match.parent_email.toLowerCase(),
           caregiver_id: match.caregiver_id,
           subject: "Match Conversation",
           status: "open",

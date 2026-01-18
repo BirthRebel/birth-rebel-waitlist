@@ -190,7 +190,7 @@ function mapToParentRequest(data: Record<string, string>) {
     if (q.includes('email address') || q.includes('your email') || q === 'email') {
       // Validate it looks like an email (contains @)
       if (answer.includes('@')) {
-        result.email = answer;
+        result.email = answer.toLowerCase(); // Normalize to lowercase
       } else {
         console.log(`Skipping invalid email value: "${answer}" - does not contain @`);
       }
