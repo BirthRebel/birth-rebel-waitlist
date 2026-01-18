@@ -74,7 +74,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch all matches for this parent email
+    // Fetch all matches for this parent email (case-insensitive)
     const { data: matches, error } = await supabase
       .from("matches")
       .select(`
@@ -87,7 +87,7 @@ serve(async (req) => {
         reviewed_at,
         meeting_link
       `)
-      .eq("parent_email", email.toLowerCase())
+      .ilike("parent_email", email)
       .order("created_at", { ascending: false });
 
     if (error) {
