@@ -326,7 +326,7 @@ const AdminParentRequests = () => {
         .insert({
           first_name: newRequest.first_name,
           last_name: newRequest.last_name || null,
-          email: newRequest.email,
+          email: newRequest.email?.toLowerCase() || null,
           phone: newRequest.phone || null,
           support_type: newRequest.support_type || null,
           stage_of_journey: newRequest.stage_of_journey || null,
@@ -448,7 +448,7 @@ const AdminParentRequests = () => {
           .from("conversations")
           .insert({
             parent_request_id: selectedRequest.id,
-            parent_email: selectedRequest.email,
+            parent_email: selectedRequest.email?.toLowerCase(),
             subject: `Support request from ${selectedRequest.first_name}`,
             status: "open",
           })
@@ -554,7 +554,7 @@ const AdminParentRequests = () => {
           .insert({
             caregiver_id: request.matched_caregiver_id,
             parent_request_id: request.id,
-            parent_email: request.email,
+            parent_email: request.email?.toLowerCase(),
             subject: cleanSubject,
             status: "open",
           })

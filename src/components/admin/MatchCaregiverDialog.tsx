@@ -142,12 +142,12 @@ export const MatchCaregiverDialog = ({
         console.error("Error generating caregiver synopsis:", synopsisErr);
       }
 
-      // Create the match record with synopsis
+      // Create the match record with synopsis (normalize email to lowercase)
       const { error: matchError } = await supabase
         .from("matches")
         .insert({
           caregiver_id: selectedCaregiver.id,
-          parent_email: parentEmail,
+          parent_email: parentEmail.toLowerCase(),
           parent_first_name: parentRequest.first_name,
           support_type: parentRequest.support_type || "general",
           status: "matched",
