@@ -7,15 +7,20 @@ import type { User } from "@supabase/supabase-js";
 export const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userType, setUserType] = useState<"caregiver" | "parent" | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => checkUserType(session.user.id, session.user.email), 0);
+          setTimeout(() => {
+            checkUserType(session.user.id, session.user.email);
+            checkAdminRole(session.user.id);
+          }, 0);
         } else {
           setUserType(null);
+          setIsAdmin(false);
         }
       }
     );
@@ -24,6 +29,7 @@ export const Header = () => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkUserType(session.user.id, session.user.email);
+        checkAdminRole(session.user.id);
       }
     });
 
@@ -31,7 +37,6 @@ export const Header = () => {
   }, []);
 
   const checkUserType = async (userId: string, email: string | undefined) => {
-    // Check if caregiver first
     const { data: caregiver } = await supabase
       .from("caregivers")
       .select("id")
@@ -43,8 +48,18 @@ export const Header = () => {
       return;
     }
 
-    // Otherwise treat as parent
     setUserType("parent");
+  };
+
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
   };
 
   return (
@@ -59,7 +74,7 @@ export const Header = () => {
             />
           </Link>
           
-          <nav className="flex gap-8 items-center">
+          <nav className="flex gap-4 md:gap-6 items-center flex-wrap">
             <Link 
               to="/" 
               className="text-lg font-semibold hover:text-primary transition-colors"
@@ -74,6 +89,40 @@ export const Header = () => {
             >
               About
             </Link>
+            
+            {isAdmin && (
+              <>
+                <Link 
+                  to="/admin/parent-requests" 
+                  className="text-sm font-medium px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                  style={{ color: '#E2725B' }}
+                >
+                  Parents
+                </Link>
+                <Link 
+                  to="/admin/caregivers" 
+                  className="text-sm font-medium px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                  style={{ color: '#E2725B' }}
+                >
+                  Caregivers
+                </Link>
+                <Link 
+                  to="/admin/matches" 
+                  className="text-sm font-medium px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                  style={{ color: '#E2725B' }}
+                >
+                  Matches
+                </Link>
+                <Link 
+                  to="/admin/import" 
+                  className="text-sm font-medium px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                  style={{ color: '#E2725B' }}
+                >
+                  Import
+                </Link>
+              </>
+            )}
+            
             {user ? (
               userType === "caregiver" ? (
                 <Link 
