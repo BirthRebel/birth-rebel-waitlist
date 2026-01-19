@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Calendar, User, MapPin, Phone, Mail, MessageSquare, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp, Calendar, User, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MatchMessaging } from "@/components/messaging/MatchMessaging";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ParentRequest {
   id: string;
@@ -42,6 +43,9 @@ interface MatchCardProps {
 
 export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [synopsis, setSynopsis] = useState<string | null>(null);
+  const [isLoadingSynopsis, setIsLoadingSynopsis] = useState(false);
+  const [synopsisError, setSynopsisError] = useState<string | null>(null);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -64,18 +68,37 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
     });
   };
 
-  // Helper to display field if it has content
-  const InfoRow = ({ icon: Icon, label, value }: { icon: any; label: string; value: string | null | undefined }) => {
-    if (!value) return null;
-    return (
-      <div className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
-        <Icon className="w-4 h-4 mt-1 text-[#E2725B] flex-shrink-0" />
-        <div>
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
-          <p className="text-sm text-gray-700 mt-0.5">{value}</p>
-        </div>
-      </div>
-    );
+  // Fetch synopsis when expanded and we have a parentRequest
+  useEffect(() => {
+    if (isExpanded && parentRequest && !synopsis && !isLoadingSynopsis) {
+      fetchSynopsis();
+    }
+  }, [isExpanded, parentRequest]);
+
+  const fetchSynopsis = async () => {
+    if (!parentRequest) return;
+    
+    setIsLoadingSynopsis(true);
+    setSynopsisError(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-request-synopsis', {
+        body: { request: parentRequest }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.synopsis) {
+        setSynopsis(data.synopsis);
+      } else {
+        setSynopsisError("Unable to generate summary");
+      }
+    } catch (error) {
+      console.error("Error fetching synopsis:", error);
+      setSynopsisError("Failed to load summary");
+    } finally {
+      setIsLoadingSynopsis(false);
+    }
   };
 
   return (
@@ -120,26 +143,21 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
       {isExpanded && (
         <CardContent className="bg-gray-50 border-t border-gray-100">
           {/* Parent Request Summary */}
-          <div className="p-4 bg-[#E2725B]/5 rounded-lg border border-[#E2725B]/20 space-y-3">
-            <h4 className="text-sm font-semibold text-[#E2725B] mb-2">Parent's Request</h4>
+          <div className="p-4 bg-[#E2725B]/5 rounded-lg border border-[#E2725B]/20">
+            <h4 className="text-sm font-semibold text-[#E2725B] mb-3">About This Parent</h4>
             
-            {parentRequest ? (
-              <div className="space-y-2">
-                <InfoRow icon={User} label="Support Type" value={parentRequest.support_type} />
-                <InfoRow icon={Clock} label="Stage of Journey" value={parentRequest.stage_of_journey} />
-                <InfoRow icon={MapPin} label="Location" value={parentRequest.location} />
-                <InfoRow icon={Calendar} label="Due Date" value={parentRequest.due_date ? formatDate(parentRequest.due_date) : null} />
-                <InfoRow icon={MessageSquare} label="Family Context" value={parentRequest.family_context} />
-                <InfoRow icon={MessageSquare} label="Specific Concerns" value={parentRequest.specific_concerns} />
-                <InfoRow icon={MessageSquare} label="Caregiver Preferences" value={parentRequest.caregiver_preferences} />
-                <InfoRow icon={MessageSquare} label="Special Requirements" value={parentRequest.special_requirements} />
-                <InfoRow icon={MessageSquare} label="Budget" value={parentRequest.budget} />
-                <InfoRow icon={Clock} label="Availability" value={parentRequest.general_availability} />
-                <InfoRow icon={MessageSquare} label="Language" value={parentRequest.language} />
+            {isLoadingSynopsis ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-[#E2725B]" />
+                <span className="ml-2 text-sm text-gray-500">Generating summary...</span>
               </div>
-            ) : (
+            ) : synopsis ? (
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{synopsis}</p>
+            ) : synopsisError ? (
+              <p className="text-sm text-gray-500 italic">{synopsisError}</p>
+            ) : !parentRequest ? (
               <p className="text-sm text-gray-500 italic">Parent request details are not available.</p>
-            )}
+            ) : null}
           </div>
           
           {match.status === "matched" && (
