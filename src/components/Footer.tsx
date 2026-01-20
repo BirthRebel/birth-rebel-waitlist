@@ -35,6 +35,13 @@ export const Footer = () => {
             >
               Privacy Policy
             </Link>
+            <span className="text-background/40">|</span>
+            <Link 
+              to="/terms-of-service" 
+              className="text-background/60 hover:text-background transition-colors"
+            >
+              Terms of Service
+            </Link>
           </div>
 
           <div className="text-center text-xs text-background/40">
