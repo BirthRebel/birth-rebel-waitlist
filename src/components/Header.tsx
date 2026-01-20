@@ -10,8 +10,13 @@ export const Header = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Reset state initially
+    setIsAdmin(false);
+    setUserType(null);
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => {
@@ -26,10 +31,14 @@ export const Header = () => {
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session:", session?.user?.email);
       setUser(session?.user ?? null);
       if (session?.user) {
         checkUserType(session.user.id, session.user.email);
         checkAdminRole(session.user.id);
+      } else {
+        setUserType(null);
+        setIsAdmin(false);
       }
     });
 
