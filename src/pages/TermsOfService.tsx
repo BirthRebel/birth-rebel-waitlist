@@ -9,7 +9,7 @@ const TermsOfService = () => {
         <div className="max-w-3xl mx-auto prose prose-gray">
           <h1 className="text-3xl font-bold text-foreground mb-8">Birth Rebel – Terms of Service</h1>
           
-          <p className="text-muted-foreground mb-6"><strong>Effective date:</strong> [insert]</p>
+          <p className="text-muted-foreground mb-6"><strong>Effective date:</strong> 20 January 2026</p>
 
           <p>Welcome to Birth Rebel Ltd ("Birth Rebel", "we", "us", "our"). We operate a marketplace that connects parents ("Parents") with independent, non-medical maternity and postnatal caregivers ("Caregivers").</p>
 
