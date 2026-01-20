@@ -5,7 +5,7 @@ const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 py-16 px-6">
+      <main className="flex-1 pt-28 pb-16 px-6">
         <div className="max-w-3xl mx-auto prose prose-gray">
           <h1 className="text-3xl font-bold text-foreground mb-8">Privacy Policy – Birth Rebel Ltd</h1>
           
