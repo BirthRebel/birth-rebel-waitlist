@@ -42,6 +42,13 @@ export const Footer = () => {
             >
               Terms of Service
             </Link>
+            <span className="text-background/40">|</span>
+            <Link 
+              to="/cookie-policy" 
+              className="text-background/60 hover:text-background transition-colors"
+            >
+              Cookie Policy
+            </Link>
           </div>
 
           <div className="text-center text-xs text-background/40">

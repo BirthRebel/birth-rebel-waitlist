@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import CookiePolicy from "./pages/CookiePolicy";
 import Auth from "./pages/Auth";
 import CaregiverAuth from "./pages/CaregiverAuth";
 import CaregiverMatches from "./pages/CaregiverMatches";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/caregiver/auth" element={<CaregiverAuth />} />
           <Route path="/caregiver/profile" element={<CaregiverProfile />} />
