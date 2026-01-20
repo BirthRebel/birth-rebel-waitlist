@@ -68,12 +68,13 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
     });
   };
 
-  // Fetch synopsis when expanded and we have a parentRequest
+  // Fetch synopsis when expanded and we have a parentRequest - only for booked/approved matches
   useEffect(() => {
-    if (isExpanded && parentRequest && !synopsis && !isLoadingSynopsis) {
+    const canViewDetails = ["booked", "approved"].includes(match.status);
+    if (isExpanded && parentRequest && !synopsis && !isLoadingSynopsis && canViewDetails) {
       fetchSynopsis();
     }
-  }, [isExpanded, parentRequest]);
+  }, [isExpanded, parentRequest, match.status]);
 
   const fetchSynopsis = async () => {
     if (!parentRequest) return;
@@ -142,39 +143,50 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
 
       {isExpanded && (
         <CardContent className="bg-gray-50 border-t border-gray-100">
-          {/* Parent Request Summary */}
-          <div className="p-4 bg-[#E2725B]/5 rounded-lg border border-[#E2725B]/20">
-            <h4 className="text-sm font-semibold text-[#E2725B] mb-3">About This Parent</h4>
-            
-            {isLoadingSynopsis ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-5 h-5 animate-spin text-[#E2725B]" />
-                <span className="ml-2 text-sm text-gray-500">Generating summary...</span>
-              </div>
-            ) : synopsis ? (
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{synopsis}</p>
-            ) : synopsisError ? (
-              <p className="text-sm text-gray-500 italic">{synopsisError}</p>
-            ) : !parentRequest ? (
-              <p className="text-sm text-gray-500 italic">Parent request details are not available.</p>
-            ) : null}
-          </div>
-          
+          {/* For "matched" status - parent hasn't accepted yet, don't show details */}
           {match.status === "matched" && (
-            <p className="text-xs text-gray-500 mt-3 italic">
-              Contact details will be shared once the parent confirms the match.
-            </p>
+            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                <strong>Pending Confirmation</strong>
+              </p>
+              <p className="text-sm text-yellow-700 mt-2">
+                This parent has been matched with you, but hasn't confirmed the match yet. 
+                Once they accept, and you have an active subscription, you'll be able to see their details and start messaging.
+              </p>
+            </div>
           )}
 
-          {/* Messaging and Video Call - for booked or approved matches */}
-          {["booked", "approved"].includes(match.status) && caregiverEmail && (
-            <MatchMessaging
-              matchId={match.id}
-              senderEmail={caregiverEmail}
-              senderType="caregiver"
-              matchStatus={match.status}
-              initialMeetingLink={match.meeting_link}
-            />
+          {/* Parent Request Summary - only show for booked or approved matches */}
+          {["booked", "approved"].includes(match.status) && (
+            <>
+              <div className="p-4 bg-[#E2725B]/5 rounded-lg border border-[#E2725B]/20">
+                <h4 className="text-sm font-semibold text-[#E2725B] mb-3">About This Parent</h4>
+                
+                {isLoadingSynopsis ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-[#E2725B]" />
+                    <span className="ml-2 text-sm text-gray-500">Generating summary...</span>
+                  </div>
+                ) : synopsis ? (
+                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{synopsis}</p>
+                ) : synopsisError ? (
+                  <p className="text-sm text-gray-500 italic">{synopsisError}</p>
+                ) : !parentRequest ? (
+                  <p className="text-sm text-gray-500 italic">Parent request details are not available.</p>
+                ) : null}
+              </div>
+
+              {/* Messaging and Video Call - for booked or approved matches */}
+              {caregiverEmail && (
+                <MatchMessaging
+                  matchId={match.id}
+                  senderEmail={caregiverEmail}
+                  senderType="caregiver"
+                  matchStatus={match.status}
+                  initialMeetingLink={match.meeting_link}
+                />
+              )}
+            </>
           )}
         </CardContent>
       )}
