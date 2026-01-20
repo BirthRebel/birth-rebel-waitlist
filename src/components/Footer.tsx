@@ -1,4 +1,5 @@
 import { Instagram } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   return (
@@ -25,6 +26,15 @@ export const Footer = () => {
               <strong>Disclaimer:</strong> Birth Rebel is not a substitute for medical advice or emergency care. 
               Always consult with qualified healthcare professionals for medical decisions.
             </p>
+          </div>
+
+          <div className="flex items-center gap-4 text-sm">
+            <Link 
+              to="/privacy-policy" 
+              className="text-background/60 hover:text-background transition-colors"
+            >
+              Privacy Policy
+            </Link>
           </div>
 
           <div className="text-center text-xs text-background/40">
