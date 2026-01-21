@@ -58,7 +58,10 @@ export const HeroSection = () => {
           </span>
           
           <span className="block mt-4 md:mt-6 text-white">
-            from the comfort of your home
+            from the comfort
+          </span>
+          <span className="block text-white">
+            of your home
           </span>
         </h1>
         
