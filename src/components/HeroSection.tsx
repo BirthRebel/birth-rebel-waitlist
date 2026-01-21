@@ -28,17 +28,15 @@ export const HeroSection = () => {
           
           <div className="mt-4 mb-4 flex justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-white/20 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2 bg-[#E2725B] text-white text-lg md:text-2xl">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-[#E2725B] text-white text-sm md:text-base font-sans font-normal">
                 <span>Select your caregiver</span>
-                <ChevronDown className="w-5 h-5 md:w-6 md:h-6 ml-2" />
+                <ChevronDown className="w-4 h-4 ml-2" />
               </div>
-              <ul className="text-left">
-                {caregiverTypes.map((type, index) => (
+              <ul className="text-left font-sans font-normal">
+                {caregiverTypes.map((type) => (
                   <li 
                     key={type}
-                    className={`px-4 py-2 md:py-3 text-lg md:text-xl text-gray-800 hover:bg-[#E2725B]/10 cursor-pointer transition-colors ${
-                      index !== caregiverTypes.length - 1 ? 'border-b border-gray-100' : ''
-                    }`}
+                    className="px-3 py-1 text-sm md:text-base text-gray-800 hover:bg-[#E2725B]/10 cursor-pointer transition-colors"
                   >
                     {type}
                   </li>
