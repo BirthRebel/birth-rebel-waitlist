@@ -67,13 +67,12 @@ export const HeroSection = () => {
         </h1>
         
         <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed text-white/90">
-          Birth Rebel is a fully virtual maternal care platform — connecting new and expectant mothers 
-          with trusted doulas, lactation consultants, sleep consultants, and more.
+          Birth Rebel helps you find trusted, personalised maternal support — all online, all in one place. We connect expectant and new parents with experienced doulas, lactation consultants, sleep experts and hypnobirthing teachers, so you can get the right help at the right time.
         </p>
         
         <div className="mb-8 max-w-2xl mx-auto">
           <p className="text-lg md:text-xl text-white/90">
-            Click the button below to connect with a caregiver. We'll ask you a few questions which will take about 5 minutes. This will help us to understand what you are looking for. Our current roster includes doulas, lactation consultants, hypnobirthing teachers and sleep experts.
+            Click below to get started. You'll answer a few short questions (it takes about 5 minutes), and our team will personally review your answers and match you with the most suitable caregiver from our current pilot roster.
           </p>
         </div>
         
