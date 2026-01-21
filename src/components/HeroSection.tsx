@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import heroVideo from "@/assets/hero-video.mp4";
 
 const caregiverTypes = [
@@ -10,6 +11,19 @@ const caregiverTypes = [
 ];
 
 export const HeroSection = () => {
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setScrollOffset((prev) => {
+        const next = prev + 1;
+        return next >= caregiverTypes.length ? 0 : next;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden">
       <video 
@@ -25,15 +39,23 @@ export const HeroSection = () => {
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-32 md:pt-36">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
           <span>Connect with your </span>
-          <span className="inline-block text-left align-top font-sans font-normal text-sm md:text-base text-[#E2725B] leading-relaxed">
-            {caregiverTypes.map((type) => (
+          <span className="inline-flex items-start align-top">
+            <span className="inline-block h-[1.4em] overflow-hidden relative">
               <span 
-                key={type}
-                className="block hover:text-white cursor-pointer transition-colors"
+                className="block transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateY(-${scrollOffset * 1.4}em)` }}
               >
-                {type}
+                {caregiverTypes.map((type, index) => (
+                  <span 
+                    key={type}
+                    className="flex items-center gap-2 text-lg md:text-2xl lg:text-3xl font-sans font-normal text-[#E2725B] leading-[1.4em]"
+                  >
+                    {type}
+                    {index === 0 && <ChevronDown className="w-4 h-4 md:w-6 md:h-6" />}
+                  </span>
+                ))}
               </span>
-            ))}
+            </span>
           </span>
           
           <span className="block mt-4 md:mt-6 text-white">
