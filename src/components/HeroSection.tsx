@@ -39,7 +39,7 @@ export const HeroSection = () => {
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-32 md:pt-36">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
           <span>Connect with your </span>
-          <span className="inline-flex items-start align-top">
+          <span className="inline-flex items-start mt-2">
             <span className="inline-block">
               {caregiverTypes.map((type, index) => (
                 <span 
