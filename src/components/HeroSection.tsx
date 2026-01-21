@@ -40,21 +40,20 @@ export const HeroSection = () => {
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
           <span>Connect with your </span>
           <span className="inline-flex items-start align-top">
-            <span className="inline-block h-[1.4em] overflow-hidden relative">
-              <span 
-                className="block transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateY(-${scrollOffset * 1.4}em)` }}
-              >
-                {caregiverTypes.map((type, index) => (
-                  <span 
-                    key={type}
-                    className="flex items-center gap-2 text-lg md:text-2xl lg:text-3xl font-sans font-normal text-[#E2725B] leading-[1.4em]"
-                  >
-                    {type}
-                    {index === 0 && <ChevronDown className="w-4 h-4 md:w-6 md:h-6" />}
-                  </span>
-                ))}
-              </span>
+            <span className="inline-block">
+              {caregiverTypes.map((type, index) => (
+                <span 
+                  key={type}
+                  className={`flex items-center gap-2 text-lg md:text-2xl lg:text-3xl font-sans font-normal leading-relaxed transition-all duration-300 ${
+                    index === scrollOffset 
+                      ? 'text-white scale-105' 
+                      : 'text-[#E2725B]'
+                  }`}
+                >
+                  {type}
+                  {index === 0 && <ChevronDown className="w-4 h-4 md:w-6 md:h-6 text-[#E2725B]" />}
+                </span>
+              ))}
             </span>
           </span>
           
