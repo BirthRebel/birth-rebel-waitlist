@@ -24,26 +24,17 @@ export const HeroSection = () => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-32 md:pt-36">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
-          <span>Connect with your</span>
-          
-          <div className="mt-4 mb-4 flex justify-center">
-            <div className="overflow-hidden">
-              <div className="flex items-center justify-center gap-2 text-[#E2725B] text-sm md:text-base font-sans font-medium">
-                <span>Select your caregiver</span>
-                <ChevronDown className="w-4 h-4" />
-              </div>
-              <ul className="text-center font-sans font-normal mt-1">
-                {caregiverTypes.map((type) => (
-                  <li 
-                    key={type}
-                    className="px-3 py-0.5 text-sm md:text-base text-[#E2725B] hover:text-white cursor-pointer transition-colors"
-                  >
-                    {type}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <span>Connect with your </span>
+          <span className="inline-block text-left align-top font-sans font-normal text-sm md:text-base text-[#E2725B] leading-relaxed">
+            {caregiverTypes.map((type) => (
+              <span 
+                key={type}
+                className="block hover:text-white cursor-pointer transition-colors"
+              >
+                {type}
+              </span>
+            ))}
+          </span>
           
           <span className="block mt-4 md:mt-6 text-white">
             from the comfort of your home
