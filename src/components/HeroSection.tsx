@@ -1,8 +1,31 @@
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 import heroVideo from "@/assets/hero-video.mp4";
 
+const caregiverTypes = [
+  "doula",
+  "hypnobirthing teacher",
+  "sleep expert",
+  "lactation specialist"
+];
+
 export const HeroSection = () => {
-  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % caregiverTypes.length);
+        setIsAnimating(false);
+      }, 300);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden">
       <video 
@@ -17,9 +40,20 @@ export const HeroSection = () => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight text-white">
-          Rebuilding Trust in{" "}
+          Book your{" "}
+          <span className="inline-flex items-center gap-2 text-[#E2725B] relative">
+            <span 
+              className={`transition-all duration-300 ${
+                isAnimating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+              }`}
+            >
+              {caregiverTypes[currentIndex]}
+            </span>
+            <ChevronDown className="w-8 h-8 md:w-12 md:h-12 animate-bounce" />
+          </span>
+          <br />
           <span className="text-white">
-            Maternal Care
+            from the comfort of your home
           </span>
         </h1>
         
