@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import heroVideo from "@/assets/hero-video.mp4";
 
@@ -11,21 +10,6 @@ const caregiverTypes = [
 ];
 
 export const HeroSection = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % caregiverTypes.length);
-        setIsAnimating(false);
-      }, 300);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <section className="relative h-full flex items-center justify-center overflow-hidden">
       <video 
@@ -40,19 +24,29 @@ export const HeroSection = () => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-20">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
-          <span className="whitespace-nowrap">
-            Connect with your{" "}
-            <span className="inline-flex items-center gap-1 text-[#E2725B] relative">
-              <span 
-                className={`transition-all duration-300 ${
-                  isAnimating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
-                }`}
-              >
-                {caregiverTypes[currentIndex]}
-              </span>
-              <ChevronDown className="w-5 h-5 md:w-8 md:h-8 animate-bounce" />
-            </span>
-          </span>
+          <span>Connect with your</span>
+          
+          <div className="mt-4 mb-4 flex justify-center">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-white/20 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-[#E2725B] text-white text-lg md:text-2xl">
+                <span>Select your caregiver</span>
+                <ChevronDown className="w-5 h-5 md:w-6 md:h-6 ml-2" />
+              </div>
+              <ul className="text-left">
+                {caregiverTypes.map((type, index) => (
+                  <li 
+                    key={type}
+                    className={`px-4 py-2 md:py-3 text-lg md:text-xl text-gray-800 hover:bg-[#E2725B]/10 cursor-pointer transition-colors ${
+                      index !== caregiverTypes.length - 1 ? 'border-b border-gray-100' : ''
+                    }`}
+                  >
+                    {type}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
           <span className="block mt-4 md:mt-6 text-white">
             from the comfort of your home
           </span>
