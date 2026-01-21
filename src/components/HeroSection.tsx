@@ -5,7 +5,7 @@ import heroVideo from "@/assets/hero-video.mp4";
 
 const caregiverTypes = [
   "doula",
-  "hypnobirthing teacher",
+  "hypnobirthing tutor",
   "sleep expert",
   "lactation specialist"
 ];
@@ -39,9 +39,9 @@ export const HeroSection = () => {
       </video>
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-20">
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold mb-6 leading-tight text-white">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
           <span className="whitespace-nowrap">
-            Book your{" "}
+            Connect with your{" "}
             <span className="inline-flex items-center gap-1 text-[#E2725B] relative">
               <span 
                 className={`transition-all duration-300 ${
@@ -53,8 +53,7 @@ export const HeroSection = () => {
               <ChevronDown className="w-5 h-5 md:w-8 md:h-8 animate-bounce" />
             </span>
           </span>
-          <br />
-          <span className="text-white">
+          <span className="block mt-4 md:mt-6 text-white">
             from the comfort of your home
           </span>
         </h1>
