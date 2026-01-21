@@ -22,21 +22,21 @@ export const HeroSection = () => {
         <source src={heroVideo} type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-20">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-32 md:pt-36">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
           <span>Connect with your</span>
           
           <div className="mt-4 mb-4 flex justify-center">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-white/20 overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-1.5 bg-[#E2725B] text-white text-sm md:text-base font-sans font-normal">
+            <div className="overflow-hidden">
+              <div className="flex items-center justify-center gap-2 text-[#E2725B] text-sm md:text-base font-sans font-medium">
                 <span>Select your caregiver</span>
-                <ChevronDown className="w-4 h-4 ml-2" />
+                <ChevronDown className="w-4 h-4" />
               </div>
-              <ul className="text-left font-sans font-normal">
+              <ul className="text-center font-sans font-normal mt-1">
                 {caregiverTypes.map((type) => (
                   <li 
                     key={type}
-                    className="px-3 py-1 text-sm md:text-base text-gray-800 hover:bg-[#E2725B]/10 cursor-pointer transition-colors"
+                    className="px-3 py-0.5 text-sm md:text-base text-[#E2725B] hover:text-white cursor-pointer transition-colors"
                   >
                     {type}
                   </li>
