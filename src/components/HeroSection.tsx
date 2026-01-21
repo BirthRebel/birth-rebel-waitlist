@@ -38,18 +38,20 @@ export const HeroSection = () => {
         <source src={heroVideo} type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight text-white">
-          Book your{" "}
-          <span className="inline-flex items-center gap-2 text-[#E2725B] relative">
-            <span 
-              className={`transition-all duration-300 ${
-                isAnimating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
-              }`}
-            >
-              {caregiverTypes[currentIndex]}
+      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-20">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold mb-6 leading-tight text-white">
+          <span className="whitespace-nowrap">
+            Book your{" "}
+            <span className="inline-flex items-center gap-1 text-[#E2725B] relative">
+              <span 
+                className={`transition-all duration-300 ${
+                  isAnimating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+                }`}
+              >
+                {caregiverTypes[currentIndex]}
+              </span>
+              <ChevronDown className="w-5 h-5 md:w-8 md:h-8 animate-bounce" />
             </span>
-            <ChevronDown className="w-8 h-8 md:w-12 md:h-12 animate-bounce" />
           </span>
           <br />
           <span className="text-white">
