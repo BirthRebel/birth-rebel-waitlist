@@ -38,13 +38,14 @@ export const HeroSection = () => {
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-32 md:pt-36">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
-          <span>Connect with your </span>
-          <span className="inline-flex items-start mt-2">
-            <span className="inline-block">
+          <span>Connect with your</span>
+          
+          <span className="block mt-4">
+            <span className="inline-block text-center">
               {caregiverTypes.map((type, index) => (
                 <span 
                   key={type}
-                  className={`flex items-center gap-2 text-lg md:text-2xl lg:text-3xl font-sans font-normal leading-relaxed transition-all duration-300 ${
+                  className={`flex items-center justify-center gap-2 text-lg md:text-2xl lg:text-3xl font-sans font-normal leading-relaxed transition-all duration-300 ${
                     index === scrollOffset 
                       ? 'text-white scale-105' 
                       : 'text-[#E2725B]'
