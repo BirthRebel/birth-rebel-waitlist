@@ -200,11 +200,11 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
           </div>
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>Platform fee (10%)</span>
-            <span>-£{(platformFee / 100).toFixed(2)}</span>
+            <span>-£{platformFee.toFixed(2)}</span>
           </div>
           <div className="border-t pt-2 flex justify-between font-medium">
             <span>You'll receive</span>
-            <span className="text-green-600">£{(caregiverPayout / 100).toFixed(2)}</span>
+            <span className="text-green-600">£{caregiverPayout.toFixed(2)}</span>
           </div>
         </div>
       </CardContent>
