@@ -85,6 +85,8 @@ export type Database = {
           care_style: string | null
           certifications_training: string | null
           city_town: string | null
+          code_of_conduct_accepted: boolean | null
+          code_of_conduct_accepted_at: string | null
           country: string | null
           created_at: string
           dbs_certificate_expires: string | null
@@ -187,6 +189,8 @@ export type Database = {
           care_style?: string | null
           certifications_training?: string | null
           city_town?: string | null
+          code_of_conduct_accepted?: boolean | null
+          code_of_conduct_accepted_at?: string | null
           country?: string | null
           created_at?: string
           dbs_certificate_expires?: string | null
@@ -289,6 +293,8 @@ export type Database = {
           care_style?: string | null
           certifications_training?: string | null
           city_town?: string | null
+          code_of_conduct_accepted?: boolean | null
+          code_of_conduct_accepted_at?: string | null
           country?: string | null
           created_at?: string
           dbs_certificate_expires?: string | null
