@@ -72,7 +72,7 @@ export const HeroSection = () => {
         
         <div className="mb-8 max-w-2xl mx-auto">
           <p className="text-lg md:text-xl text-white/90">
-            Tell us what you're looking for in a quick 5-minute questionnaire, and our team will personally review your answers and match you with the most suitable caregiver from our current pilot roster.
+            Tell us what you're looking for and our team will personally review your answers and match you with the most suitable caregiver from our current pilot roster.
           </p>
         </div>
         
