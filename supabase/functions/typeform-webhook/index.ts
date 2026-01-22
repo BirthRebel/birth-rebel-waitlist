@@ -555,12 +555,26 @@ Deno.serve(async (req) => {
       }
 
       // GDPR consent - match the exact long title
-      if (fieldTitle.includes('gdpr') || fieldTitle.includes('consent') || fieldTitle.includes('agree') || fieldTitle.includes('data protection')) {
+      if (fieldTitle.includes('gdpr') || (fieldTitle.includes('consent') && !fieldTitle.includes('code of conduct')) || fieldTitle.includes('data protection')) {
         caregiverData.gdpr_consent = answer.boolean === true || 
           answer.choice?.label?.toLowerCase().includes('understand') ||
           answer.choice?.label?.toLowerCase().includes('yes') || 
           answer.choice?.label?.toLowerCase().includes('agree')
         console.log('Matched gdpr_consent:', caregiverData.gdpr_consent)
+      }
+
+      // Code of Conduct acceptance (Question 20)
+      if (fieldTitle.includes('code of conduct') || fieldTitle.includes('birth rebel values') || fieldTitle.includes('birth rebel\'s values')) {
+        const accepted = answer.boolean === true || 
+          answer.choice?.label?.toLowerCase().includes('yes') || 
+          answer.choice?.label?.toLowerCase().includes('agree') ||
+          answer.choice?.label?.toLowerCase().includes('i accept') ||
+          answer.choice?.label?.toLowerCase().includes('i understand')
+        if (accepted) {
+          caregiverData.code_of_conduct_accepted = true
+          caregiverData.code_of_conduct_accepted_at = new Date().toISOString()
+        }
+        console.log('Matched code_of_conduct_accepted:', accepted)
       }
 
       // Pricing fields

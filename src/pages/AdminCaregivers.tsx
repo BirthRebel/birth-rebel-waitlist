@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar, Save, Loader2, ExternalLink, PoundSterling } from "lucide-react";
+import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar, Save, Loader2, ExternalLink, PoundSterling, ShieldCheck, ShieldX } from "lucide-react";
 import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 import { AdminDocumentUpload } from "@/components/admin/AdminDocumentUpload";
 
@@ -108,6 +108,9 @@ interface Caregiver {
   training_certificate_expires: string | null;
   additional_certificate_1_expires: string | null;
   additional_certificate_2_expires: string | null;
+  // Code of Conduct
+  code_of_conduct_accepted: boolean | null;
+  code_of_conduct_accepted_at: string | null;
   dbs_certificate_expires: string | null;
   insurance_certificate_expires: string | null;
 }
@@ -660,6 +663,17 @@ const AdminCaregivers = () => {
                           <Badge className="bg-green-500 text-white hover:bg-green-600">
                             <CreditCard className="h-3 w-3 mr-1" />
                             Subscribed
+                          </Badge>
+                        )}
+                        {caregiver.code_of_conduct_accepted ? (
+                          <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            CoC Accepted
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-amber-600 border-amber-500">
+                            <ShieldX className="h-3 w-3 mr-1" />
+                            CoC Pending
                           </Badge>
                         )}
                         {caregiver.active ? (
