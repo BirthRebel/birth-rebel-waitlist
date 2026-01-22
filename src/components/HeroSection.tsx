@@ -5,7 +5,7 @@ import heroVideo from "@/assets/hero-video.mp4";
 
 const caregiverTypes = [
   "doula",
-  "hypnobirthing tutor",
+  "hypnobirthing teacher",
   "sleep expert",
   "lactation specialist"
 ];
