@@ -70,12 +70,6 @@ export const HeroSection = () => {
           Birth Rebel helps you find trusted, personalised maternal support — all online, all in one place. We connect expectant and new parents with experienced doulas, lactation consultants, sleep experts and hypnobirthing teachers, so you can get the right help at the right time.
         </p>
         
-        <div className="mb-8 max-w-2xl mx-auto">
-          <p className="text-lg md:text-xl text-white/90">
-            Tell us what you're looking for and our team will personally review your answers and match you with the most suitable caregiver from our current pilot roster.
-          </p>
-        </div>
-        
         <Button 
           className="bg-[#E2725B] text-white hover:bg-[#E2725B]/90 shadow-glow transform hover:scale-105"
           size="xl" 
@@ -83,6 +77,12 @@ export const HeroSection = () => {
         >
           Find Your Maternity Caregiver
         </Button>
+        
+        <div className="mt-6 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-white/90">
+            Our team will review your answers and match you with the most suitable caregiver from our current pilot roster.
+          </p>
+        </div>
       </div>
     </section>
   );
