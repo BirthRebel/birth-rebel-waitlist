@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Upload, User, Calendar, FileText, CreditCard, Check, ExternalLink } from "lucide-react";
 import { DocumentUpload } from "@/components/DocumentUpload";
+import { StripeConnectCard } from "@/components/caregiver/StripeConnectCard";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface CaregiverProfile {
@@ -577,6 +578,9 @@ const CaregiverProfilePage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Stripe Connect */}
+          <StripeConnectCard />
 
           {/* Documents - Upload Section */}
           <Card className="mb-6">
