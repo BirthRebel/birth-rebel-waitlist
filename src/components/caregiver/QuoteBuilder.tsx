@@ -136,61 +136,122 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
         {/* Quote Items */}
         <div className="space-y-3">
           <Label>Services</Label>
-          {/* Column headers */}
-          <div className="flex gap-2 items-center text-xs text-muted-foreground font-medium">
+          {/* Desktop: Column headers (hidden on mobile) */}
+          <div className="hidden sm:flex gap-2 items-center text-xs text-muted-foreground font-medium">
             <div className="flex-1">Description</div>
             <div className="w-20 text-center">Qty</div>
             <div className="w-28 text-center">Unit Price</div>
             <div className="w-9"></div>
           </div>
+          
           {items.map((item, index) => (
-            <div key={item.id} className="flex gap-2 items-start">
-              <div className="flex-1">
-                <Input
-                  placeholder="e.g. Birth Support Package"
-                  value={item.description}
-                  onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                />
+            <div key={item.id} className="border rounded-lg p-3 sm:p-0 sm:border-0 space-y-2 sm:space-y-0">
+              {/* Mobile: Stacked layout */}
+              <div className="flex sm:hidden justify-between items-center mb-2">
+                <span className="text-sm font-medium text-muted-foreground">Service {index + 1}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeItem(item.id)}
+                  disabled={items.length === 1}
+                  className="text-muted-foreground hover:text-destructive h-8 w-8"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-              <div className="w-20">
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="1"
-                  value={item.quantity}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    updateItem(item.id, "quantity", isNaN(val) ? 1 : Math.max(1, val));
-                  }}
-                />
-              </div>
-              <div className="w-28">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">£</span>
+              
+              {/* Mobile: Full width description */}
+              <div className="sm:hidden space-y-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Description</Label>
                   <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="pl-7"
-                    value={item.unitPrice || ""}
-                    onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
+                    placeholder="e.g. Birth Support Package"
+                    value={item.description}
+                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
                   />
                 </div>
+                <div className="flex gap-3">
+                  <div className="w-24">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Quantity</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        updateItem(item.id, "quantity", isNaN(val) ? 1 : Math.max(1, val));
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Unit Price</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">£</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        className="pl-7"
+                        value={item.unitPrice || ""}
+                        onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeItem(item.id)}
-                disabled={items.length === 1}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              
+              {/* Desktop: Horizontal layout */}
+              <div className="hidden sm:flex gap-2 items-start">
+                <div className="flex-1">
+                  <Input
+                    placeholder="e.g. Birth Support Package"
+                    value={item.description}
+                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                  />
+                </div>
+                <div className="w-20">
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="1"
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      updateItem(item.id, "quantity", isNaN(val) ? 1 : Math.max(1, val));
+                    }}
+                  />
+                </div>
+                <div className="w-28">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">£</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="pl-7"
+                      value={item.unitPrice || ""}
+                      onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeItem(item.id)}
+                  disabled={items.length === 1}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" onClick={addItem}>
+          <Button type="button" variant="outline" size="sm" onClick={addItem} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Service
           </Button>
