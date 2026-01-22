@@ -66,6 +66,9 @@ export const HeroSection = () => {
           </span>
         </h1>
         
+        <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed text-white/90">
+          Birth Rebel helps you find trusted, personalised maternal support — all online, all in one place. We connect expectant and new parents with experienced doulas, lactation consultants, sleep experts and hypnobirthing teachers, so you can get the right help at the right time.
+        </p>
         
         <Button 
           className="bg-[#E2725B] text-white hover:bg-[#E2725B]/90 shadow-glow transform hover:scale-105"
