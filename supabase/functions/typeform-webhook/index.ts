@@ -595,31 +595,11 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Document expiration dates
-      if (fieldTitle.includes('training') && fieldTitle.includes('expir')) {
-        const expiryDate = parseDate(answer.text || answer.date)
-        if (expiryDate) caregiverData.training_certificate_expires = expiryDate
-        console.log('Matched training_certificate_expires:', expiryDate)
-      }
+      // Document expiration dates - only track insurance expiry
       if (fieldTitle.includes('insurance') && fieldTitle.includes('expir')) {
         const expiryDate = parseDate(answer.text || answer.date)
         if (expiryDate) caregiverData.insurance_certificate_expires = expiryDate
         console.log('Matched insurance_certificate_expires:', expiryDate)
-      }
-      if (fieldTitle.includes('dbs') && fieldTitle.includes('expir')) {
-        const expiryDate = parseDate(answer.text || answer.date)
-        if (expiryDate) caregiverData.dbs_certificate_expires = expiryDate
-        console.log('Matched dbs_certificate_expires:', expiryDate)
-      }
-      if ((fieldTitle.includes('certificate') || fieldTitle.includes('certification')) && fieldTitle.includes('expir')) {
-        const expiryDate = parseDate(answer.text || answer.date)
-        if (expiryDate && !caregiverData.additional_certificate_1_expires) {
-          caregiverData.additional_certificate_1_expires = expiryDate
-          console.log('Matched additional_certificate_1_expires:', expiryDate)
-        } else if (expiryDate && !caregiverData.additional_certificate_2_expires) {
-          caregiverData.additional_certificate_2_expires = expiryDate
-          console.log('Matched additional_certificate_2_expires:', expiryDate)
-        }
       }
       
       // Log unmatched fields for debugging

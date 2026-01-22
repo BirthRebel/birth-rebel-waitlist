@@ -18,11 +18,11 @@ interface DocumentUploadProps {
 }
 
 const documentFieldMap = {
-  training: { urlField: "training_certificate_url", expiresField: "training_certificate_expires" },
+  training: { urlField: "training_certificate_url", expiresField: null },
   insurance: { urlField: "insurance_certificate_url", expiresField: "insurance_certificate_expires" },
-  dbs: { urlField: "dbs_certificate_url", expiresField: "dbs_certificate_expires" },
-  additional1: { urlField: "additional_certificate_1_url", expiresField: "additional_certificate_1_expires" },
-  additional2: { urlField: "additional_certificate_2_url", expiresField: "additional_certificate_2_expires" },
+  dbs: { urlField: "dbs_certificate_url", expiresField: null },
+  additional1: { urlField: "additional_certificate_1_url", expiresField: null },
+  additional2: { urlField: "additional_certificate_2_url", expiresField: null },
 };
 
 export const DocumentUpload = ({
@@ -78,8 +78,9 @@ export const DocumentUpload = ({
         [documentFieldMap[documentType].urlField]: documentUrl,
       };
       
-      if (localExpiry) {
-        updateData[documentFieldMap[documentType].expiresField] = localExpiry;
+      const expiresField = documentFieldMap[documentType].expiresField;
+      if (localExpiry && expiresField) {
+        updateData[expiresField] = localExpiry;
       }
 
       const { error: updateError } = await supabase
