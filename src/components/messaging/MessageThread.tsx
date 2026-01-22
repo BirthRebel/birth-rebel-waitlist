@@ -52,7 +52,7 @@ export const MessageThread = ({
   isLoading,
   shouldAutoScroll = false,
 }: MessageThreadProps) => {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const hasInitializedRef = useRef<boolean>(false);
 
@@ -62,7 +62,10 @@ export const MessageThread = ({
     const hasNewMessages = messages.length > prevMessageCountRef.current;
     
     if (isInitialLoad || (hasNewMessages && shouldAutoScroll)) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      // Scroll within the container only, not the whole page
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }
       hasInitializedRef.current = true;
     }
     
@@ -86,7 +89,7 @@ export const MessageThread = ({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message) => {
         const isCurrentUser = message.sender_type === currentUserType;
         
@@ -121,7 +124,6 @@ export const MessageThread = ({
           </div>
         );
       })}
-      <div ref={bottomRef} />
     </div>
   );
 };
