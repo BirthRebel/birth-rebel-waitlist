@@ -55,8 +55,14 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
   const caregiverPayout = calculateTotal() - platformFee;
 
   const handleSendQuote = async () => {
-    // Validate items
-    const validItems = items.filter(item => item.description.trim() && item.unitPrice > 0);
+    // Normalize items first - ensure quantity is at least 1
+    const normalizedItems = items.map(item => ({
+      ...item,
+      quantity: item.quantity < 1 ? 1 : item.quantity
+    }));
+    
+    // Validate items - check for description and price > 0
+    const validItems = normalizedItems.filter(item => item.description.trim() && item.unitPrice > 0);
     if (validItems.length === 0) {
       toast({
         title: "Add at least one item",
@@ -151,16 +157,10 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
                   type="number"
                   min="1"
                   placeholder="1"
-                  value={item.quantity === 0 ? "" : item.quantity}
+                  value={item.quantity}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    updateItem(item.id, "quantity", val === "" ? 0 : Math.max(1, parseInt(val) || 1));
-                  }}
-                  onBlur={(e) => {
-                    // Ensure minimum of 1 when focus leaves
-                    if (!e.target.value || parseInt(e.target.value) < 1) {
-                      updateItem(item.id, "quantity", 1);
-                    }
+                    const val = parseInt(e.target.value);
+                    updateItem(item.id, "quantity", isNaN(val) ? 1 : Math.max(1, val));
                   }}
                 />
               </div>
