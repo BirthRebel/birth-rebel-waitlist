@@ -53,6 +53,7 @@ export const AdminMessagePanel = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
   const { toast } = useToast();
 
   const isCaregiver = !!caregiverId;
@@ -233,6 +234,9 @@ export const AdminMessagePanel = ({
 
       if (error) throw error;
 
+      // Trigger auto-scroll when user sends a message
+      setShouldAutoScroll(true);
+
       // Optimistically add message to state (real-time might also add it, so we check for duplicates)
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === newMessage.id);
@@ -329,6 +333,7 @@ export const AdminMessagePanel = ({
             messages={messages}
             currentUserType="admin"
             isLoading={messagesLoading}
+            shouldAutoScroll={shouldAutoScroll}
           />
 
           {/* Message input */}

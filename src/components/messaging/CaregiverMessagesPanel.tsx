@@ -32,6 +32,7 @@ export const CaregiverMessagesPanel = ({ caregiverId }: CaregiverMessagesPanelPr
   const [loading, setLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -127,6 +128,7 @@ export const CaregiverMessagesPanel = ({ caregiverId }: CaregiverMessagesPanelPr
 
       if (error) throw error;
 
+      setShouldAutoScroll(true);
       fetchMessages(selectedConversation.id);
 
       // Send email notification to admin/parent
@@ -237,6 +239,7 @@ export const CaregiverMessagesPanel = ({ caregiverId }: CaregiverMessagesPanelPr
               messages={messages}
               currentUserType="caregiver"
               isLoading={messagesLoading}
+              shouldAutoScroll={shouldAutoScroll}
             />
           </div>
 

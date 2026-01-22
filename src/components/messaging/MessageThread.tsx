@@ -14,6 +14,7 @@ interface MessageThreadProps {
   messages: Message[];
   currentUserType: "admin" | "caregiver" | "parent";
   isLoading?: boolean;
+  shouldAutoScroll?: boolean;
 }
 
 // Helper to convert URLs in text to clickable links
@@ -49,12 +50,24 @@ export const MessageThread = ({
   messages,
   currentUserType,
   isLoading,
+  shouldAutoScroll = false,
 }: MessageThreadProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef<number>(0);
+  const hasInitializedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // Only auto-scroll on initial load or when new messages are added (user sent a message)
+    const isInitialLoad = !hasInitializedRef.current && messages.length > 0;
+    const hasNewMessages = messages.length > prevMessageCountRef.current;
+    
+    if (isInitialLoad || (hasNewMessages && shouldAutoScroll)) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      hasInitializedRef.current = true;
+    }
+    
+    prevMessageCountRef.current = messages.length;
+  }, [messages, shouldAutoScroll]);
 
   if (isLoading) {
     return (

@@ -39,6 +39,7 @@ export const MatchMessaging = ({
   const [sending, setSending] = useState(false);
   const [savingLink, setSavingLink] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
   const { toast } = useToast();
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -96,6 +97,7 @@ export const MatchMessaging = ({
 
       if (error) throw error;
 
+      setShouldAutoScroll(true);
       await fetchMessages();
       toast({
         title: "Message sent",
@@ -282,6 +284,7 @@ export const MatchMessaging = ({
               messages={messages}
               currentUserType={senderType}
               isLoading={loading}
+              shouldAutoScroll={shouldAutoScroll}
             />
           </div>
 

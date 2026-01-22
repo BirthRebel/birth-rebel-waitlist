@@ -32,6 +32,7 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -155,7 +156,8 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
 
       if (error) throw error;
 
-      // Refresh messages
+      // Refresh messages and trigger auto-scroll
+      setShouldAutoScroll(true);
       fetchMessages(selectedConversation.id);
 
       toast({
@@ -235,6 +237,7 @@ export const ParentMessagesPanel = ({ parentEmail }: ParentMessagesPanelProps) =
               messages={messages}
               currentUserType="parent"
               isLoading={messagesLoading}
+              shouldAutoScroll={shouldAutoScroll}
             />
           </div>
 
