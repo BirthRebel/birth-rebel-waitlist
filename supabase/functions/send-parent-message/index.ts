@@ -114,6 +114,27 @@ serve(async (req) => {
       .update({ updated_at: new Date().toISOString() })
       .eq("id", conversation_id);
 
+    // Notify the caregiver about the new message
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-message-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          conversationId: conversation_id,
+          messageContent: content,
+          senderType: "admin", // Use admin sender type to trigger caregiver notification
+          notificationType: "message",
+        }),
+      });
+      console.log("Caregiver notification triggered for parent message");
+    } catch (notifyError) {
+      // Don't fail the message send if notification fails
+      console.error("Failed to send notification:", notifyError);
+    }
+
     return new Response(
       JSON.stringify({ success: true, message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
