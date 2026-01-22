@@ -197,14 +197,42 @@ serve(async (req) => {
       }
 
       case 'checkout.session.completed': {
-        // Checkout completed - trigger auto-booking
+        // Checkout completed - could be subscription or quote payment
         const session = event.data.object as Stripe.Checkout.Session;
         const customerEmail = session.customer_email || (session.customer_details?.email);
         
-        logStep('Checkout completed', { sessionId: session.id, email: customerEmail });
+        logStep('Checkout completed', { sessionId: session.id, email: customerEmail, mode: session.mode });
 
-        if (customerEmail) {
-          // Call the auto-book-matches function
+        // Check if this is a quote payment (has quote_id in metadata)
+        const quoteId = session.metadata?.quote_id;
+        if (quoteId) {
+          logStep('Processing quote payment', { quoteId });
+          
+          // Update quote status to paid
+          const { error: quoteUpdateError } = await supabase
+            .from('quotes')
+            .update({ 
+              status: 'paid',
+              payment_intent_id: session.payment_intent as string,
+            })
+            .eq('id', quoteId);
+
+          if (quoteUpdateError) {
+            logStep('Error updating quote status', { error: quoteUpdateError.message });
+          } else {
+            logStep('Quote marked as paid');
+            
+            // Create admin notification
+            await supabase.from('admin_notifications').insert({
+              type: 'quote_paid',
+              title: 'Quote Payment Received',
+              message: `Payment received for quote ${quoteId} from ${customerEmail}`,
+              match_id: session.metadata?.match_id,
+              parent_email: customerEmail,
+            });
+          }
+        } else if (customerEmail && session.mode === 'subscription') {
+          // Subscription checkout - trigger auto-booking
           try {
             const autoBookResponse = await fetch(
               `${supabaseUrl}/functions/v1/auto-book-matches`,

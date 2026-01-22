@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 import { MatchCard } from "@/components/caregiver/MatchCard";
-import { Users, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
+import { QuotesPanel } from "@/components/caregiver/QuotesPanel";
+import { Users, ChevronDown, ChevronUp, User as UserIcon, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
 
@@ -48,6 +49,7 @@ const CaregiverMatches = () => {
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [caregiverEmail, setCaregiverEmail] = useState<string | null>(null);
   const [matchesExpanded, setMatchesExpanded] = useState(true);
+  const [quotesExpanded, setQuotesExpanded] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
   const [parentRequests, setParentRequests] = useState<Record<string, ParentRequest>>({});
   const [loading, setLoading] = useState(true);
@@ -334,6 +336,38 @@ const CaregiverMatches = () => {
               </div>
             </div>
           </div>
+
+          {/* Quotes Section */}
+          {caregiverId && (
+            <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
+              <button
+                onClick={() => setQuotesExpanded(!quotesExpanded)}
+                className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5" style={{ color: "#E2725B" }} />
+                  <h2 className="text-lg font-semibold" style={{ color: "#36454F" }}>
+                    My Quotes
+                  </h2>
+                </div>
+                {quotesExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </button>
+              <div
+                className={cn(
+                  "overflow-hidden transition-all duration-300",
+                  quotesExpanded ? "max-h-[2000px]" : "max-h-0"
+                )}
+              >
+                <div className="border-t border-border p-4">
+                  <QuotesPanel caregiverId={caregiverId} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

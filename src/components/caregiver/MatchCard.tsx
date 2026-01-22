@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Calendar, User, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, User, Loader2, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { MatchMessaging } from "@/components/messaging/MatchMessaging";
+import { QuoteBuilder } from "@/components/caregiver/QuoteBuilder";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ParentRequest {
@@ -46,6 +48,7 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [isLoadingSynopsis, setIsLoadingSynopsis] = useState(false);
   const [synopsisError, setSynopsisError] = useState<string | null>(null);
+  const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -175,6 +178,30 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
                   <p className="text-sm text-gray-500 italic">Parent request details are not available.</p>
                 ) : null}
               </div>
+
+              {/* Quote Builder */}
+              {showQuoteBuilder ? (
+                <div className="mt-4">
+                  <QuoteBuilder
+                    matchId={match.id}
+                    parentEmail={match.parent_email}
+                    parentName={match.parent_first_name}
+                    onQuoteSent={() => setShowQuoteBuilder(false)}
+                    onCancel={() => setShowQuoteBuilder(false)}
+                  />
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <Button 
+                    onClick={() => setShowQuoteBuilder(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Send Quote
+                  </Button>
+                </div>
+              )}
 
               {/* Messaging and Video Call - for booked or approved matches */}
               {caregiverEmail && (
