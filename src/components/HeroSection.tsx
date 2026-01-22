@@ -36,7 +36,7 @@ export const HeroSection = () => {
         <source src={heroVideo} type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-24 md:pt-28 pb-16">
+      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center pt-32 md:pt-36 pb-16">
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-white">
           <span>Connect with your</span>
           
