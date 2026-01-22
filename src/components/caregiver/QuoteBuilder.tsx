@@ -130,11 +130,18 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
         {/* Quote Items */}
         <div className="space-y-3">
           <Label>Services</Label>
+          {/* Column headers */}
+          <div className="flex gap-2 items-center text-xs text-muted-foreground font-medium">
+            <div className="flex-1">Description</div>
+            <div className="w-20 text-center">Qty</div>
+            <div className="w-28 text-center">Unit Price</div>
+            <div className="w-9"></div>
+          </div>
           {items.map((item, index) => (
             <div key={item.id} className="flex gap-2 items-start">
               <div className="flex-1">
                 <Input
-                  placeholder="Service description (e.g. Birth Support Package)"
+                  placeholder="e.g. Birth Support Package"
                   value={item.description}
                   onChange={(e) => updateItem(item.id, "description", e.target.value)}
                 />
@@ -143,9 +150,18 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
                 <Input
                   type="number"
                   min="1"
-                  placeholder="Qty"
-                  value={item.quantity}
-                  onChange={(e) => updateItem(item.id, "quantity", parseInt(e.target.value) || 1)}
+                  placeholder="1"
+                  value={item.quantity === 0 ? "" : item.quantity}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateItem(item.id, "quantity", val === "" ? 0 : Math.max(1, parseInt(val) || 1));
+                  }}
+                  onBlur={(e) => {
+                    // Ensure minimum of 1 when focus leaves
+                    if (!e.target.value || parseInt(e.target.value) < 1) {
+                      updateItem(item.id, "quantity", 1);
+                    }
+                  }}
                 />
               </div>
               <div className="w-28">
@@ -155,7 +171,7 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="Price"
+                    placeholder="0.00"
                     className="pl-7"
                     value={item.unitPrice || ""}
                     onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
