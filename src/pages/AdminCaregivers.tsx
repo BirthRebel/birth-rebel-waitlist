@@ -104,24 +104,20 @@ interface Caregiver {
   additional_certificate_2_url: string | null;
   dbs_certificate_url: string | null;
   insurance_certificate_url: string | null;
-  // Document expiration dates
-  training_certificate_expires: string | null;
-  additional_certificate_1_expires: string | null;
-  additional_certificate_2_expires: string | null;
+  // Document expiration date (only insurance has expiry)
+  insurance_certificate_expires: string | null;
   // Code of Conduct
   code_of_conduct_accepted: boolean | null;
   code_of_conduct_accepted_at: string | null;
-  dbs_certificate_expires: string | null;
-  insurance_certificate_expires: string | null;
 }
 
-// Document configuration for tracking
+// Document configuration for tracking (only insurance has expiry)
 const documentConfig = [
-  { key: 'training_certificate', label: 'Training Certificate', urlField: 'training_certificate_url', expiresField: 'training_certificate_expires' },
+  { key: 'training_certificate', label: 'Training Certificate', urlField: 'training_certificate_url', expiresField: null },
   { key: 'insurance_certificate', label: 'Insurance', urlField: 'insurance_certificate_url', expiresField: 'insurance_certificate_expires' },
-  { key: 'dbs_certificate', label: 'DBS Certificate', urlField: 'dbs_certificate_url', expiresField: 'dbs_certificate_expires' },
-  { key: 'additional_certificate_1', label: 'Additional Cert 1', urlField: 'additional_certificate_1_url', expiresField: 'additional_certificate_1_expires' },
-  { key: 'additional_certificate_2', label: 'Additional Cert 2', urlField: 'additional_certificate_2_url', expiresField: 'additional_certificate_2_expires' },
+  { key: 'dbs_certificate', label: 'DBS Certificate', urlField: 'dbs_certificate_url', expiresField: null },
+  { key: 'additional_certificate_1', label: 'Additional Cert 1', urlField: 'additional_certificate_1_url', expiresField: null },
+  { key: 'additional_certificate_2', label: 'Additional Cert 2', urlField: 'additional_certificate_2_url', expiresField: null },
 ] as const;
 
 type DocumentStatus = 'missing' | 'expired' | 'expiring_soon' | 'valid' | 'no_expiry';
@@ -365,8 +361,6 @@ const AdminCaregivers = () => {
       hourly_rate: caregiver.hourly_rate,
       doula_package_rate: caregiver.doula_package_rate,
       insurance_certificate_expires: caregiver.insurance_certificate_expires,
-      training_certificate_expires: caregiver.training_certificate_expires,
-      dbs_certificate_expires: caregiver.dbs_certificate_expires,
     });
   };
 
@@ -392,8 +386,6 @@ const AdminCaregivers = () => {
           hourly_rate: editForm.hourly_rate ? parseFloat(String(editForm.hourly_rate)) : null,
           doula_package_rate: editForm.doula_package_rate ? parseFloat(String(editForm.doula_package_rate)) : null,
           insurance_certificate_expires: editForm.insurance_certificate_expires || null,
-          training_certificate_expires: editForm.training_certificate_expires || null,
-          dbs_certificate_expires: editForm.dbs_certificate_expires || null,
         })
         .eq("id", caregiverId);
 
@@ -841,24 +833,6 @@ const AdminCaregivers = () => {
                                 onChange={(e) => setEditForm({ ...editForm, insurance_certificate_expires: e.target.value })}
                               />
                             </div>
-                            <div>
-                              <Label htmlFor={`training_exp_${caregiver.id}`}>Training Expires</Label>
-                              <Input
-                                id={`training_exp_${caregiver.id}`}
-                                type="date"
-                                value={editForm.training_certificate_expires || ""}
-                                onChange={(e) => setEditForm({ ...editForm, training_certificate_expires: e.target.value })}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`dbs_exp_${caregiver.id}`}>DBS Expires</Label>
-                              <Input
-                                id={`dbs_exp_${caregiver.id}`}
-                                type="date"
-                                value={editForm.dbs_certificate_expires || ""}
-                                onChange={(e) => setEditForm({ ...editForm, dbs_certificate_expires: e.target.value })}
-                              />
-                            </div>
                           </div>
                         </div>
                       ) : (
@@ -962,7 +936,7 @@ const AdminCaregivers = () => {
                               documentType="training"
                               label="Training"
                               currentUrl={caregiver.training_certificate_url}
-                              expiryDate={caregiver.training_certificate_expires}
+                              expiryDate={null}
                               onUploadComplete={fetchCaregivers}
                             />
                             <AdminDocumentUpload
@@ -978,7 +952,7 @@ const AdminCaregivers = () => {
                               documentType="dbs"
                               label="DBS"
                               currentUrl={caregiver.dbs_certificate_url}
-                              expiryDate={caregiver.dbs_certificate_expires}
+                              expiryDate={null}
                               onUploadComplete={fetchCaregivers}
                             />
                             <AdminDocumentUpload
@@ -986,7 +960,7 @@ const AdminCaregivers = () => {
                               documentType="additional1"
                               label="Additional 1"
                               currentUrl={caregiver.additional_certificate_1_url}
-                              expiryDate={caregiver.additional_certificate_1_expires}
+                              expiryDate={null}
                               onUploadComplete={fetchCaregivers}
                             />
                             <AdminDocumentUpload
@@ -994,7 +968,7 @@ const AdminCaregivers = () => {
                               documentType="additional2"
                               label="Additional 2"
                               currentUrl={caregiver.additional_certificate_2_url}
-                              expiryDate={caregiver.additional_certificate_2_expires}
+                              expiryDate={null}
                               onUploadComplete={fetchCaregivers}
                             />
                           </div>

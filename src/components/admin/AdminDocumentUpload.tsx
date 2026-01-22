@@ -32,11 +32,11 @@ interface AdminDocumentUploadProps {
 }
 
 const documentFieldMap = {
-  training: { urlField: "training_certificate_url", expiresField: "training_certificate_expires" },
+  training: { urlField: "training_certificate_url", expiresField: null },
   insurance: { urlField: "insurance_certificate_url", expiresField: "insurance_certificate_expires" },
-  dbs: { urlField: "dbs_certificate_url", expiresField: "dbs_certificate_expires" },
-  additional1: { urlField: "additional_certificate_1_url", expiresField: "additional_certificate_1_expires" },
-  additional2: { urlField: "additional_certificate_2_url", expiresField: "additional_certificate_2_expires" },
+  dbs: { urlField: "dbs_certificate_url", expiresField: null },
+  additional1: { urlField: "additional_certificate_1_url", expiresField: null },
+  additional2: { urlField: "additional_certificate_2_url", expiresField: null },
 };
 
 export const AdminDocumentUpload = ({
@@ -88,8 +88,9 @@ export const AdminDocumentUpload = ({
         [documentFieldMap[documentType].urlField]: documentUrl,
       };
       
-      if (localExpiry) {
-        updateData[documentFieldMap[documentType].expiresField] = localExpiry;
+      const expiresField = documentFieldMap[documentType].expiresField;
+      if (localExpiry && expiresField) {
+        updateData[expiresField] = localExpiry;
       }
 
       const { error: updateError } = await supabase
@@ -117,13 +118,14 @@ export const AdminDocumentUpload = ({
   };
 
   const handleExpiryUpdate = async () => {
-    if (!localExpiry) return;
+    const expiresField = documentFieldMap[documentType].expiresField;
+    if (!localExpiry || !expiresField) return;
     
     try {
       const { error } = await supabase
         .from("caregivers")
         .update({
-          [documentFieldMap[documentType].expiresField]: localExpiry,
+          [expiresField]: localExpiry,
         })
         .eq("id", caregiverId);
 
@@ -143,7 +145,10 @@ export const AdminDocumentUpload = ({
     }
   };
 
-  const expiryStatus = getExpiryStatus(expiryDate);
+  // Only show expiry UI for insurance documents
+  const showExpiry = documentType === "insurance";
+
+  const expiryStatus = showExpiry ? getExpiryStatus(expiryDate) : "no_date";
 
   return (
     <div className={cn(
@@ -187,17 +192,19 @@ export const AdminDocumentUpload = ({
       </div>
       
       <div className="flex items-center gap-1 flex-shrink-0">
-        <Input
-          type="date"
-          value={localExpiry}
-          onChange={(e) => setLocalExpiry(e.target.value)}
-          className={cn(
-            "h-7 text-xs w-28",
-            expiryStatus === "expired" && "border-red-400 dark:border-red-600",
-            expiryStatus === "expiring_soon" && "border-amber-400 dark:border-amber-600"
-          )}
-          onBlur={handleExpiryUpdate}
-        />
+        {showExpiry && (
+          <Input
+            type="date"
+            value={localExpiry}
+            onChange={(e) => setLocalExpiry(e.target.value)}
+            className={cn(
+              "h-7 text-xs w-28",
+              expiryStatus === "expired" && "border-red-400 dark:border-red-600",
+              expiryStatus === "expiring_soon" && "border-amber-400 dark:border-amber-600"
+            )}
+            onBlur={handleExpiryUpdate}
+          />
+        )}
         <label>
           <Button
             variant="outline"

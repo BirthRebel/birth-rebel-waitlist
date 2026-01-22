@@ -32,13 +32,9 @@ interface CaregiverProfile {
   insurance_certificate_expires: string | null;
   insurance_certificate_url: string | null;
   training_certificate_url: string | null;
-  training_certificate_expires: string | null;
   dbs_certificate_url: string | null;
-  dbs_certificate_expires: string | null;
   additional_certificate_1_url: string | null;
-  additional_certificate_1_expires: string | null;
   additional_certificate_2_url: string | null;
-  additional_certificate_2_expires: string | null;
   is_doula: boolean | null;
   is_private_midwife: boolean | null;
   is_lactation_consultant: boolean | null;
@@ -598,9 +594,9 @@ const CaregiverProfilePage = () => {
                   documentType="training"
                   label="Training Certificate"
                   currentUrl={profile.training_certificate_url}
-                  expiryDate={profile.training_certificate_expires}
+                  expiryDate={null}
                   onUploadComplete={(url) => setProfile({ ...profile, training_certificate_url: url })}
-                  onExpiryChange={(date) => setProfile({ ...profile, training_certificate_expires: date })}
+                  showExpiryInput={false}
                 />
                 
                 <DocumentUpload
@@ -618,9 +614,9 @@ const CaregiverProfilePage = () => {
                   documentType="dbs"
                   label="DBS Certificate"
                   currentUrl={profile.dbs_certificate_url}
-                  expiryDate={profile.dbs_certificate_expires}
+                  expiryDate={null}
                   onUploadComplete={(url) => setProfile({ ...profile, dbs_certificate_url: url })}
-                  onExpiryChange={(date) => setProfile({ ...profile, dbs_certificate_expires: date })}
+                  showExpiryInput={false}
                 />
                 
                 <DocumentUpload
@@ -628,9 +624,9 @@ const CaregiverProfilePage = () => {
                   documentType="additional1"
                   label="Additional Certificate 1"
                   currentUrl={profile.additional_certificate_1_url}
-                  expiryDate={profile.additional_certificate_1_expires}
+                  expiryDate={null}
                   onUploadComplete={(url) => setProfile({ ...profile, additional_certificate_1_url: url })}
-                  onExpiryChange={(date) => setProfile({ ...profile, additional_certificate_1_expires: date })}
+                  showExpiryInput={false}
                 />
                 
                 <DocumentUpload
@@ -638,9 +634,9 @@ const CaregiverProfilePage = () => {
                   documentType="additional2"
                   label="Additional Certificate 2"
                   currentUrl={profile.additional_certificate_2_url}
-                  expiryDate={profile.additional_certificate_2_expires}
+                  expiryDate={null}
                   onUploadComplete={(url) => setProfile({ ...profile, additional_certificate_2_url: url })}
-                  onExpiryChange={(date) => setProfile({ ...profile, additional_certificate_2_expires: date })}
+                  showExpiryInput={false}
                 />
 
                 {/* Profile Photo - View Only */}
