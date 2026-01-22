@@ -133,6 +133,8 @@ export type Database = {
           speaks_spanish: boolean | null
           speaks_urdu: boolean | null
           state_region_province: string | null
+          stripe_account_id: string | null
+          stripe_onboarding_complete: boolean | null
           support_type_other: string | null
           supports_bereavement: boolean | null
           supports_caesareans: boolean | null
@@ -233,6 +235,8 @@ export type Database = {
           speaks_spanish?: boolean | null
           speaks_urdu?: boolean | null
           state_region_province?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           support_type_other?: string | null
           supports_bereavement?: boolean | null
           supports_caesareans?: boolean | null
@@ -333,6 +337,8 @@ export type Database = {
           speaks_spanish?: boolean | null
           speaks_urdu?: boolean | null
           state_region_province?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean | null
           support_type_other?: string | null
           supports_bereavement?: boolean | null
           supports_caesareans?: boolean | null
@@ -627,6 +633,81 @@ export type Database = {
             columns: ["matched_caregiver_id"]
             isOneToOne: false
             referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          caregiver_id: string | null
+          caregiver_payout: number | null
+          created_at: string
+          expires_at: string | null
+          first_session_completed: boolean | null
+          first_session_completed_at: string | null
+          id: string
+          items: Json
+          match_id: string | null
+          notes: string | null
+          parent_email: string
+          payment_intent_id: string | null
+          payout_status: string | null
+          platform_fee: number | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          caregiver_id?: string | null
+          caregiver_payout?: number | null
+          created_at?: string
+          expires_at?: string | null
+          first_session_completed?: boolean | null
+          first_session_completed_at?: string | null
+          id?: string
+          items?: Json
+          match_id?: string | null
+          notes?: string | null
+          parent_email: string
+          payment_intent_id?: string | null
+          payout_status?: string | null
+          platform_fee?: number | null
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          caregiver_id?: string | null
+          caregiver_payout?: number | null
+          created_at?: string
+          expires_at?: string | null
+          first_session_completed?: boolean | null
+          first_session_completed_at?: string | null
+          id?: string
+          items?: Json
+          match_id?: string | null
+          notes?: string | null
+          parent_email?: string
+          payment_intent_id?: string | null
+          payout_status?: string | null
+          platform_fee?: number | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
             referencedColumns: ["id"]
           },
         ]
