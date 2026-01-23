@@ -19,12 +19,14 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    const authHeader = req.headers.get("Authorization")!;
+    
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
@@ -34,7 +36,7 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: userData.user.id });
 
-    // Get caregiver ID
+    // Get caregiver ID - now RLS will work properly with the auth context
     const { data: caregiver, error: caregiverError } = await supabaseClient
       .from("caregivers")
       .select("id, stripe_account_id, stripe_onboarding_complete")
