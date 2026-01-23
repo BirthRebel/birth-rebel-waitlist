@@ -20,29 +20,52 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const supabaseClient = createClient(
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
+    }
+
+    // Use service role to bypass RLS for querying caregiver data
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Also create a client with the user's token to verify auth
+    const supabaseAuth = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseAuth.auth.getUser(token);
     
     if (userError || !userData.user) {
+      logStep("Auth failed", { error: userError?.message });
       throw new Error("User not authenticated");
     }
 
-    // Get caregiver record
-    const { data: caregiver, error: caregiverError } = await supabaseClient
+    logStep("User authenticated", { userId: userData.user.id });
+
+    // Get caregiver record using service role to bypass RLS
+    const { data: caregiver, error: caregiverError } = await supabaseAdmin
       .from("caregivers")
       .select("id, stripe_account_id, stripe_onboarding_complete")
       .eq("user_id", userData.user.id)
       .single();
 
-    if (caregiverError || !caregiver) {
+    if (caregiverError) {
+      logStep("Caregiver query error", { error: caregiverError.message });
       throw new Error("Caregiver not found");
     }
+
+    if (!caregiver) {
+      logStep("No caregiver record found for user");
+      throw new Error("Caregiver not found");
+    }
+
+    logStep("Found caregiver", { caregiverId: caregiver.id, stripeAccountId: caregiver.stripe_account_id });
 
     if (!caregiver.stripe_account_id) {
       return new Response(
