@@ -80,7 +80,7 @@ serve(async (req) => {
 
     const { data: conversations, error } = await supabase
       .from("conversations")
-      .select("id, subject, status, created_at, updated_at")
+      .select("id, subject, status, created_at, updated_at, caregiver_id")
       .eq("parent_email", parent_email.toLowerCase())
       .order("updated_at", { ascending: false });
 

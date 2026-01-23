@@ -6,10 +6,10 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Heart } from "lucide-react";
+import { Calendar, Heart, Users } from "lucide-react";
 import { format } from "date-fns";
-import { ParentMessagesPanel } from "@/components/messaging/ParentMessagesPanel";
 import { PendingMatchesCard } from "@/components/parent/PendingMatchesCard";
+import { ParentCaregiverCard } from "@/components/parent/ParentCaregiverCard";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface ParentRequest {
@@ -25,9 +25,40 @@ interface ParentRequest {
   matched_caregiver_id: string | null;
 }
 
+interface Match {
+  id: string;
+  status: string;
+  support_type: string;
+  created_at: string;
+  caregiver_synopsis: string | null;
+  meeting_link: string | null;
+  caregiver_id: string;
+  caregivers: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    profile_photo_url: string | null;
+    is_doula: boolean;
+    is_private_midwife: boolean;
+    is_lactation_consultant: boolean;
+    is_sleep_consultant: boolean;
+    is_hypnobirthing_coach: boolean;
+    is_bereavement_councillor: boolean;
+  };
+  quote: {
+    id: string;
+    status: string;
+    total_amount: number;
+    items: any[];
+    notes: string | null;
+    created_at: string;
+  } | null;
+}
+
 const ParentDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [parentRequest, setParentRequest] = useState<ParentRequest | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -65,6 +96,7 @@ const ParentDashboard = () => {
   useEffect(() => {
     if (user?.email) {
       fetchParentData();
+      fetchMatches();
     }
   }, [user]);
 
@@ -75,7 +107,6 @@ const ParentDashboard = () => {
     }
 
     try {
-      // Fetch parent request by email using edge function
       const { data, error } = await supabase.functions.invoke("get-parent-request", {
         body: { email: user.email },
       });
@@ -89,6 +120,24 @@ const ParentDashboard = () => {
       console.error("Error fetching parent data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMatches = async () => {
+    if (!user?.email) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("get-parent-matches", {
+        body: { email: user.email },
+      });
+
+      if (error) {
+        console.error("Error fetching matches:", error);
+      } else {
+        setMatches(data?.matches || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching matches:", error);
     }
   };
 
@@ -111,6 +160,10 @@ const ParentDashboard = () => {
         return "bg-muted";
     }
   };
+
+  // Filter matches - pending ones shown in PendingMatchesCard, active ones shown in caregiver cards
+  const activeMatches = matches.filter(m => ["booked", "approved"].includes(m.status));
+  const declinedMatches = matches.filter(m => m.status === "declined");
 
   if (loading) {
     return (
@@ -145,13 +198,30 @@ const ParentDashboard = () => {
 
           {/* Pending Matches Section - Priority */}
           {user?.email && (
-            <PendingMatchesCard parentEmail={user.email} />
+            <PendingMatchesCard parentEmail={user.email} onMatchResponse={fetchMatches} />
           )}
 
-          {/* Messages Section */}
-          {user?.email && (
+          {/* My Caregivers Section - Active Connections */}
+          {activeMatches.length > 0 && (
             <div className="mb-8">
-              <ParentMessagesPanel parentEmail={user.email} />
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="h-5 w-5" style={{ color: "#E2725B" }} />
+                <h2 className="text-xl font-semibold" style={{ color: "#36454F" }}>
+                  My Caregivers
+                </h2>
+                <span className="text-sm text-muted-foreground">
+                  ({activeMatches.length})
+                </span>
+              </div>
+              
+              {activeMatches.map((match, index) => (
+                <ParentCaregiverCard 
+                  key={match.id} 
+                  match={match} 
+                  parentEmail={user?.email || ""}
+                  defaultExpanded={index === 0}
+                />
+              ))}
             </div>
           )}
 
@@ -203,6 +273,21 @@ const ParentDashboard = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Past/Declined Matches - collapsed by default */}
+          {declinedMatches.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Past Matches</h3>
+              {declinedMatches.map((match) => (
+                <ParentCaregiverCard 
+                  key={match.id} 
+                  match={match} 
+                  parentEmail={user?.email || ""}
+                  defaultExpanded={false}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
       <Footer />
