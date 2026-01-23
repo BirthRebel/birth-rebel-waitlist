@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Heart, CheckCircle, XCircle, Clock, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { DeclineMatchDialog } from "./DeclineMatchDialog";
 import { MatchMessaging } from "@/components/messaging/MatchMessaging";
+import { cn } from "@/lib/utils";
 
 interface Match {
   id: string;
@@ -30,6 +31,7 @@ export function PendingMatchesCard({ parentEmail }: PendingMatchesCardProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchMatches();
@@ -121,6 +123,14 @@ export function PendingMatchesCard({ parentEmail }: PendingMatchesCardProps) {
     }
   };
 
+  const handleUnreadCountChange = useCallback((matchId: string, count: number) => {
+    setUnreadCounts(prev => ({ ...prev, [matchId]: count }));
+  }, []);
+
+  const getTotalUnreadCount = () => {
+    return Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -208,19 +218,41 @@ export function PendingMatchesCard({ parentEmail }: PendingMatchesCardProps) {
 
       {/* Booked Matches - with messaging */}
       {bookedMatches.length > 0 && (
-        <Card className="border-2 border-green-500/20 mb-6">
+        <Card className={cn(
+          "mb-6 transition-all duration-300",
+          getTotalUnreadCount() > 0 
+            ? "border-2 border-red-500 ring-2 ring-red-500/20" 
+            : "border-2 border-green-500/20"
+        )}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Heart className="h-5 w-5 text-green-600" />
               Your Matched Caregiver{bookedMatches.length > 1 ? "s" : ""}
+              {getTotalUnreadCount() > 0 && (
+                <span className="flex items-center gap-1 text-sm bg-red-500 text-white px-2 py-0.5 rounded-full font-medium animate-pulse">
+                  <MessageCircle className="h-3 w-3" />
+                  {getTotalUnreadCount()} new message{getTotalUnreadCount() > 1 ? "s" : ""}
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {bookedMatches.map((match) => (
-              <div key={match.id} className="border rounded-lg p-4 bg-white">
+              <div 
+                key={match.id} 
+                className={cn(
+                  "border rounded-lg p-4 bg-white transition-all duration-300",
+                  (unreadCounts[match.id] || 0) > 0 && "border-red-500 ring-1 ring-red-500/20"
+                )}
+              >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <p className="font-semibold capitalize">{match.support_type} Support</p>
+                    <p className="font-semibold capitalize flex items-center gap-2">
+                      {match.support_type} Support
+                      {(unreadCounts[match.id] || 0) > 0 && (
+                        <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                      )}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       Confirmed on {format(new Date(match.reviewed_at || match.created_at), "PPP")}
                     </p>
@@ -244,6 +276,7 @@ export function PendingMatchesCard({ parentEmail }: PendingMatchesCardProps) {
                   senderType="parent"
                   matchStatus={match.status}
                   initialMeetingLink={match.meeting_link}
+                  onUnreadCountChange={(count) => handleUnreadCountChange(match.id, count)}
                 />
               </div>
             ))}

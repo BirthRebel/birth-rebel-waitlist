@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Calendar, User, Loader2, FileText } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, User, Loader2, FileText, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MatchMessaging } from "@/components/messaging/MatchMessaging";
 import { QuoteBuilder } from "@/components/caregiver/QuoteBuilder";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface ParentRequest {
   id: string;
@@ -49,6 +50,7 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
   const [isLoadingSynopsis, setIsLoadingSynopsis] = useState(false);
   const [synopsisError, setSynopsisError] = useState<string | null>(null);
   const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -105,20 +107,41 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
     }
   };
 
+  const canMessage = ["booked", "approved"].includes(match.status);
+
   return (
-    <Card className="mb-4 overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+    <Card className={cn(
+      "mb-4 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300",
+      unreadCount > 0 
+        ? "border-2 border-red-500 ring-2 ring-red-500/20" 
+        : "border border-gray-200"
+    )}>
       <CardHeader 
         className="cursor-pointer bg-white hover:bg-gray-50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#E2725B]/10 flex items-center justify-center">
-              <User className="w-6 h-6 text-[#E2725B]" />
+            <div className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center relative",
+              unreadCount > 0 ? "bg-red-500/10" : "bg-[#E2725B]/10"
+            )}>
+              <User className={cn("w-6 h-6", unreadCount > 0 ? "text-red-500" : "text-[#E2725B]")} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold">
+                  {unreadCount}
+                </span>
+              )}
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-[#36454F]">
+              <h3 className="font-semibold text-lg text-[#36454F] flex items-center gap-2">
                 {match.parent_first_name}
+                {unreadCount > 0 && (
+                  <span className="flex items-center gap-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-medium animate-pulse">
+                    <MessageCircle className="h-3 w-3" />
+                    {unreadCount} new
+                  </span>
+                )}
               </h3>
               <div className="flex items-center gap-2 mt-1">
                 <Badge className={`${getStatusBadgeColor(match.status)} border capitalize`}>
@@ -211,6 +234,7 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
                   senderType="caregiver"
                   matchStatus={match.status}
                   initialMeetingLink={match.meeting_link}
+                  onUnreadCountChange={setUnreadCount}
                 />
               )}
             </>

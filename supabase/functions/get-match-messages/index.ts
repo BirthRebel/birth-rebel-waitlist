@@ -107,11 +107,23 @@ serve(async (req) => {
       );
     }
 
+    // Calculate unread count - messages FROM others that haven't been read
+    // If sender is parent, count unread from caregiver/admin
+    // If sender is caregiver, count unread from parent only
+    const senderTypesToCount = sender_type === "parent" 
+      ? ["caregiver", "admin"] 
+      : ["parent"];
+    
+    const unreadCount = (messages || []).filter(
+      (m: any) => senderTypesToCount.includes(m.sender_type) && !m.read_at
+    ).length;
+
     return new Response(
       JSON.stringify({ 
         messages: messages || [], 
         meeting_link: match.meeting_link,
-        can_message: ["booked", "approved"].includes(match.status)
+        can_message: ["booked", "approved"].includes(match.status),
+        unread_count: unreadCount
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
