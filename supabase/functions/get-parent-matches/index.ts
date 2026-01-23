@@ -74,7 +74,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch all matches for this parent email (case-insensitive)
+    // Fetch all matches for this parent email with caregiver details
     const { data: matches, error } = await supabase
       .from("matches")
       .select(`
@@ -85,7 +85,20 @@ serve(async (req) => {
         caregiver_synopsis,
         decline_reason,
         reviewed_at,
-        meeting_link
+        meeting_link,
+        caregiver_id,
+        caregivers (
+          id,
+          first_name,
+          last_name,
+          profile_photo_url,
+          is_doula,
+          is_private_midwife,
+          is_lactation_consultant,
+          is_sleep_consultant,
+          is_hypnobirthing_coach,
+          is_bereavement_councillor
+        )
       `)
       .ilike("parent_email", email)
       .order("created_at", { ascending: false });
@@ -95,8 +108,34 @@ serve(async (req) => {
       throw error;
     }
 
+    // Fetch quotes for each match
+    const matchIds = matches?.map(m => m.id) || [];
+    let quotesMap: Record<string, any> = {};
+    
+    if (matchIds.length > 0) {
+      const { data: quotes, error: quotesError } = await supabase
+        .from("quotes")
+        .select("id, match_id, status, total_amount, items, notes, created_at")
+        .in("match_id", matchIds);
+      
+      if (!quotesError && quotes) {
+        // Map quotes by match_id (get the latest quote per match)
+        quotes.forEach(quote => {
+          if (!quotesMap[quote.match_id] || new Date(quote.created_at) > new Date(quotesMap[quote.match_id].created_at)) {
+            quotesMap[quote.match_id] = quote;
+          }
+        });
+      }
+    }
+
+    // Attach quotes to matches
+    const matchesWithQuotes = matches?.map(match => ({
+      ...match,
+      quote: quotesMap[match.id] || null
+    })) || [];
+
     return new Response(
-      JSON.stringify({ matches: matches || [] }),
+      JSON.stringify({ matches: matchesWithQuotes }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
