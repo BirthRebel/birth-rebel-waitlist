@@ -269,7 +269,7 @@ serve(async (req) => {
 
     // Send SMS notification to parent if phone available
     if (parentRequest?.phone) {
-      const smsMessage = `Hi ${parentName}, ${caregiverName} has sent you a quote for ${formattedTotal}. View and pay at: ${quoteUrl}`;
+      const smsMessage = `Hi ${parentName}! ${caregiverName} has sent you a quote for ${formattedTotal}. Check your email or log in to your Birth Rebel dashboard to view and pay.`;
       const smsSent = await sendSMS(parentRequest.phone, smsMessage);
       logStep("SMS notification result", { sent: smsSent });
     } else {
