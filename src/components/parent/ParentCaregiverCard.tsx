@@ -211,9 +211,13 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
       if (!error) {
         const msgs = data?.messages || [];
         setMessages(msgs);
-        const unread = msgs.filter((m: Message) => m.sender_type === "caregiver" && !m.read_at).length;
-        setUnreadCount(unread);
-        onUnreadCountChange?.(match.id, unread);
+        
+        // Only update unread count if not already viewed - prevents red border from reappearing
+        if (!hasBeenViewed) {
+          const unread = msgs.filter((m: Message) => m.sender_type === "caregiver" && !m.read_at).length;
+          setUnreadCount(unread);
+          onUnreadCountChange?.(match.id, unread);
+        }
       }
     } catch (error) {
       console.error("Error polling messages:", error);
