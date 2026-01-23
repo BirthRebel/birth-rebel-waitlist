@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { MatchCard } from "@/components/caregiver/MatchCard";
 import { QuotesPanel } from "@/components/caregiver/QuotesPanel";
+import { CodeOfConductDialog } from "@/components/caregiver/CodeOfConductDialog";
 import { Users, ChevronDown, ChevronUp, User as UserIcon, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
@@ -48,6 +49,7 @@ const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [caregiverEmail, setCaregiverEmail] = useState<string | null>(null);
+  const [showCoCDialog, setShowCoCDialog] = useState(false);
   const [matchesExpanded, setMatchesExpanded] = useState(true);
   const [quotesExpanded, setQuotesExpanded] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -172,7 +174,7 @@ const CaregiverMatches = () => {
       // Query with explicit user_id filter
       const { data: caregiver, error: caregiverError } = await supabase
         .from("caregivers")
-        .select("id, email")
+        .select("id, email, code_of_conduct_accepted")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -194,6 +196,11 @@ const CaregiverMatches = () => {
 
       setCaregiverId(caregiver.id);
       setCaregiverEmail(caregiver.email);
+      
+      // Check if CoC needs to be accepted
+      if (!caregiver.code_of_conduct_accepted) {
+        setShowCoCDialog(true);
+      }
 
       // Fetch matches for this caregiver - only show confirmed matches (not declined)
       const { data: matchesData, error: matchesError } = await supabase
@@ -256,6 +263,16 @@ const CaregiverMatches = () => {
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FFFAF5' }}>
       <Header />
+      
+      {/* Code of Conduct Dialog */}
+      {caregiverId && (
+        <CodeOfConductDialog
+          open={showCoCDialog}
+          caregiverId={caregiverId}
+          onAccepted={() => setShowCoCDialog(false)}
+        />
+      )}
+      
       <main className="flex-1 pt-32 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-8">
