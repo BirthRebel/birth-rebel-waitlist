@@ -65,6 +65,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasBeenViewed, setHasBeenViewed] = useState(false);
   const { toast } = useToast();
 
   const caregiver = match.caregivers;
@@ -122,6 +123,13 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
     }
   }, [match.status]);
 
+  // Mark messages as read when card is expanded
+  useEffect(() => {
+    if (isExpanded && conversationId && unreadCount > 0 && !hasBeenViewed) {
+      markMessagesAsRead();
+    }
+  }, [isExpanded, conversationId, unreadCount, hasBeenViewed]);
+
   // Poll for messages when expanded
   useEffect(() => {
     if (!conversationId) return;
@@ -133,6 +141,20 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
 
     return () => clearInterval(interval);
   }, [conversationId, isExpanded]);
+
+  const markMessagesAsRead = async () => {
+    if (!conversationId) return;
+    try {
+      await supabase.functions.invoke("mark-messages-read", {
+        body: { conversation_id: conversationId, reader_type: "parent" },
+      });
+      setHasBeenViewed(true);
+      setUnreadCount(0);
+      onUnreadCountChange?.(match.id, 0);
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
 
   const fetchConversation = async () => {
     try {
@@ -230,10 +252,13 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
     ? `${caregiver.first_name}${caregiver.last_name ? ` ${caregiver.last_name}` : ""}`
     : "Your Caregiver";
 
+  // Show red border only if unread AND not yet viewed
+  const showUnreadIndicator = unreadCount > 0 && !hasBeenViewed;
+
   return (
     <Card className={cn(
       "mb-4 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300",
-      unreadCount > 0 
+      showUnreadIndicator 
         ? "border-2 border-red-500 ring-2 ring-red-500/20" 
         : "border border-gray-200"
     )}>
@@ -246,7 +271,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
             {/* Avatar */}
             <div className={cn(
               "w-14 h-14 rounded-full flex items-center justify-center relative overflow-hidden",
-              unreadCount > 0 ? "ring-2 ring-red-500" : ""
+              showUnreadIndicator ? "ring-2 ring-red-500" : ""
             )}>
               {caregiver?.profile_photo_url ? (
                 <img 
@@ -259,7 +284,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
                   <User className="w-7 h-7 text-[#E2725B]" />
                 </div>
               )}
-              {unreadCount > 0 && (
+              {showUnreadIndicator && (
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold">
                   {unreadCount}
                 </span>
@@ -269,7 +294,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
             <div className="flex-1">
               <h3 className="font-semibold text-lg text-[#36454F] flex items-center gap-2">
                 {caregiverName}
-                {unreadCount > 0 && (
+                {showUnreadIndicator && (
                   <span className="flex items-center gap-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-medium animate-pulse">
                     <MessageCircle className="h-3 w-3" />
                     {unreadCount} new
@@ -309,7 +334,15 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
 
       {isExpanded && (
         <CardContent className="bg-gray-50 border-t border-gray-100 space-y-4 pt-4">
-          {/* Quote Details */}
+          {/* 1. About Caregiver - moved to top */}
+          {match.caregiver_synopsis && canMessage && (
+            <div className="bg-[#E2725B]/5 p-4 rounded-lg border border-[#E2725B]/20">
+              <h4 className="text-sm font-semibold text-[#E2725B] mb-2">About {caregiver?.first_name || "Your Caregiver"}</h4>
+              <p className="text-sm text-gray-700 leading-relaxed">{match.caregiver_synopsis}</p>
+            </div>
+          )}
+
+          {/* 2. Quote Details */}
           {match.quote && (
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex items-center gap-2 mb-3">
@@ -349,7 +382,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
             </div>
           )}
 
-          {/* Video Session Link */}
+          {/* 3. Video Session Link */}
           {match.meeting_link && canMessage && (
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
@@ -373,15 +406,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
             </div>
           )}
 
-          {/* About Caregiver */}
-          {match.caregiver_synopsis && canMessage && (
-            <div className="bg-[#E2725B]/5 p-4 rounded-lg border border-[#E2725B]/20">
-              <h4 className="text-sm font-semibold text-[#E2725B] mb-2">About {caregiver?.first_name || "Your Caregiver"}</h4>
-              <p className="text-sm text-gray-700 leading-relaxed">{match.caregiver_synopsis}</p>
-            </div>
-          )}
-
-          {/* Messaging */}
+          {/* 4. Messaging - moved to bottom with scroll fix */}
           {canMessage && (
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="p-3 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
@@ -389,7 +414,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
                 <h4 className="font-semibold text-sm">Messages with {caregiver?.first_name || "Caregiver"}</h4>
               </div>
               
-              <div className="h-64">
+              <div className="h-64 overflow-y-auto">
                 <MessageThread
                   messages={messages}
                   currentUserType="parent"
