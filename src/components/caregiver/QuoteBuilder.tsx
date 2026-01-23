@@ -101,7 +101,10 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
         },
       });
 
-      if (error) throw error;
+      // Check for error in the response data (edge function returns error in body)
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || "Failed to send quote");
+      }
 
       toast({
         title: "Quote sent!",
@@ -112,8 +115,10 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
     } catch (err: any) {
       console.error("Error sending quote:", err);
       
+      // Extract error message - handle both thrown errors and response body errors
+      const errorMessage = err?.message || "";
+      
       // Check for Stripe setup error
-      const errorMessage = err.message || "";
       const isStripeError = errorMessage.toLowerCase().includes("stripe") || 
                             errorMessage.toLowerCase().includes("complete your");
       
