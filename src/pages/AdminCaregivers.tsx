@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, User, Mail, Phone, MapPin, Clock, Heart, Globe, Briefcase, CheckCircle, Filter, X, UserPlus, MessageSquare, CreditCard, FileCheck, AlertTriangle, FileX, Calendar, Save, Loader2, ExternalLink, PoundSterling, ShieldCheck, ShieldX } from "lucide-react";
 import { AdminMessagePanel } from "@/components/admin/AdminMessagePanel";
 import { AdminDocumentUpload } from "@/components/admin/AdminDocumentUpload";
+import { BroadcastMessageDialog } from "@/components/admin/BroadcastMessageDialog";
 
 interface Caregiver {
   id: string;
@@ -345,6 +346,7 @@ const AdminCaregivers = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Caregiver>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
   const { toast } = useToast();
 
   const startEditing = (caregiver: Caregiver) => {
@@ -509,39 +511,48 @@ const AdminCaregivers = () => {
                 {filteredCaregivers.length} of {caregivers.length} caregivers
               </p>
             </div>
-            <Button 
-              onClick={async () => {
-                setInviting(true);
-                try {
-                  const { data, error } = await supabase.functions.invoke("invite-caregivers", {
-                    body: { invite_all: true },
-                  });
-                  
-                  if (error) throw error;
-                  
-                  toast({
-                    title: "Invitations sent",
-                    description: `${data.invited} caregivers invited. ${data.errors?.length || 0} errors.`,
-                  });
-                  
-                  if (data.errors?.length > 0) {
-                    console.log("Invite errors:", data.errors);
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => setBroadcastOpen(true)}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Message All
+              </Button>
+              <Button 
+                onClick={async () => {
+                  setInviting(true);
+                  try {
+                    const { data, error } = await supabase.functions.invoke("invite-caregivers", {
+                      body: { invite_all: true },
+                    });
+                    
+                    if (error) throw error;
+                    
+                    toast({
+                      title: "Invitations sent",
+                      description: `${data.invited} caregivers invited. ${data.errors?.length || 0} errors.`,
+                    });
+                    
+                    if (data.errors?.length > 0) {
+                      console.log("Invite errors:", data.errors);
+                    }
+                  } catch (err: any) {
+                    toast({
+                      title: "Error",
+                      description: err.message,
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setInviting(false);
                   }
-                } catch (err: any) {
-                  toast({
-                    title: "Error",
-                    description: err.message,
-                    variant: "destructive",
-                  });
-                } finally {
-                  setInviting(false);
-                }
-              }}
-              disabled={inviting}
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              {inviting ? "Inviting..." : "Invite All Caregivers"}
-            </Button>
+                }}
+                disabled={inviting}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                {inviting ? "Inviting..." : "Invite All Caregivers"}
+              </Button>
+            </div>
           </div>
 
           {/* Search */}
@@ -1009,6 +1020,13 @@ const AdminCaregivers = () => {
             : undefined
         }
         caregiverEmail={messagePanelCaregiver?.email}
+      />
+
+      {/* Broadcast message dialog */}
+      <BroadcastMessageDialog
+        open={broadcastOpen}
+        onOpenChange={setBroadcastOpen}
+        recipientCount={caregivers.filter(c => c.active).length}
       />
     </div>
   );
