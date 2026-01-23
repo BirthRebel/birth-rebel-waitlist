@@ -70,15 +70,15 @@ export const CodeOfConductDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
+        <DialogContent className="max-w-2xl h-[90vh] sm:h-auto sm:max-h-[85vh] flex flex-col" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl">Birth Rebel Code of Conduct</DialogTitle>
           <DialogDescription>
             Please review and accept our Code of Conduct to continue using the platform.
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[50vh] pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4">
           <div className="space-y-4 text-sm text-muted-foreground">
             <p>
               As a caregiver on the Birth Rebel platform, I agree to uphold the following standards:
