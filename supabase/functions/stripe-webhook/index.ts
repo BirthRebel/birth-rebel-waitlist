@@ -83,10 +83,10 @@ serve(async (req) => {
       );
     }
 
-    // Verify the webhook signature
+    // Verify the webhook signature using async method for Deno
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
     } catch (err) {
       logStep('ERROR: Webhook signature verification failed', { error: err.message });
       return new Response(
@@ -303,11 +303,12 @@ serve(async (req) => {
               }
             }
 
-            // Notify caregiver via SMS
+            // Notify caregiver via SMS (no URL to avoid carrier spam filters)
             if (caregiver.phone) {
+              const payoutAmount = ((quote.total_amount * 0.9) / 100).toFixed(2);
               await sendSMS(
                 caregiver.phone,
-                `Birth Rebel: Your quote of £${(quote.total_amount / 100).toFixed(2)} has been paid by ${customerEmail}! The funds will be transferred to your account. 🎉`
+                `Hi ${caregiver.first_name}! Great news - your quote of £${(quote.total_amount / 100).toFixed(2)} has been paid! Your payout of £${payoutAmount} will be transferred to your account. Check your Birth Rebel dashboard for details.`
               );
             }
           }
