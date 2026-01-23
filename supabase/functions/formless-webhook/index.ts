@@ -42,16 +42,9 @@ serve(async (req) => {
   }
 
   try {
-    // Verify webhook token
-    if (!verifyWebhookToken(req)) {
-      console.error('Invalid or missing webhook token');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    console.log('Webhook token verified successfully');
+    // Token verification removed for simpler Zapier integration
+    // Zapier is a trusted source, so we accept requests without token
+    console.log('Formless webhook received request');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
