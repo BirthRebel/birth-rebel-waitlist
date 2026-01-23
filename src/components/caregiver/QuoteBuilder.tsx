@@ -101,9 +101,30 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
         },
       });
 
+      console.log("Quote response:", { data, error });
+
       // Check for error in the response data (edge function returns error in body)
-      if (error || data?.error) {
-        throw new Error(data?.error || error?.message || "Failed to send quote");
+      const errorMessage = data?.error || error?.message || "";
+      
+      if (errorMessage) {
+        // Check for Stripe setup error
+        const isStripeError = errorMessage.toLowerCase().includes("stripe") || 
+                              errorMessage.toLowerCase().includes("complete your");
+        
+        if (isStripeError) {
+          toast({
+            title: "Stripe Setup Required",
+            description: "Please complete your Stripe account setup in your dashboard before sending quotes. Go to your Caregiver Profile to connect your bank account.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Failed to send quote",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+        return;
       }
 
       toast({
@@ -114,27 +135,11 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
       onQuoteSent?.();
     } catch (err: any) {
       console.error("Error sending quote:", err);
-      
-      // Extract error message - handle both thrown errors and response body errors
-      const errorMessage = err?.message || "";
-      
-      // Check for Stripe setup error
-      const isStripeError = errorMessage.toLowerCase().includes("stripe") || 
-                            errorMessage.toLowerCase().includes("complete your");
-      
-      if (isStripeError) {
-        toast({
-          title: "Stripe Setup Required",
-          description: "Please complete your Stripe account setup in your dashboard before sending quotes. Go to your Caregiver Profile to connect your bank account.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Failed to send quote",
-          description: errorMessage || "Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Failed to send quote",
+        description: err?.message || "Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSending(false);
     }
