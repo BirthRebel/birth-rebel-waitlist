@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,46 @@ const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
+
+// Helper to send SMS via Vonage
+async function sendSMS(to: string, message: string): Promise<boolean> {
+  const apiKey = Deno.env.get("VONAGE_API_KEY");
+  const apiSecret = Deno.env.get("VONAGE_API_SECRET");
+  const fromNumber = Deno.env.get("VONAGE_FROM_NUMBER");
+
+  if (!apiKey || !apiSecret || !fromNumber) {
+    logStep("SMS skipped - Vonage not configured");
+    return false;
+  }
+
+  try {
+    let formattedNumber = to.replace(/\s+/g, "").replace(/[^0-9+]/g, "");
+    if (formattedNumber.startsWith("0")) {
+      formattedNumber = "44" + formattedNumber.substring(1);
+    } else if (formattedNumber.startsWith("+")) {
+      formattedNumber = formattedNumber.substring(1);
+    }
+
+    const response = await fetch("https://rest.nexmo.com/sms/json", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        api_secret: apiSecret,
+        from: fromNumber,
+        to: formattedNumber,
+        text: message,
+      }),
+    });
+
+    const result = await response.json();
+    logStep("SMS result", { to: formattedNumber, status: result.messages?.[0]?.status });
+    return result.messages?.[0]?.status === "0";
+  } catch (error) {
+    logStep("SMS error", { error: error.message });
+    return false;
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -99,12 +140,8 @@ serve(async (req) => {
           .from('admin_notifications')
           .insert({
             type: 'subscription_canceled',
+            title: 'Subscription Canceled',
             message: `Subscription canceled for caregiver ${caregiver.first_name} ${caregiver.last_name} (${email})`,
-            metadata: {
-              caregiver_id: caregiver.id,
-              caregiver_email: email,
-              subscription_id: subscription.id,
-            },
           });
 
         if (notifError) {
@@ -145,13 +182,8 @@ serve(async (req) => {
               .from('admin_notifications')
               .insert({
                 type: 'subscription_status_change',
+                title: 'Subscription Status Changed',
                 message: `Subscription status changed to ${subscription.status} for ${caregiver.first_name} ${caregiver.last_name} (${email})`,
-                metadata: {
-                  caregiver_id: caregiver.id,
-                  caregiver_email: email,
-                  subscription_id: subscription.id,
-                  new_status: subscription.status,
-                },
               });
             logStep('Admin notification created for status change');
           }
@@ -183,13 +215,8 @@ serve(async (req) => {
             .from('admin_notifications')
             .insert({
               type: 'payment_failed',
-              message: `Payment failed for caregiver ${caregiver.first_name} ${caregiver.last_name} (${email}). Amount: $${(invoice.amount_due / 100).toFixed(2)}`,
-              metadata: {
-                caregiver_id: caregiver.id,
-                caregiver_email: email,
-                invoice_id: invoice.id,
-                amount_due: invoice.amount_due,
-              },
+              title: 'Payment Failed',
+              message: `Payment failed for caregiver ${caregiver.first_name} ${caregiver.last_name} (${email}). Amount: £${(invoice.amount_due / 100).toFixed(2)}`,
             });
           logStep('Admin notification created for payment failure');
         }
@@ -208,6 +235,18 @@ serve(async (req) => {
         if (quoteId) {
           logStep('Processing quote payment', { quoteId });
           
+          // Get the quote with caregiver details
+          const { data: quote, error: quoteFetchError } = await supabase
+            .from('quotes')
+            .select('*, caregivers!inner(id, first_name, last_name, email, phone)')
+            .eq('id', quoteId)
+            .single();
+
+          if (quoteFetchError || !quote) {
+            logStep('Error fetching quote', { error: quoteFetchError?.message });
+            break;
+          }
+
           // Update quote status to paid
           const { error: quoteUpdateError } = await supabase
             .from('quotes')
@@ -226,10 +265,51 @@ serve(async (req) => {
             await supabase.from('admin_notifications').insert({
               type: 'quote_paid',
               title: 'Quote Payment Received',
-              message: `Payment received for quote ${quoteId} from ${customerEmail}`,
+              message: `Payment of £${(quote.total_amount / 100).toFixed(2)} received from ${customerEmail}`,
               match_id: session.metadata?.match_id,
               parent_email: customerEmail,
             });
+
+            // Notify caregiver via email
+            const caregiver = quote.caregivers;
+            const resendApiKey = Deno.env.get("RESEND_API_KEY");
+            
+            if (resendApiKey && caregiver.email) {
+              try {
+                const resend = new Resend(resendApiKey);
+                await resend.emails.send({
+                  from: "Birth Rebel <notifications@birthrebel.com>",
+                  to: [caregiver.email],
+                  subject: "🎉 Payment Received - Your Quote Has Been Paid!",
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                      <h1 style="color: #7c3aed;">Payment Received!</h1>
+                      <p>Hi ${caregiver.first_name},</p>
+                      <p>Great news! Your quote has been paid.</p>
+                      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0;"><strong>Amount:</strong> £${(quote.total_amount / 100).toFixed(2)}</p>
+                        <p style="margin: 10px 0 0 0;"><strong>From:</strong> ${customerEmail}</p>
+                        <p style="margin: 10px 0 0 0;"><strong>Your payout:</strong> £${((quote.total_amount * 0.9) / 100).toFixed(2)}</p>
+                      </div>
+                      <p>The payment will be transferred to your connected Stripe account automatically.</p>
+                      <p>You can log in to your Birth Rebel dashboard to see more details.</p>
+                      <p style="margin-top: 30px;">Best wishes,<br>The Birth Rebel Team</p>
+                    </div>
+                  `,
+                });
+                logStep("Caregiver email sent", { to: caregiver.email });
+              } catch (emailError) {
+                logStep("Email error", { error: emailError.message });
+              }
+            }
+
+            // Notify caregiver via SMS
+            if (caregiver.phone) {
+              await sendSMS(
+                caregiver.phone,
+                `Birth Rebel: Your quote of £${(quote.total_amount / 100).toFixed(2)} has been paid by ${customerEmail}! The funds will be transferred to your account. 🎉`
+              );
+            }
           }
         } else if (customerEmail && session.mode === 'subscription') {
           // Subscription checkout - trigger auto-booking
