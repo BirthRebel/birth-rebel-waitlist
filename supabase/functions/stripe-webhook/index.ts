@@ -278,7 +278,7 @@ serve(async (req) => {
               try {
                 const resend = new Resend(resendApiKey);
                 await resend.emails.send({
-                  from: "Birth Rebel <notifications@birthrebel.com>",
+                  from: "Birth Rebel <noreply@notifications.birthrebel.com>",
                   to: [caregiver.email],
                   subject: "🎉 Payment Received - Your Quote Has Been Paid!",
                   html: `
