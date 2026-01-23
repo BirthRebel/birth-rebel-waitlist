@@ -177,7 +177,7 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
               </p>
               <p className="text-sm text-yellow-700 mt-2">
                 This parent has been matched with you, but hasn't confirmed the match yet. 
-                Once they accept, and you have an active subscription, you'll be able to see their details and start messaging.
+                Once they accept, you'll be able to see their details and start messaging.
               </p>
             </div>
           )}
