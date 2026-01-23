@@ -55,9 +55,10 @@ interface ParentCaregiverCardProps {
   match: Match;
   parentEmail: string;
   defaultExpanded?: boolean;
+  onUnreadCountChange?: (matchId: string, count: number) => void;
 }
 
-export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = false }: ParentCaregiverCardProps) => {
+export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = false, onUnreadCountChange }: ParentCaregiverCardProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -114,20 +115,21 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
     });
   };
 
-  // Fetch conversation and messages when expanded
+  // Fetch conversation on mount to get unread counts (even when collapsed)
   useEffect(() => {
-    if (isExpanded && ["booked", "approved"].includes(match.status)) {
+    if (["booked", "approved"].includes(match.status)) {
       fetchConversation();
     }
-  }, [isExpanded, match.status]);
+  }, [match.status]);
 
-  // Poll for messages
+  // Poll for messages when expanded
   useEffect(() => {
-    if (!conversationId || !isExpanded) return;
+    if (!conversationId) return;
     
+    // Poll more frequently when expanded, less frequently when collapsed
     const interval = setInterval(() => {
       fetchMessagesQuiet();
-    }, 3000);
+    }, isExpanded ? 3000 : 15000);
 
     return () => clearInterval(interval);
   }, [conversationId, isExpanded]);
@@ -166,9 +168,10 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
       const msgs = data?.messages || [];
       setMessages(msgs);
       
-      // Count unread messages
+      // Count unread messages and notify parent
       const unread = msgs.filter((m: Message) => m.sender_type === "caregiver" && !m.read_at).length;
       setUnreadCount(unread);
+      onUnreadCountChange?.(match.id, unread);
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
@@ -188,6 +191,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
         setMessages(msgs);
         const unread = msgs.filter((m: Message) => m.sender_type === "caregiver" && !m.read_at).length;
         setUnreadCount(unread);
+        onUnreadCountChange?.(match.id, unread);
       }
     } catch (error) {
       console.error("Error polling messages:", error);

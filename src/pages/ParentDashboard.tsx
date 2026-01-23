@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
@@ -6,11 +6,12 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Heart, Users } from "lucide-react";
+import { Calendar, Heart, Users, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { PendingMatchesCard } from "@/components/parent/PendingMatchesCard";
 import { ParentCaregiverCard } from "@/components/parent/ParentCaregiverCard";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { cn } from "@/lib/utils";
 
 interface ParentRequest {
   id: string;
@@ -60,7 +61,16 @@ const ParentDashboard = () => {
   const [parentRequest, setParentRequest] = useState<ParentRequest | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const navigate = useNavigate();
+
+  const handleUnreadCountChange = useCallback((matchId: string, count: number) => {
+    setUnreadCounts(prev => ({ ...prev, [matchId]: count }));
+  }, []);
+
+  const getTotalUnreadCount = () => {
+    return Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -203,15 +213,27 @@ const ParentDashboard = () => {
 
           {/* My Caregivers Section - Active Connections */}
           {activeMatches.length > 0 && (
-            <div className="mb-8">
+            <div className={cn(
+              "mb-8 p-4 rounded-xl transition-all duration-300",
+              getTotalUnreadCount() > 0 && "bg-red-50 ring-2 ring-red-500/30"
+            )}>
               <div className="flex items-center gap-3 mb-4">
-                <Users className="h-5 w-5" style={{ color: "#E2725B" }} />
+                <Users className={cn(
+                  "h-5 w-5",
+                  getTotalUnreadCount() > 0 ? "text-red-500" : ""
+                )} style={getTotalUnreadCount() === 0 ? { color: "#E2725B" } : undefined} />
                 <h2 className="text-xl font-semibold" style={{ color: "#36454F" }}>
                   My Caregivers
                 </h2>
                 <span className="text-sm text-muted-foreground">
                   ({activeMatches.length})
                 </span>
+                {getTotalUnreadCount() > 0 && (
+                  <span className="flex items-center gap-1.5 text-sm bg-red-500 text-white px-3 py-1 rounded-full font-medium animate-pulse shadow-lg">
+                    <MessageCircle className="h-4 w-4" />
+                    {getTotalUnreadCount()} new message{getTotalUnreadCount() > 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
               
               {activeMatches.map((match, index) => (
@@ -219,7 +241,8 @@ const ParentDashboard = () => {
                   key={match.id} 
                   match={match} 
                   parentEmail={user?.email || ""}
-                  defaultExpanded={index === 0}
+                  defaultExpanded={index === 0 || getTotalUnreadCount() > 0}
+                  onUnreadCountChange={handleUnreadCountChange}
                 />
               ))}
             </div>
