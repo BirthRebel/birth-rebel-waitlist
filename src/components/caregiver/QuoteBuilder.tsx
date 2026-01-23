@@ -103,8 +103,20 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
 
       console.log("Quote response:", { data, error });
 
-      // Check for error in the response data (edge function returns error in body)
-      const errorMessage = data?.error || error?.message || "";
+      // Extract error message from various possible locations
+      // When edge function returns 500, error body is in data (parsed JSON) or error.context
+      let errorMessage = "";
+      if (data?.error) {
+        errorMessage = data.error;
+      } else if (error) {
+        // Try to get the error from context (FunctionsHttpError)
+        try {
+          const errorBody = await error.context?.json?.();
+          errorMessage = errorBody?.error || error.message;
+        } catch {
+          errorMessage = error.message;
+        }
+      }
       
       if (errorMessage) {
         // Check for Stripe setup error
