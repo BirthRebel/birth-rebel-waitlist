@@ -111,11 +111,25 @@ export const QuoteBuilder = ({ matchId, parentEmail, parentName, onQuoteSent, on
       onQuoteSent?.();
     } catch (err: any) {
       console.error("Error sending quote:", err);
-      toast({
-        title: "Failed to send quote",
-        description: err.message || "Please try again.",
-        variant: "destructive",
-      });
+      
+      // Check for Stripe setup error
+      const errorMessage = err.message || "";
+      const isStripeError = errorMessage.toLowerCase().includes("stripe") || 
+                            errorMessage.toLowerCase().includes("complete your");
+      
+      if (isStripeError) {
+        toast({
+          title: "Stripe Setup Required",
+          description: "Please complete your Stripe account setup in your dashboard before sending quotes. Go to your Caregiver Profile to connect your bank account.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to send quote",
+          description: errorMessage || "Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setSending(false);
     }
