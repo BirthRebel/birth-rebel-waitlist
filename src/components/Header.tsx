@@ -98,6 +98,13 @@ export const Header = () => {
             >
               About
             </Link>
+            <Link 
+              to="/faq" 
+              className="text-lg font-semibold hover:text-primary transition-colors"
+              style={{ color: '#36454F' }}
+            >
+              FAQ
+            </Link>
             
             {isAdmin && (
               <>
