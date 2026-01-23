@@ -22,6 +22,7 @@ interface MatchMessagingProps {
   senderType: "caregiver" | "parent";
   matchStatus: string;
   initialMeetingLink?: string | null;
+  onUnreadCountChange?: (count: number) => void;
 }
 
 export const MatchMessaging = ({
@@ -30,6 +31,7 @@ export const MatchMessaging = ({
   senderType,
   matchStatus,
   initialMeetingLink,
+  onUnreadCountChange,
 }: MatchMessagingProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [meetingLink, setMeetingLink] = useState(initialMeetingLink || "");
@@ -40,6 +42,7 @@ export const MatchMessaging = ({
   const [savingLink, setSavingLink] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -74,12 +77,41 @@ export const MatchMessaging = ({
         setMeetingLink(data.meeting_link || "");
         setLinkInput(data.meeting_link || "");
       }
+      
+      // Update unread count
+      const newUnreadCount = data?.unread_count || 0;
+      setUnreadCount(newUnreadCount);
+      onUnreadCountChange?.(newUnreadCount);
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Mark messages as read when expanded
+  const markAsRead = async () => {
+    try {
+      await supabase.functions.invoke("mark-messages-read", {
+        body: { 
+          match_id: matchId, 
+          reader_type: senderType, 
+          reader_email: senderEmail 
+        },
+      });
+      setUnreadCount(0);
+      onUnreadCountChange?.(0);
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
+  // Mark as read when expanded
+  useEffect(() => {
+    if (expanded && unreadCount > 0) {
+      markAsRead();
+    }
+  }, [expanded, unreadCount]);
 
   const handleSendMessage = async (content: string) => {
     if (!canMessage) return;
@@ -167,11 +199,15 @@ export const MatchMessaging = ({
           <span className="font-medium text-sm" style={{ color: "#36454F" }}>
             Messages & Video Call
           </span>
-          {messages.length > 0 && (
+          {unreadCount > 0 ? (
+            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-medium animate-pulse">
+              {unreadCount} new
+            </span>
+          ) : messages.length > 0 ? (
             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
               {messages.length}
             </span>
-          )}
+          ) : null}
         </div>
         {expanded ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
