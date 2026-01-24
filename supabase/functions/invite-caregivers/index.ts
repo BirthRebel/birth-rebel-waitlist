@@ -93,33 +93,51 @@ serve(async (req) => {
     const results = [];
     const errors = [];
 
+    // Generate a random password (user will reset via forgot password flow)
+    const generateRandomPassword = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+      let password = '';
+      for (let i = 0; i < 24; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return password;
+    };
+
     for (const caregiver of caregivers) {
       try {
-        console.log(`Inviting caregiver: ${caregiver.email}`);
+        console.log(`Creating account for caregiver: ${caregiver.email}`);
         
-        // Use inviteUserByEmail to send invite - redirect to profile page
-        const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-          caregiver.email,
-          {
-            data: {
-              first_name: caregiver.first_name,
-              last_name: caregiver.last_name,
-              caregiver_id: caregiver.id,
-            },
-            redirectTo: `https://birth-rebel-waitlist.lovable.app/caregiver/profile`,
-          }
-        );
+        // Create user with pre-confirmed email and random password
+        // Caregiver will use "Forgot Password" to set their own password
+        const { data, error } = await supabaseAdmin.auth.admin.createUser({
+          email: caregiver.email,
+          password: generateRandomPassword(),
+          email_confirm: true, // Pre-confirm email so they can reset password immediately
+          user_metadata: {
+            first_name: caregiver.first_name,
+            last_name: caregiver.last_name,
+            caregiver_id: caregiver.id,
+          },
+        });
 
         if (error) {
-          console.error(`Error inviting ${caregiver.email}:`, error);
+          console.error(`Error creating user ${caregiver.email}:`, error);
           
           // Check if user already exists
-          if (error.message?.includes("already been registered")) {
+          if (error.message?.includes("already been registered") || error.message?.includes("already exists")) {
             // Try to get the existing user and link them
             const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
             const existingUser = existingUsers?.users?.find(u => u.email === caregiver.email);
             
             if (existingUser) {
+              // Ensure email is confirmed for existing user
+              if (!existingUser.email_confirmed_at) {
+                await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+                  email_confirm: true,
+                });
+                console.log(`Confirmed email for existing user ${caregiver.email}`);
+              }
+              
               // Link the caregiver to existing user
               const { error: updateError } = await supabaseAdmin
                 .from("caregivers")
@@ -129,8 +147,8 @@ serve(async (req) => {
               if (updateError) {
                 errors.push({ email: caregiver.email, error: updateError.message });
               } else {
-                results.push({ email: caregiver.email, status: "linked_existing" });
-                console.log(`Linked existing user for ${caregiver.email}`);
+                results.push({ email: caregiver.email, status: "linked_existing_and_confirmed" });
+                console.log(`Linked and confirmed existing user for ${caregiver.email}`);
               }
             } else {
               errors.push({ email: caregiver.email, error: error.message });
@@ -139,10 +157,10 @@ serve(async (req) => {
             errors.push({ email: caregiver.email, error: error.message });
           }
         } else {
-          results.push({ email: caregiver.email, status: "invited", userId: data?.user?.id });
-          console.log(`Successfully invited ${caregiver.email}`);
+          results.push({ email: caregiver.email, status: "created", userId: data?.user?.id });
+          console.log(`Successfully created account for ${caregiver.email}`);
           
-          // If we got a user ID back, link it to the caregiver
+          // Link the new user to the caregiver record
           if (data?.user?.id) {
             await supabaseAdmin
               .from("caregivers")
@@ -151,7 +169,7 @@ serve(async (req) => {
           }
         }
       } catch (err: any) {
-        console.error(`Exception inviting ${caregiver.email}:`, err);
+        console.error(`Exception creating user ${caregiver.email}:`, err);
         errors.push({ email: caregiver.email, error: err.message });
       }
     }
