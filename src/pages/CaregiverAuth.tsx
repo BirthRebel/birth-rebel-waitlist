@@ -12,13 +12,37 @@ const TYPEFORM_URL = "https://form.typeform.com/to/eAJV4XXH?typeform-source=birt
 
 const CaregiverAuth = () => {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "reset" | "update_password">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Listen for PASSWORD_RECOVERY event when user clicks reset link
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event);
+      
+      if (event === "PASSWORD_RECOVERY") {
+        // User clicked the password reset link - show update password form
+        setMode("update_password");
+        if (session?.user?.email) {
+          setEmail(session.user.email);
+        }
+        toast({
+          title: "Set your new password",
+          description: "Please enter your new password below.",
+        });
+      } else if (event === "SIGNED_IN" && mode !== "update_password") {
+        // Regular sign in - redirect to matches
+        navigate("/caregiver/matches", { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [mode, navigate, toast]);
 
   // Pre-fill email and set signup mode from URL params
   useEffect(() => {
@@ -33,8 +57,60 @@ const CaregiverAuth = () => {
     }
   }, [searchParams]);
 
+  const handleUpdatePassword = async () => {
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Password updated!",
+        description: "Your password has been set. Redirecting...",
+      });
+      
+      // Navigate to matches after password update
+      setTimeout(() => {
+        navigate("/caregiver/matches", { replace: true });
+      }, 1500);
+    } catch (error: any) {
+      console.error("Password update error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Handle password update separately
+    if (mode === "update_password") {
+      await handleUpdatePassword();
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -158,6 +234,7 @@ const CaregiverAuth = () => {
     switch (mode) {
       case "signup": return "Create Your Account";
       case "reset": return "Reset Password";
+      case "update_password": return "Set New Password";
       default: return "Caregiver Login";
     }
   };
@@ -167,6 +244,7 @@ const CaregiverAuth = () => {
     switch (mode) {
       case "signup": return "Create Account";
       case "reset": return "Send Reset Link";
+      case "update_password": return "Set Password";
       default: return "Log In";
     }
   };
@@ -186,24 +264,41 @@ const CaregiverAuth = () => {
                 Set up your password to access your caregiver dashboard
               </p>
             )}
+
+            {mode === "update_password" && (
+              <p className="text-center text-sm text-muted-foreground mb-6">
+                Choose a secure password for your account
+              </p>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  disabled={mode === "signup" && searchParams.get("email") !== null}
-                />
-              </div>
-              
-              {mode !== "reset" && (
+              {mode !== "update_password" && (
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                    disabled={mode === "signup" && searchParams.get("email") !== null}
+                  />
+                </div>
+              )}
+
+              {mode === "update_password" && email && (
+                <div>
+                  <Label>Email</Label>
+                  <p className="text-sm text-muted-foreground py-2">{email}</p>
+                </div>
+              )}
+              
+              {(mode === "login" || mode === "signup" || mode === "update_password") && (
+                <div>
+                  <Label htmlFor="password">
+                    {mode === "update_password" ? "New Password" : "Password"}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -216,7 +311,7 @@ const CaregiverAuth = () => {
                 </div>
               )}
 
-              {mode === "signup" && (
+              {(mode === "signup" || mode === "update_password") && (
                 <div>
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
                   <Input
@@ -305,6 +400,12 @@ const CaregiverAuth = () => {
                   >
                     Log in
                   </button>
+                </p>
+              )}
+
+              {mode === "update_password" && (
+                <p className="text-muted-foreground">
+                  Setting password for your caregiver account
                 </p>
               )}
             </div>
