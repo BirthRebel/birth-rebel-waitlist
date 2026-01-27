@@ -147,16 +147,23 @@ export function PendingMatchesCard({ parentEmail, onMatchResponse }: PendingMatc
 
   return (
     <>
-      <Card className="border-2 border-primary/20 mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5" style={{ color: "#E2725B" }} />
-            Your Caregiver Match{pendingMatches.length > 1 ? "es" : ""} - Review Required
+      <Card className="border-2 border-amber-400 mb-6 shadow-lg shadow-amber-500/10 overflow-hidden">
+        <CardHeader className="bg-amber-50 border-b border-amber-200">
+          <CardTitle className="flex items-center gap-2 text-amber-900">
+            <div className="p-1.5 bg-amber-100 rounded-full">
+              <Heart className="h-5 w-5 text-amber-600" />
+            </div>
+            <span className="flex-1">
+              Your Caregiver Match{pendingMatches.length > 1 ? "es" : ""}
+            </span>
+            <Badge className="bg-amber-500 text-white border-0 animate-pulse">
+              Action Required
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {pendingMatches.map((match) => (
-            <div key={match.id} className="border rounded-lg p-4 bg-white">
+            <div key={match.id} className="border-2 border-amber-200 rounded-lg p-4 bg-white">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="font-semibold capitalize">{match.support_type} Support</p>
@@ -168,12 +175,12 @@ export function PendingMatchesCard({ parentEmail, onMatchResponse }: PendingMatc
               </div>
 
               {match.caregiver_synopsis ? (
-                <div className="bg-muted/50 rounded-lg p-4 mb-4">
-                  <p className="text-sm font-medium mb-2 flex items-center gap-1">
+                <div className="bg-[#E2725B]/5 rounded-lg p-4 mb-4 border border-[#E2725B]/20">
+                  <p className="text-sm font-medium mb-2 flex items-center gap-1 text-[#E2725B]">
                     <Clock className="h-4 w-4" />
                     About Your Matched Caregiver
                   </p>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
                     {match.caregiver_synopsis}
                   </p>
                 </div>
@@ -185,7 +192,7 @@ export function PendingMatchesCard({ parentEmail, onMatchResponse }: PendingMatc
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end">
+              <div className="flex gap-3 justify-end pt-2">
                 <Button
                   variant="outline"
                   onClick={() => handleDeclineClick(match.id)}
@@ -198,8 +205,8 @@ export function PendingMatchesCard({ parentEmail, onMatchResponse }: PendingMatc
                 <Button
                   onClick={() => handleApprove(match.id)}
                   disabled={actionLoading === match.id}
-                  className="flex items-center gap-2"
-                  style={{ backgroundColor: "#E2725B" }}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                  size="lg"
                 >
                   <CheckCircle className="h-4 w-4" />
                   {actionLoading === match.id ? "Processing..." : "Approve Match"}
