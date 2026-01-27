@@ -120,6 +120,17 @@ async function processTypeformPayload(supabase: any, payload: any) {
 
   console.log('Extracted data:', JSON.stringify(extractedData, null, 2));
 
+  // Check if this looks like a caregiver submission (sent to wrong webhook)
+  if (detectCaregiverSubmission(extractedData)) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'This appears to be a caregiver submission. Please route to typeform-webhook instead.',
+        hint: 'Caregiver forms should be sent to: /functions/v1/typeform-webhook'
+      }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Map extracted data to parent_requests fields using intelligent matching
   const parentRequest = mapToParentRequest(extractedData);
   
@@ -156,6 +167,17 @@ async function processSimplePayload(supabase: any, answers: any, fullPayload: an
   }
 
   console.log('Extracted data from simple format:', JSON.stringify(extractedData, null, 2));
+
+  // Check if this looks like a caregiver submission (sent to wrong webhook)
+  if (detectCaregiverSubmission(extractedData)) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'This appears to be a caregiver submission. Please route to typeform-webhook instead.',
+        hint: 'Caregiver forms should be sent to: /functions/v1/typeform-webhook'
+      }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 
   const parentRequest = mapToParentRequest(extractedData);
   
@@ -301,6 +323,33 @@ function parseDateField(value: string): string | null {
   }
   
   return null;
+}
+
+// Detect if submission looks like caregiver data (should go to typeform-webhook instead)
+function detectCaregiverSubmission(data: Record<string, string>): boolean {
+  const caregiverIndicators = [
+    'doula', 'midwife', 'lactation consultant', 'sleep consultant', 
+    'hypnobirthing', 'bereavement', 'years practicing', 'hourly rate',
+    'certifications', 'births supported', 'insurance certificate',
+    'dbs certificate', 'training certificate', 'caregiver type',
+    'i am a', 'i\'m a doula', 'caregiver profile'
+  ];
+  
+  const allText = Object.entries(data)
+    .map(([k, v]) => `${k} ${v}`)
+    .join(' ')
+    .toLowerCase();
+  
+  const matches = caregiverIndicators.filter(indicator => allText.includes(indicator));
+  
+  // If 2+ caregiver indicators found, likely a caregiver submission
+  if (matches.length >= 2) {
+    console.warn('CAREGIVER SUBMISSION DETECTED - This should go to typeform-webhook!');
+    console.warn('Matched indicators:', matches);
+    return true;
+  }
+  
+  return false;
 }
 
 // Save parent request to database
