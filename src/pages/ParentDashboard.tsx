@@ -4,12 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Heart, Users, MessageCircle } from "lucide-react";
-import { format } from "date-fns";
+import { Users, MessageCircle } from "lucide-react";
 import { PendingMatchesCard } from "@/components/parent/PendingMatchesCard";
 import { ParentCaregiverCard } from "@/components/parent/ParentCaregiverCard";
+import { ActionRequiredBanner } from "@/components/ActionRequiredBanner";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 
@@ -156,24 +154,13 @@ const ParentDashboard = () => {
     navigate("/");
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "new":
-        return "bg-blue-500";
-      case "contacted":
-        return "bg-yellow-500";
-      case "matched":
-        return "bg-green-500";
-      case "closed":
-        return "bg-gray-500";
-      default:
-        return "bg-muted";
-    }
-  };
-
   // Filter matches - pending ones shown in PendingMatchesCard, active ones shown in caregiver cards
+  const pendingMatches = matches.filter(m => m.status === "matched");
   const activeMatches = matches.filter(m => ["booked", "approved"].includes(m.status));
   const declinedMatches = matches.filter(m => m.status === "declined");
+  
+  // Check for quotes needing payment
+  const quotesNeedingPayment = activeMatches.filter(m => m.quote?.status === "sent");
 
   if (loading) {
     return (
@@ -205,6 +192,23 @@ const ParentDashboard = () => {
               Log Out
             </Button>
           </div>
+
+          {/* Action Required Banners */}
+          {pendingMatches.length > 0 && (
+            <ActionRequiredBanner
+              title={`${pendingMatches.length} Caregiver Match${pendingMatches.length > 1 ? "es" : ""} Awaiting Your Review`}
+              description="You've been matched with a caregiver! Please review and confirm below to start communicating."
+              variant="warning"
+            />
+          )}
+
+          {quotesNeedingPayment.length > 0 && (
+            <ActionRequiredBanner
+              title={`${quotesNeedingPayment.length} Quote${quotesNeedingPayment.length > 1 ? "s" : ""} Ready for Payment`}
+              description="Your caregiver has sent you a quote. Review the details and pay to confirm your booking."
+              variant="info"
+            />
+          )}
 
           {/* Pending Matches Section - Priority */}
           {user?.email && (
@@ -248,54 +252,21 @@ const ParentDashboard = () => {
             </div>
           )}
 
-          {/* Request Status Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5" style={{ color: "#E2725B" }} />
-                Your Support Request
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {parentRequest ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge className={getStatusColor(parentRequest.status)}>
-                      {parentRequest.status}
-                    </Badge>
-                  </div>
-                  {parentRequest.support_type && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Support Type</p>
-                      <p className="font-medium capitalize">{parentRequest.support_type}</p>
-                    </div>
-                  )}
-                  {parentRequest.due_date && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Due Date</p>
-                      <p className="font-medium flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {format(new Date(parentRequest.due_date), "PPP")}
-                      </p>
-                    </div>
-                  )}
-                  {parentRequest.location && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Location</p>
-                      <p className="font-medium">{parentRequest.location}</p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">
-                    You don't have an active support request yet. Please contact us to get matched with a caregiver.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Empty state when no matches or caregivers yet */}
+          {matches.length === 0 && (
+            <div className="bg-white rounded-xl p-8 text-center border border-gray-200 shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-[#E2725B]/10 flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-[#E2725B]" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                We're Finding Your Perfect Match
+              </h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                Our team is reviewing your request and will match you with a caregiver who fits your needs. 
+                You'll receive an email when your match is ready for review.
+              </p>
+            </div>
+          )}
 
           {/* Past/Declined Matches - collapsed by default */}
           {declinedMatches.length > 0 && (

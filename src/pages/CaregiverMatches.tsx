@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { MatchCard } from "@/components/caregiver/MatchCard";
 import { QuotesPanel } from "@/components/caregiver/QuotesPanel";
 import { CodeOfConductDialog } from "@/components/caregiver/CodeOfConductDialog";
-import { Users, ChevronDown, ChevronUp, User as UserIcon, FileText } from "lucide-react";
+import { ActionRequiredBanner } from "@/components/ActionRequiredBanner";
+import { Users, ChevronDown, ChevronUp, User as UserIcon, FileText, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
 
@@ -283,6 +284,16 @@ const CaregiverMatches = () => {
               Log Out
             </Button>
           </div>
+
+          {/* Action Required Banner for pending matches */}
+          {matches.filter(m => m.status === "matched").length > 0 && (
+            <ActionRequiredBanner
+              title={`${matches.filter(m => m.status === "matched").length} Match${matches.filter(m => m.status === "matched").length > 1 ? "es" : ""} Awaiting Parent Confirmation`}
+              description="These parents have been matched with you but haven't confirmed yet. You'll be able to message them once they accept."
+              variant="info"
+              icon={<Clock className="h-6 w-6 text-blue-600" />}
+            />
+          )}
 
           {/* My Profile Section - Prominent Card */}
           <button
