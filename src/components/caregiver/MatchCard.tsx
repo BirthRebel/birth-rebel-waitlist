@@ -51,6 +51,9 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
   const [synopsisError, setSynopsisError] = useState<string | null>(null);
   const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasBeenViewed, setHasBeenViewed] = useState(false);
+
+  const canMessage = ["booked", "approved"].includes(match.status);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -73,13 +76,57 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
     });
   };
 
+  // Fetch unread count on mount for messageable matches
+  useEffect(() => {
+    if (canMessage && caregiverEmail) {
+      fetchUnreadCount();
+      // Poll for unread counts
+      const interval = setInterval(fetchUnreadCount, isExpanded ? 3000 : 15000);
+      return () => clearInterval(interval);
+    }
+  }, [canMessage, caregiverEmail, isExpanded]);
+
+  const fetchUnreadCount = async () => {
+    if (!caregiverEmail) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("get-match-messages", {
+        body: { match_id: match.id, sender_email: caregiverEmail, sender_type: "caregiver" },
+      });
+      if (!error && !hasBeenViewed) {
+        const count = data?.unread_count || 0;
+        setUnreadCount(count);
+      }
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
+
+  // Mark as read when expanded and has unread
+  useEffect(() => {
+    if (isExpanded && unreadCount > 0 && !hasBeenViewed) {
+      markAsRead();
+    }
+  }, [isExpanded, unreadCount, hasBeenViewed]);
+
+  const markAsRead = async () => {
+    if (!caregiverEmail) return;
+    try {
+      await supabase.functions.invoke("mark-messages-read", {
+        body: { match_id: match.id, reader_type: "caregiver", reader_email: caregiverEmail },
+      });
+      setHasBeenViewed(true);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking as read:", error);
+    }
+  };
+
   // Fetch synopsis when expanded and we have a parentRequest - only for booked/approved matches
   useEffect(() => {
-    const canViewDetails = ["booked", "approved"].includes(match.status);
-    if (isExpanded && parentRequest && !synopsis && !isLoadingSynopsis && canViewDetails) {
+    if (isExpanded && parentRequest && !synopsis && !isLoadingSynopsis && canMessage) {
       fetchSynopsis();
     }
-  }, [isExpanded, parentRequest, match.status]);
+  }, [isExpanded, parentRequest, canMessage]);
 
   const fetchSynopsis = async () => {
     if (!parentRequest) return;
@@ -107,12 +154,13 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
     }
   };
 
-  const canMessage = ["booked", "approved"].includes(match.status);
+  // Show red border only if unread AND not yet viewed
+  const showUnreadIndicator = unreadCount > 0 && !hasBeenViewed;
 
   return (
     <Card className={cn(
       "mb-4 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300",
-      unreadCount > 0 
+      showUnreadIndicator 
         ? "border-2 border-red-500 ring-2 ring-red-500/20" 
         : "border border-gray-200"
     )}>
@@ -124,10 +172,10 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
           <div className="flex items-center gap-4">
             <div className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center relative",
-              unreadCount > 0 ? "bg-red-500/10" : "bg-[#E2725B]/10"
+              showUnreadIndicator ? "bg-red-500/10" : "bg-[#E2725B]/10"
             )}>
-              <User className={cn("w-6 h-6", unreadCount > 0 ? "text-red-500" : "text-[#E2725B]")} />
-              {unreadCount > 0 && (
+              <User className={cn("w-6 h-6", showUnreadIndicator ? "text-red-500" : "text-[#E2725B]")} />
+              {showUnreadIndicator && (
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold">
                   {unreadCount}
                 </span>
@@ -136,7 +184,7 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
             <div>
               <h3 className="font-semibold text-lg text-[#36454F] flex items-center gap-2">
                 {match.parent_first_name}
-                {unreadCount > 0 && (
+                {showUnreadIndicator && (
                   <span className="flex items-center gap-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-medium animate-pulse">
                     <MessageCircle className="h-3 w-3" />
                     {unreadCount} new
@@ -234,7 +282,11 @@ export const MatchCard = ({ match, parentRequest, caregiverEmail }: MatchCardPro
                   senderType="caregiver"
                   matchStatus={match.status}
                   initialMeetingLink={match.meeting_link}
-                  onUnreadCountChange={setUnreadCount}
+                  onUnreadCountChange={(count) => {
+                    if (!hasBeenViewed) {
+                      setUnreadCount(count);
+                    }
+                  }}
                 />
               )}
             </>
