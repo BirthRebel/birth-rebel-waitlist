@@ -80,7 +80,7 @@ serve(async (req) => {
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
+      apiVersion: "2024-12-18.acacia",
     });
 
     const account = await stripe.accounts.retrieve(caregiver.stripe_account_id);

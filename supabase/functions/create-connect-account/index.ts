@@ -51,7 +51,7 @@ serve(async (req) => {
     logStep("Found caregiver", { caregiverId: caregiver.id });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
+      apiVersion: "2024-12-18.acacia",
     });
 
     let accountId = caregiver.stripe_account_id;
