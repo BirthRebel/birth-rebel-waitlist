@@ -394,18 +394,21 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
                   <Video className="h-4 w-4 text-[#E2725B]" />
                   <h4 className="font-semibold text-sm">Video Session</h4>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(match.meeting_link!, "_blank");
-                  }}
-                  className="gap-2"
+                <a
+                  href={match.meeting_link!.startsWith('http') ? match.meeting_link! : `https://${match.meeting_link!}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <ExternalLink className="h-3 w-3" />
-                  Join Call
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Join Call
+                  </Button>
+                </a>
               </div>
             </div>
           )}
