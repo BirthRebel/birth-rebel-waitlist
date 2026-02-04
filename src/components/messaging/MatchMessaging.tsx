@@ -263,15 +263,24 @@ export const MatchMessaging = ({
                 <div className="flex items-center gap-2">
                   {meetingLink ? (
                     <>
-                      <a
-                        href={meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate flex-1"
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const url = meetingLink.startsWith('http') 
+                            ? meetingLink 
+                            : `https://${meetingLink}`;
+                          navigator.clipboard.writeText(url);
+                          toast({
+                            title: "Link copied!",
+                            description: "Open a new browser tab and paste the link to join the call.",
+                          });
+                        }}
+                        className="flex-1"
                       >
-                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{meetingLink}</span>
-                      </a>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Copy Meeting Link
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
