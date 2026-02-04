@@ -6,35 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Verify webhook token from URL query parameter
-function verifyWebhookToken(req: Request): boolean {
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token');
-  const expectedToken = Deno.env.get('FORMLESS_WEBHOOK_TOKEN');
-  
-  if (!expectedToken) {
-    console.error('FORMLESS_WEBHOOK_TOKEN not configured');
-    return false;
-  }
-  
-  if (!token) {
-    console.error('No token provided in request URL');
-    return false;
-  }
-  
-  // Constant-time comparison to prevent timing attacks
-  if (token.length !== expectedToken.length) {
-    return false;
-  }
-  
-  let result = 0;
-  for (let i = 0; i < token.length; i++) {
-    result |= token.charCodeAt(i) ^ expectedToken.charCodeAt(i);
-  }
-  
-  return result === 0;
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -42,8 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Token verification removed for simpler Zapier integration
-    // Zapier is a trusted source, so we accept requests without token
     console.log('Formless webhook received request');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -184,91 +153,165 @@ async function processSimplePayload(supabase: any, answers: any, fullPayload: an
   return await saveParentRequest(supabase, parentRequest);
 }
 
+// Extract first name from conversational text that mentions "Thanks, [Name]" pattern
+function extractNameFromConversation(text: string): string | null {
+  // Look for patterns like "Thanks, Leah." or "Thank you, Leah."
+  const patterns = [
+    /Thanks,\s+([A-Z][a-z]+)/i,
+    /Thank you,\s+([A-Z][a-z]+)/i,
+    /Hello,?\s+([A-Z][a-z]+)/i,
+    /Hi,?\s+([A-Z][a-z]+)/i,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+// Extract support type from conversational text
+function extractSupportTypeFromConversation(text: string): string | null {
+  const lowerText = text.toLowerCase();
+  
+  // Check for explicit mentions of support types
+  if (lowerText.includes('doula')) return 'doula';
+  if (lowerText.includes('lactation')) return 'lactation';
+  if (lowerText.includes('sleep support') || lowerText.includes('sleep consultant')) return 'sleep';
+  if (lowerText.includes('hypnobirthing')) return 'hypnobirthing';
+  
+  return null;
+}
+
+// Extract email from any field value
+function extractEmailFromValue(value: string): string | null {
+  const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const match = value.match(emailPattern);
+  return match ? match[0].toLowerCase() : null;
+}
+
+// Extract phone from any field value
+function extractPhoneFromValue(value: string): string | null {
+  // Check if it has at least 6 digits and doesn't contain @ (email)
+  const digitsOnly = value.replace(/\D/g, '');
+  if (digitsOnly.length >= 6 && !value.includes('@')) {
+    return value;
+  }
+  return null;
+}
+
 // Intelligent mapping from extracted question/answer data to parent_requests fields
 function mapToParentRequest(data: Record<string, string>) {
   const result: Record<string, any> = {
     status: 'new'
   };
 
+  // First pass: try to extract values from any field that might contain them
+  // This handles the case where Formless concatenates all conversation in one field
+  let allText = '';
+  for (const [question, answer] of Object.entries(data)) {
+    allText += ' ' + question + ' ' + answer;
+  }
+  
+  // Try to extract name from conversational patterns in any field
+  const nameFromConversation = extractNameFromConversation(allText);
+  if (nameFromConversation) {
+    result.first_name = nameFromConversation;
+    console.log('Extracted name from conversation:', nameFromConversation);
+  }
+  
+  // Try to extract support type from any field
+  const supportTypeFromConversation = extractSupportTypeFromConversation(allText);
+  if (supportTypeFromConversation) {
+    result.support_type = supportTypeFromConversation;
+    console.log('Extracted support type from conversation:', supportTypeFromConversation);
+  }
+
+  // Second pass: process each field specifically
   for (const [question, answer] of Object.entries(data)) {
     const q = question.toLowerCase();
     
-    // First name
-    if (q.includes('your name') || q.includes('first name') || q === 'name') {
-      // Extract first name from answer if not already set
-      if (!result.first_name) {
-        result.first_name = answer.split(' ')[0]; // Take first word as first name
+    // First name - direct field match
+    if ((q.includes('your name') || q.includes('first name') || q === 'name') && !result.first_name) {
+      // Check if answer is a simple name (not a long conversation)
+      if (answer.length < 50 && !answer.includes(',')) {
+        result.first_name = answer.split(' ')[0];
       }
     }
     
-    // Email - specifically look for email-related questions
-    if (q.includes('email address') || q.includes('your email') || q === 'email') {
-      // Validate it looks like an email (contains @)
-      if (answer.includes('@')) {
-        result.email = answer.toLowerCase(); // Normalize to lowercase
-      } else {
-        console.log(`Skipping invalid email value: "${answer}" - does not contain @`);
+    // Last name
+    if (q.includes('last name') || q.includes('surname')) {
+      if (answer.length < 50 && !answer.includes(',')) {
+        result.last_name = answer;
       }
     }
     
-    // Phone - specifically look for phone-related questions
-    if (q.includes('phone number') || q.includes('contact you') || q.includes('telephone') || q.includes('reach you') || q === 'phone') {
-      // Basic phone validation (contains digits)
-      if (/\d{6,}/.test(answer.replace(/\D/g, ''))) {
-        result.phone = answer;
+    // Email - scan ALL field values for emails
+    if (!result.email) {
+      const foundEmail = extractEmailFromValue(answer);
+      if (foundEmail) {
+        result.email = foundEmail;
+        console.log('Found email in field "' + question + '":', foundEmail);
       }
     }
     
-    // Also check if "email address" field actually contains a phone number and store it as phone
-    if ((q.includes('email address') || q.includes('your email')) && !answer.includes('@') && /\d{6,}/.test(answer.replace(/\D/g, ''))) {
-      if (!result.phone) {
-        result.phone = answer;
-        console.log(`Email field contained phone number, storing as phone: ${answer}`);
+    // Phone - scan values for phone numbers
+    if (!result.phone) {
+      const foundPhone = extractPhoneFromValue(answer);
+      if (foundPhone && (q.includes('phone') || q.includes('contact') || q.includes('number') || q.includes('email'))) {
+        result.phone = foundPhone;
+        console.log('Found phone in field "' + question + '":', foundPhone);
       }
     }
     
-    // Stage of journey
-    if (q.includes('postpartum') || q.includes('pregnancy') || q.includes('how far along') || q.includes('stage')) {
+    // Stage of journey - only if answer is reasonable length
+    if ((q.includes('postpartum') || q.includes('pregnancy') || q.includes('how far along') || q.includes('stage of journey')) 
+        && answer.length < 100) {
       result.stage_of_journey = answer;
     }
     
-    // Support type - look for specific question about type of support
-    if (q.includes('type of support') || q.includes('looking for') && (q.includes('doula') || q.includes('lactation') || q.includes('sleep') || q.includes('hypnobirthing'))) {
-      result.support_type = answer;
+    // Support type - only from the specific question, and only short answers
+    if (q.includes('support type') && !q.includes('looking for')) {
+      if (answer.length < 100) {
+        result.support_type = answer;
+      }
     }
     
     // Family context
-    if (q.includes('birth') && q.includes('family') || q.includes('family context') || q.includes('relationship status') || q.includes('other children')) {
+    if ((q.includes('birth and family context') || q.includes('family context') || q.includes('relationship status')) 
+        && answer.length < 200) {
       result.family_context = answer;
     }
     
     // Caregiver preferences
-    if (q.includes('preferences') && (q.includes('caregiver') || q.includes('personality') || q.includes('experience'))) {
+    if ((q.includes('caregiver preference') || q.includes('preferences')) && answer.length < 300) {
       result.caregiver_preferences = answer;
     }
     
     // Preferred communication
-    if (q.includes('communication') || q.includes('text') && q.includes('phone') && q.includes('video')) {
+    if ((q.includes('communication') || q.includes('communicate')) && answer.length < 100) {
       result.preferred_communication = answer;
     }
     
     // Shared identity requests
-    if (q.includes('identity') || q.includes('ethnicity') || q.includes('gender') || q.includes('orientation')) {
+    if ((q.includes('identity') || q.includes('ethnicity') || q.includes('orientation')) && answer.length < 300) {
       result.shared_identity_requests = answer;
     }
     
     // Budget
-    if (q.includes('budget')) {
+    if (q.includes('budget') && answer.length < 100) {
       result.budget = answer;
     }
     
     // General availability
-    if (q.includes('availability') || q.includes('days and times') || q.includes('weekdays') || q.includes('weekends')) {
+    if ((q.includes('availability') || q.includes('days and times')) && answer.length < 100) {
       result.general_availability = answer;
     }
     
     // Specific concerns
-    if (q.includes('concerns') || q.includes('challenges') || q.includes('issues')) {
+    if ((q.includes('concerns') || q.includes('challenges')) && answer.length < 500) {
       result.specific_concerns = answer;
     }
     
@@ -278,18 +321,13 @@ function mapToParentRequest(data: Record<string, string>) {
     }
     
     // Location
-    if (q.includes('located') || q.includes('location') || q === 'city' || q === 'area') {
+    if ((q.includes('located') || q.includes('location') || q === 'city' || q === 'area') && answer.length < 100) {
       result.location = answer;
     }
     
     // Language
-    if (q.includes('language') && !q.includes('cultural')) {
+    if (q.includes('language') && !q.includes('cultural') && answer.length < 100) {
       result.language = answer;
-    }
-    
-    // Special requirements
-    if (q.includes('special') && q.includes('requirement')) {
-      result.special_requirements = answer;
     }
   }
 
@@ -328,8 +366,7 @@ function parseDateField(value: string): string | null {
 // Detect if submission looks like caregiver data (should go to typeform-webhook instead)
 function detectCaregiverSubmission(data: Record<string, string>): boolean {
   const caregiverIndicators = [
-    'doula', 'midwife', 'lactation consultant', 'sleep consultant', 
-    'hypnobirthing', 'bereavement', 'years practicing', 'hourly rate',
+    'midwife', 'years practicing', 'hourly rate',
     'certifications', 'births supported', 'insurance certificate',
     'dbs certificate', 'training certificate', 'caregiver type',
     'i am a', 'i\'m a doula', 'caregiver profile'
