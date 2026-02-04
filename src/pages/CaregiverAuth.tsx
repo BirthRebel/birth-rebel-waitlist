@@ -151,8 +151,9 @@ const CaregiverAuth = () => {
         });
 
         if (signUpError) {
-          // If user already exists, suggest login instead
-          if (signUpError.message.includes("already registered")) {
+          console.error("Signup error:", signUpError);
+          // Handle various signup error scenarios
+          if (signUpError.message.includes("already registered") || signUpError.message.includes("User already registered")) {
             toast({
               title: "Account exists",
               description: "This email is already registered. Please log in instead.",
@@ -162,7 +163,14 @@ const CaregiverAuth = () => {
             setLoading(false);
             return;
           }
-          throw signUpError;
+          // Show the actual error message for any other signup failure
+          toast({
+            title: "Signup failed",
+            description: signUpError.message || "Unable to create account. Please try again.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
         }
 
         if (signUpData.user) {
