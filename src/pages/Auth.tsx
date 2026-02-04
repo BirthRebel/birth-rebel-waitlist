@@ -120,7 +120,7 @@ const Auth = () => {
 
       if (isReset) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: "https://birth-rebel-waitlist.lovable.app/auth",
         });
         if (error) throw error;
 
@@ -212,7 +212,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
+          emailRedirectTo: "https://birth-rebel-waitlist.lovable.app/auth",
           data: {
             first_name: firstName,
             user_type: userType,
