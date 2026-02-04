@@ -18,6 +18,7 @@ const Auth = () => {
   
   const [isLogin, setIsLogin] = useState(true);
   const [isReset, setIsReset] = useState(false);
+  const [isSettingNewPassword, setIsSettingNewPassword] = useState(false);
   const [userType, setUserType] = useState<"parent" | "caregiver">(prefillType || "parent");
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
@@ -30,13 +31,36 @@ const Auth = () => {
   const isFromEmailLink = !!prefillEmail;
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+    // Listen for auth state changes including PASSWORD_RECOVERY
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth event:", event);
+      
+      if (event === "PASSWORD_RECOVERY") {
+        console.log("Password recovery event detected");
+        setIsSettingNewPassword(true);
+        setIsLogin(false);
+        setIsReset(false);
+        if (session?.user?.email) {
+          setEmail(session.user.email);
+        }
+        toast({
+          title: "Set your new password",
+          description: "Enter your new password below.",
+        });
+      } else if (event === "SIGNED_IN" && session?.user && !isSettingNewPassword) {
         redirectBasedOnUserType(session.user.id);
       }
     });
-  }, []);
+
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user && !isSettingNewPassword) {
+        redirectBasedOnUserType(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isSettingNewPassword]);
 
   const redirectBasedOnUserType = async (userId: string) => {
     try {
@@ -74,6 +98,26 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Handle setting new password after recovery
+      if (isSettingNewPassword) {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+
+        toast({
+          title: "Password updated!",
+          description: "Your password has been successfully changed. You are now logged in.",
+        });
+        setIsSettingNewPassword(false);
+        setLoading(false);
+        
+        // Get current session and redirect
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          redirectBasedOnUserType(session.user.id);
+        }
+        return;
+      }
+
       if (isReset) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth`,
@@ -240,7 +284,9 @@ const Auth = () => {
               className="text-2xl font-bold text-center mb-2"
               style={{ color: "#E2725B" }}
             >
-              {isReset
+              {isSettingNewPassword
+                ? "Set New Password"
+                : isReset
                 ? "Reset Password"
                 : isLogin
                 ? "Welcome Back"
@@ -259,7 +305,7 @@ const Auth = () => {
               </p>
             )}
 
-            {!isLogin && !isReset && (
+            {!isLogin && !isReset && !isSettingNewPassword && (
               <Tabs
                 value={userType}
                 onValueChange={(v) => {
@@ -279,7 +325,7 @@ const Auth = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && !isReset && (
+              {!isLogin && !isReset && !isSettingNewPassword && (
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
@@ -293,21 +339,29 @@ const Auth = () => {
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              {!isReset && (
+              {!isSettingNewPassword && (
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                  />
+                </div>
+              )}
+
+              {isSettingNewPassword && (
+                <p className="text-center text-sm text-muted-foreground mb-2">
+                  Setting new password for <strong>{email}</strong>
+                </p>
+              )}
+
+              {(!isReset || isSettingNewPassword) && (
+                <div>
+                  <Label htmlFor="password">{isSettingNewPassword ? "New Password" : "Password"}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -328,6 +382,8 @@ const Auth = () => {
               >
                 {loading
                   ? "Loading..."
+                  : isSettingNewPassword
+                  ? "Save New Password"
                   : isReset
                   ? "Send Reset Link"
                   : isLogin
@@ -336,7 +392,7 @@ const Auth = () => {
               </Button>
             </form>
 
-            {isLogin && !isReset && (
+            {isLogin && !isReset && !isSettingNewPassword && (
               <p className="text-center mt-3 text-sm">
                 <button
                   type="button"
@@ -349,30 +405,32 @@ const Auth = () => {
               </p>
             )}
 
-            <p className="text-center mt-4 text-sm" style={{ color: "#36454F" }}>
-              {isReset ? (
-                <button
-                  type="button"
-                  onClick={() => setIsReset(false)}
-                  className="underline font-medium"
-                  style={{ color: "#E2725B" }}
-                >
-                  Back to login
-                </button>
-              ) : (
-                <>
-                  {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            {!isSettingNewPassword && (
+              <p className="text-center mt-4 text-sm" style={{ color: "#36454F" }}>
+                {isReset ? (
                   <button
                     type="button"
-                    onClick={() => setIsLogin(!isLogin)}
+                    onClick={() => setIsReset(false)}
                     className="underline font-medium"
                     style={{ color: "#E2725B" }}
                   >
-                    {isLogin ? "Sign up" : "Log in"}
+                    Back to login
                   </button>
-                </>
-              )}
-            </p>
+                ) : (
+                  <>
+                    {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsLogin(!isLogin)}
+                      className="underline font-medium"
+                      style={{ color: "#E2725B" }}
+                    >
+                      {isLogin ? "Sign up" : "Log in"}
+                    </button>
+                  </>
+                )}
+              </p>
+            )}
           </div>
         </div>
       </main>
