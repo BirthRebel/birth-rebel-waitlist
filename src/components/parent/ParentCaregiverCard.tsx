@@ -389,26 +389,35 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
           {/* 3. Video Session Link */}
           {match.meeting_link && canMessage && (
             <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-[#E2725B]" />
-                  <h4 className="font-semibold text-sm">Video Session</h4>
-                </div>
-                <a
-                  href={match.meeting_link!.startsWith('http') ? match.meeting_link! : `https://${match.meeting_link!}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-[#E2725B]" />
+                    <h4 className="font-semibold text-sm">Video Session</h4>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = match.meeting_link!.startsWith('http') 
+                        ? match.meeting_link! 
+                        : `https://${match.meeting_link!}`;
+                      navigator.clipboard.writeText(url);
+                      toast({
+                        title: "Link copied!",
+                        description: "Open a new browser tab and paste the link to join the call.",
+                      });
+                    }}
                   >
                     <ExternalLink className="h-3 w-3" />
-                    Join Call
+                    Copy Link
                   </Button>
-                </a>
+                </div>
+                <div className="text-xs text-muted-foreground bg-gray-50 p-2 rounded break-all font-mono">
+                  {match.meeting_link}
+                </div>
               </div>
             </div>
           )}
