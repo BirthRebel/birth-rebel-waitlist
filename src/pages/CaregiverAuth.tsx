@@ -116,7 +116,7 @@ const CaregiverAuth = () => {
     try {
       if (mode === "reset") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/caregiver/auth`,
+          redirectTo: "https://birth-rebel-waitlist.lovable.app/caregiver/auth",
         });
         if (error) throw error;
         
@@ -146,7 +146,7 @@ const CaregiverAuth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/caregiver/auth`,
+            emailRedirectTo: "https://birth-rebel-waitlist.lovable.app/caregiver/auth",
           },
         });
 
