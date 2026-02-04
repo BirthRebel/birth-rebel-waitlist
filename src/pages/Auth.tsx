@@ -30,7 +30,16 @@ const Auth = () => {
   // Show helpful message if coming from email link
   const isFromEmailLink = !!prefillEmail;
 
+  // Check if this is a password recovery link (has token in URL hash)
+  const isRecoveryLink = window.location.hash.includes('type=recovery') || 
+                         window.location.hash.includes('access_token');
+
   useEffect(() => {
+    // If this looks like a recovery link, don't do anything until the auth event fires
+    if (isRecoveryLink) {
+      console.log("Recovery link detected, waiting for PASSWORD_RECOVERY event");
+    }
+
     // Listen for auth state changes including PASSWORD_RECOVERY
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth event:", event);
@@ -47,20 +56,26 @@ const Auth = () => {
           title: "Set your new password",
           description: "Enter your new password below.",
         });
-      } else if (event === "SIGNED_IN" && session?.user && !isSettingNewPassword) {
+        return; // Don't do anything else
+      }
+      
+      // Only redirect on SIGNED_IN if not in password setting mode and not a recovery link
+      if (event === "SIGNED_IN" && session?.user && !isSettingNewPassword && !isRecoveryLink) {
         redirectBasedOnUserType(session.user.id);
       }
     });
 
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && !isSettingNewPassword) {
-        redirectBasedOnUserType(session.user.id);
-      }
-    });
+    // Only check existing session if NOT a recovery link
+    if (!isRecoveryLink) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user && !isSettingNewPassword) {
+          redirectBasedOnUserType(session.user.id);
+        }
+      });
+    }
 
     return () => subscription.unsubscribe();
-  }, [isSettingNewPassword]);
+  }, [isSettingNewPassword, isRecoveryLink]);
 
   const redirectBasedOnUserType = async (userId: string) => {
     try {
