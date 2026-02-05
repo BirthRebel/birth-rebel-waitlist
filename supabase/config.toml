@@ -6,7 +6,7 @@ verify_jwt = false
 [functions.import-caregivers-csv]
 verify_jwt = false
 
-[functions.formless-webhook]
+[functions.parent-intake-webhook]
 verify_jwt = false
 
 [functions.get-all-caregivers]
