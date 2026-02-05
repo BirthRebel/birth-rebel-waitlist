@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Formless webhook received request');
+    console.log('Parent intake webhook received request');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -21,17 +21,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload = await req.json();
-    console.log('=== FORMLESS WEBHOOK RECEIVED ===');
+    console.log('=== PARENT INTAKE WEBHOOK RECEIVED ===');
     console.log('Full payload:', JSON.stringify(payload, null, 2));
 
-    // Formless by Typeform uses similar structure to Typeform webhooks
-    // Check for form_response structure (Typeform/Formless style)
+    // Check for form_response structure (Typeform/Formless/Deformity style)
     if (payload.form_response) {
       console.log('Processing Typeform/Formless style payload');
       return await processTypeformPayload(supabase, payload);
     }
 
-    // Check for direct answers array or data object (alternative Formless format)
+    // Check for direct answers array or data object (alternative format)
     const answers = payload.answers || payload.data || payload;
     console.log('Processing alternative format, answers:', JSON.stringify(answers, null, 2));
     
@@ -209,7 +208,7 @@ function mapToParentRequest(data: Record<string, string>) {
   };
 
   // First pass: try to extract values from any field that might contain them
-  // This handles the case where Formless concatenates all conversation in one field
+  // This handles the case where conversational forms concatenate all conversation in one field
   let allText = '';
   for (const [question, answer] of Object.entries(data)) {
     allText += ' ' + question + ' ' + answer;
