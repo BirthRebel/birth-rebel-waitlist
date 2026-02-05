@@ -119,12 +119,18 @@ function mapToParentRequest(data: Record<string, string>) {
     const emailMatch = v.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     if (emailMatch && !result.email) result.email = emailMatch[0].toLowerCase();
     
-    if ((key.includes('first name') || key === 'name') && v.length < 50) result.first_name = v.split(' ')[0];
-    if (key.includes('last name')) result.last_name = v;
+    // Handle combined "name" field - split into first/last
+    if ((key === 'name' || key.includes('full name')) && v.length < 100 && !result.first_name) {
+      const parts = v.trim().split(/\s+/);
+      result.first_name = parts[0];
+      if (parts.length > 1) result.last_name = parts.slice(1).join(' ');
+    }
+    if (key.includes('first_name') || key.includes('first name')) result.first_name = v.trim();
+    if (key.includes('last_name') || key.includes('last name')) result.last_name = v.trim();
     if (key.includes('phone') && !result.phone) result.phone = v;
-    if (key.includes('support type') && v.length < 100) result.support_type = v;
+    if ((key.includes('support_type') || key.includes('support type') || key === 'support') && v.length < 100) result.support_type = v;
     if (key.includes('location') && v.length < 100) result.location = v;
-    if (key.includes('due date')) result.due_date = v;
+    if (key.includes('due_date') || key.includes('due date')) result.due_date = v;
     if (key.includes('budget')) result.budget = v;
     if (key.includes('concerns')) result.specific_concerns = v;
   }
