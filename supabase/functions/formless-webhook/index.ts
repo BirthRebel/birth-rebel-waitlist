@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Parent intake webhook received request');
+    console.log('Formless webhook received request');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
