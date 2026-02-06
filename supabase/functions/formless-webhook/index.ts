@@ -132,7 +132,12 @@ function mapToParentRequest(data: Record<string, string>) {
     if (key.includes('location') && v.length < 100) result.location = v;
     if (key.includes('due_date') || key.includes('due date')) result.due_date = v;
     if (key.includes('budget')) result.budget = v;
-    if (key.includes('concerns')) result.specific_concerns = v;
+    if (key.includes('concerns') || key.includes('challenges')) result.specific_concerns = v;
+    if (key.includes('stage_of_journey') || key.includes('stage') || key.includes('how far along')) result.stage_of_journey = v;
+    if (key.includes('family_context') || key.includes('family context')) result.family_context = v;
+    if (key.includes('caregiver_preferences') || key.includes('caregiver preferences') || key.includes('preferences')) result.caregiver_preferences = v;
+    if (key.includes('preferred_communication') || key.includes('communication')) result.preferred_communication = v;
+    if (key.includes('general_availability') || key.includes('availability')) result.general_availability = v;
   }
   
   // Extract support type from text
