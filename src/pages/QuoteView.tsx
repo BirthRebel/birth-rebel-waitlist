@@ -164,7 +164,7 @@ const QuoteView = () => {
   }
 
   const isExpired = quote.expires_at && new Date(quote.expires_at) < new Date();
-  const canPay = quote.status === "sent" && !isExpired;
+  const canPay = (quote.status === "sent" || quote.status === "accepted") && !isExpired;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
