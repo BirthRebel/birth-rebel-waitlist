@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MatchCard } from "@/components/caregiver/MatchCard";
 import { QuotesPanel } from "@/components/caregiver/QuotesPanel";
 import { CodeOfConductDialog } from "@/components/caregiver/CodeOfConductDialog";
+import { OnboardingChecklist } from "@/components/caregiver/OnboardingChecklist";
 import { ActionRequiredBanner } from "@/components/ActionRequiredBanner";
 import { Users, ChevronDown, ChevronUp, User as UserIcon, FileText, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ const CaregiverMatches = () => {
   const [user, setUser] = useState<User | null>(null);
   const [caregiverId, setCaregiverId] = useState<string | null>(null);
   const [caregiverEmail, setCaregiverEmail] = useState<string | null>(null);
+  const [caregiverData, setCaregiverData] = useState<any>(null);
   const [showCoCDialog, setShowCoCDialog] = useState(false);
   const [matchesExpanded, setMatchesExpanded] = useState(true);
   const [quotesExpanded, setQuotesExpanded] = useState(true);
@@ -175,7 +177,7 @@ const CaregiverMatches = () => {
       // Query with explicit user_id filter
       const { data: caregiver, error: caregiverError } = await supabase
         .from("caregivers")
-        .select("id, email, code_of_conduct_accepted")
+        .select("id, email, code_of_conduct_accepted, first_name, last_name, bio, hourly_rate, profile_photo_url, profile_completed_at, training_certificate_url, insurance_certificate_url, insurance_certificate_expires, dbs_certificate_url, stripe_onboarding_complete, cal_link")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -197,6 +199,7 @@ const CaregiverMatches = () => {
 
       setCaregiverId(caregiver.id);
       setCaregiverEmail(caregiver.email);
+      setCaregiverData(caregiver);
       
       // Check if CoC needs to be accepted
       if (!caregiver.code_of_conduct_accepted) {
@@ -284,6 +287,11 @@ const CaregiverMatches = () => {
               Log Out
             </Button>
           </div>
+
+          {/* Onboarding Checklist */}
+          {caregiverData && (
+            <OnboardingChecklist caregiver={caregiverData} />
+          )}
 
           {/* Action Required Banner for pending matches */}
           {matches.filter(m => m.status === "matched").length > 0 && (
