@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, Calendar, User, Video, MessageCircle, Receipt, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -387,7 +387,7 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
             </div>
           )}
 
-          {/* 3. Book a Call (Cal.com) */}
+          {/* 3. Book a Call (Cal.com embed) */}
           {caregiver?.cal_link && canMessage && (
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
@@ -399,16 +399,19 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
                   variant="outline"
                   size="sm"
                   className="gap-2"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    const url = caregiver.cal_link!.startsWith('http') 
-                      ? caregiver.cal_link! 
-                      : `https://${caregiver.cal_link!}`;
-                    window.open(url, '_blank');
+                    const { getCalApi } = await import("@calcom/embed-react");
+                    const cal = await getCalApi();
+                    // Extract the cal link path from full URL
+                    let calLink = caregiver.cal_link!;
+                    // Remove protocol and domain if full URL provided
+                    calLink = calLink.replace(/^https?:\/\/(www\.)?cal\.com\//, "");
+                    cal("modal", { calLink });
                   }}
                 >
-                  <ExternalLink className="h-3 w-3" />
-                  Schedule on Cal.com
+                  <Calendar className="h-3 w-3" />
+                  Schedule a Call
                 </Button>
               </div>
             </div>
