@@ -20,6 +20,7 @@ interface Caregiver {
   is_sleep_consultant: boolean;
   is_hypnobirthing_coach: boolean;
   is_bereavement_councillor: boolean;
+  cal_link: string | null;
 }
 
 interface Quote {
@@ -386,7 +387,34 @@ export const ParentCaregiverCard = ({ match, parentEmail, defaultExpanded = fals
             </div>
           )}
 
-          {/* 3. Video Session Link */}
+          {/* 3. Book a Call (Cal.com) */}
+          {caregiver?.cal_link && canMessage && (
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-[#E2725B]" />
+                  <h4 className="font-semibold text-sm">Book a Call</h4>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const url = caregiver.cal_link!.startsWith('http') 
+                      ? caregiver.cal_link! 
+                      : `https://${caregiver.cal_link!}`;
+                    window.open(url, '_blank');
+                  }}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Schedule on Cal.com
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Video Session Link */}
           {match.meeting_link && canMessage && (
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">

@@ -43,6 +43,7 @@ interface Match {
     is_sleep_consultant: boolean;
     is_hypnobirthing_coach: boolean;
     is_bereavement_councillor: boolean;
+    cal_link: string | null;
   };
   quote: {
     id: string;
