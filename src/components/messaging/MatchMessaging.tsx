@@ -149,10 +149,21 @@ export const MatchMessaging = ({
   const handleSaveLink = async () => {
     setSavingLink(true);
     try {
-      // Normalize the link - add https:// if missing
+      // Extract URL from pasted text (e.g. Google Calendar invite text)
       let normalizedLink = linkInput.trim();
-      if (normalizedLink && !normalizedLink.startsWith("http://") && !normalizedLink.startsWith("https://")) {
-        normalizedLink = "https://" + normalizedLink;
+      if (normalizedLink) {
+        const urlMatch = normalizedLink.match(/(https?:\/\/(?:meet\.google\.com|calendar\.app\.google|zoom\.us|teams\.microsoft\.com)[^\s]*)/i);
+        if (urlMatch) {
+          normalizedLink = urlMatch[1];
+        } else {
+          const anyUrlMatch = normalizedLink.match(/(https?:\/\/[^\s]+)/);
+          if (anyUrlMatch) {
+            normalizedLink = anyUrlMatch[1];
+          }
+        }
+        if (!normalizedLink.startsWith("http://") && !normalizedLink.startsWith("https://")) {
+          normalizedLink = "https://" + normalizedLink;
+        }
       }
 
       const { error } = await supabase.functions.invoke("update-meeting-link", {
