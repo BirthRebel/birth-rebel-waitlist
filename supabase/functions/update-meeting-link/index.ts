@@ -55,10 +55,26 @@ serve(async (req) => {
       );
     }
 
+    // Extract a valid URL from the input (user may paste full calendar text)
+    let cleanedLink = meeting_link || null;
+    if (cleanedLink) {
+      // Find the first valid meeting/calendar URL in the text
+      const urlMatch = cleanedLink.match(/(https?:\/\/(?:meet\.google\.com|calendar\.app\.google|zoom\.us|teams\.microsoft\.com)[^\s]*)/i);
+      if (urlMatch) {
+        cleanedLink = urlMatch[1];
+      } else {
+        // Fallback: extract any URL
+        const anyUrlMatch = cleanedLink.match(/(https?:\/\/[^\s]+)/);
+        if (anyUrlMatch) {
+          cleanedLink = anyUrlMatch[1];
+        }
+      }
+    }
+
     // Update meeting link
     const { error: updateError } = await supabase
       .from("matches")
-      .update({ meeting_link: meeting_link || null })
+      .update({ meeting_link: cleanedLink })
       .eq("id", match_id);
 
     if (updateError) {
