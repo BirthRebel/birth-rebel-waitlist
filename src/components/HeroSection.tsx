@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import heroVideo from "@/assets/hero-video.mp4";
+import { DeformityFormDialog } from "@/components/DeformityFormDialog";
 
 const caregiverTypes = [
   "doula",
@@ -12,6 +13,7 @@ const caregiverTypes = [
 
 export const HeroSection = () => {
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [formOpen, setFormOpen] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -73,10 +75,11 @@ export const HeroSection = () => {
         <Button 
           className="bg-[#E2725B] text-white hover:bg-[#E2725B]/90 shadow-glow transform hover:scale-105"
           size="xl" 
-          onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
+          onClick={() => setFormOpen(true)}
         >
           Find Your Maternity Caregiver
         </Button>
+        <DeformityFormDialog open={formOpen} onOpenChange={setFormOpen} />
         
         <div className="mt-6 max-w-2xl mx-auto">
           <p className="text-lg md:text-xl text-white/90">

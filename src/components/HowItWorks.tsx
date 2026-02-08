@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { DeformityFormDialog } from "@/components/DeformityFormDialog";
 
 export const HowItWorks = () => {
+  const [formOpen, setFormOpen] = useState(false);
   const steps = [
     {
       number: "01",
@@ -65,10 +68,11 @@ export const HowItWorks = () => {
           <Button 
             variant="hero" 
             size="xl" 
-            onClick={() => window.open('https://formless.ai/c/L4iE1bTSHy6C', '_blank')}
+            onClick={() => setFormOpen(true)}
           >
             Find Your Maternity Caregiver
           </Button>
+          <DeformityFormDialog open={formOpen} onOpenChange={setFormOpen} />
         </div>
       </div>
     </section>
