@@ -587,11 +587,30 @@ const CaregiverProfilePage = () => {
                 Booking Calendar
               </CardTitle>
               <CardDescription>
-                Set up your free Cal.com account to let parents book calls with you directly. 
-                Paste your Cal.com booking link below.
+                Set up your free Cal.com account to let parents book video calls with you directly.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
+              {/* Setup instructions */}
+              <div className="bg-accent/30 p-4 rounded-lg border border-accent space-y-3">
+                <h4 className="font-semibold text-sm">Setup Instructions (required)</h4>
+                <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                  <li>
+                    <a href="https://cal.com/signup" target="_blank" rel="noopener noreferrer" className="text-primary underline">Sign up for a free Cal.com account</a> and set your availability
+                  </li>
+                  <li>
+                    Go to <strong>Event Types</strong> → select your event → <strong>Location</strong> → choose <strong>"Cal Video"</strong> as the conferencing app
+                  </li>
+                  <li>
+                    This is <strong>mandatory</strong> — all Birth Rebel calls must use Cal Video so parents have a consistent, reliable experience
+                  </li>
+                  <li>
+                    Copy your booking link (e.g. <span className="font-mono text-xs">cal.com/your-name/30min</span>) and paste it below
+                  </li>
+                </ol>
+              </div>
+
+              {/* Link input */}
               <div>
                 <Label htmlFor="cal-link">Cal.com Booking URL</Label>
                 <Input
@@ -601,13 +620,14 @@ const CaregiverProfilePage = () => {
                   placeholder="e.g. https://cal.com/your-name/30min"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Don't have one? <a href="https://cal.com/signup" target="_blank" rel="noopener noreferrer" className="text-primary underline">Sign up for free at Cal.com</a>, set your availability, and paste your link here.
+                  Paste your Cal.com event link here. Make sure Cal Video is set as the conferencing app.
                 </p>
               </div>
+
               {calLink && (
-                <div className="flex items-center gap-2 p-2 bg-accent/30 rounded-lg">
+                <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-muted-foreground">Booking link set — parents will see a "Book a Call" button</span>
+                  <span className="text-sm text-green-800">Booking link set — parents will see a "Schedule a Call" button with Cal Video</span>
                 </div>
               )}
             </CardContent>
