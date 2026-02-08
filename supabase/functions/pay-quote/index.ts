@@ -46,7 +46,7 @@ serve(async (req) => {
       throw new Error("Quote not found");
     }
 
-    if (quote.status !== "sent") {
+    if (quote.status !== "sent" && quote.status !== "accepted") {
       throw new Error(`Quote is ${quote.status}, cannot process payment`);
     }
 
@@ -103,11 +103,10 @@ serve(async (req) => {
 
     logStep("Checkout session created", { sessionId: session.id });
 
-    // Update quote status to accepted
+    // Store payment intent ID but keep status as "sent" until payment is confirmed via webhook
     await supabaseAdmin
       .from("quotes")
       .update({ 
-        status: "accepted",
         payment_intent_id: session.payment_intent as string,
       })
       .eq("id", quote.id);
