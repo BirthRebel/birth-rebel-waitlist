@@ -44,6 +44,7 @@ interface CaregiverProfile {
   years_practicing: string | null;
   births_supported: string | null;
   profile_completed_at: string | null;
+  cal_link: string | null;
 }
 
 const CaregiverProfilePage = () => {
@@ -65,6 +66,7 @@ const CaregiverProfilePage = () => {
   const [hourlyRate, setHourlyRate] = useState("");
   const [doulaPackageRate, setDoulaPackageRate] = useState("");
   const [insuranceExpires, setInsuranceExpires] = useState("");
+  const [calLink, setCalLink] = useState("");
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -136,6 +138,7 @@ const CaregiverProfilePage = () => {
       setHourlyRate(data.hourly_rate?.toString() || "");
       setDoulaPackageRate(data.doula_package_rate?.toString() || "");
       setInsuranceExpires(data.insurance_certificate_expires || "");
+      setCalLink(data.cal_link || "");
     } catch (err) {
       console.error("Error:", err);
     } finally {
@@ -262,6 +265,7 @@ const CaregiverProfilePage = () => {
         hourly_rate: parseFloat(hourlyRate),
         insurance_certificate_expires: insuranceExpires || null,
         profile_completed_at: new Date().toISOString(),
+        cal_link: calLink.trim() || null,
       };
 
       if (profile.is_doula) {
@@ -572,6 +576,40 @@ const CaregiverProfilePage = () => {
                   className="max-w-[200px]"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Cal.com Booking Link */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Booking Calendar
+              </CardTitle>
+              <CardDescription>
+                Set up your free Cal.com account to let parents book calls with you directly. 
+                Paste your Cal.com booking link below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label htmlFor="cal-link">Cal.com Booking URL</Label>
+                <Input
+                  id="cal-link"
+                  value={calLink}
+                  onChange={(e) => setCalLink(e.target.value)}
+                  placeholder="e.g. https://cal.com/your-name/30min"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Don't have one? <a href="https://cal.com/signup" target="_blank" rel="noopener noreferrer" className="text-primary underline">Sign up for free at Cal.com</a>, set your availability, and paste your link here.
+                </p>
+              </div>
+              {calLink && (
+                <div className="flex items-center gap-2 p-2 bg-accent/30 rounded-lg">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-muted-foreground">Booking link set — parents will see a "Book a Call" button</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 

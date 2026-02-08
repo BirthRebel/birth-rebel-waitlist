@@ -97,7 +97,8 @@ serve(async (req) => {
           is_lactation_consultant,
           is_sleep_consultant,
           is_hypnobirthing_coach,
-          is_bereavement_councillor
+          is_bereavement_councillor,
+          cal_link
         )
       `)
       .ilike("parent_email", email)

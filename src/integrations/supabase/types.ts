@@ -72,6 +72,7 @@ export type Database = {
           avail_weekends_overnight: boolean | null
           bio: string | null
           births_supported: string | null
+          cal_link: string | null
           care_antenatal_planning: boolean | null
           care_birth_support: boolean | null
           care_cultural_spiritual: boolean | null
@@ -172,6 +173,7 @@ export type Database = {
           avail_weekends_overnight?: boolean | null
           bio?: string | null
           births_supported?: string | null
+          cal_link?: string | null
           care_antenatal_planning?: boolean | null
           care_birth_support?: boolean | null
           care_cultural_spiritual?: boolean | null
@@ -272,6 +274,7 @@ export type Database = {
           avail_weekends_overnight?: boolean | null
           bio?: string | null
           births_supported?: string | null
+          cal_link?: string | null
           care_antenatal_planning?: boolean | null
           care_birth_support?: boolean | null
           care_cultural_spiritual?: boolean | null
