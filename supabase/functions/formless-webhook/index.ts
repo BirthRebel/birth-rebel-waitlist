@@ -135,7 +135,7 @@ function mapToParentRequest(data: Record<string, string>) {
     if (key.includes('concerns') || key.includes('challenges')) result.specific_concerns = v;
     if (key.includes('stage_of_journey') || key.includes('stage') || key.includes('how far along')) result.stage_of_journey = v;
     if (key.includes('family_context') || key.includes('family context')) result.family_context = v;
-    if (key.includes('caregiver_preferences') || key.includes('caregiver preferences') || key.includes('preferences')) result.caregiver_preferences = v;
+    if (key.includes('caregiver_preferences') || key.includes('caregiver preference') || key.includes('preferences')) result.caregiver_preferences = v;
     if (key.includes('preferred_communication') || key.includes('communication')) result.preferred_communication = v;
     if (key.includes('general_availability') || key.includes('availability')) result.general_availability = v;
   }
