@@ -140,7 +140,13 @@ const Auth = () => {
       // Handle setting new password after recovery
       if (isSettingNewPassword) {
         const { error } = await supabase.auth.updateUser({ password });
-        if (error) throw error;
+        if (error) {
+          // Supabase returns a verbose message listing every special character — simplify it
+          if (error.message?.toLowerCase().includes('must contain') || error.status === 422) {
+            throw new Error('Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character (e.g. !@#$%).');
+          }
+          throw error;
+        }
 
         toast({
           title: "Password updated!",
