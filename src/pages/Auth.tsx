@@ -30,9 +30,14 @@ const Auth = () => {
   // Show helpful message if coming from email link
   const isFromEmailLink = !!prefillEmail;
 
-  // Check if this is a password recovery link (has token in URL hash)
-  const isRecoveryLink = window.location.hash.includes('type=recovery') || 
-                         window.location.hash.includes('access_token');
+  // Check if this is a password recovery link (has token in URL hash or query params)
+  const [isRecoveryLink, setIsRecoveryLink] = useState(() => {
+    const hash = window.location.hash;
+    const search = window.location.search;
+    return hash.includes('type=recovery') || 
+           hash.includes('access_token') ||
+           search.includes('type=recovery');
+  });
 
   useEffect(() => {
     // If this looks like a recovery link, don't do anything until the auth event fires
@@ -49,6 +54,7 @@ const Auth = () => {
         setIsSettingNewPassword(true);
         setIsLogin(false);
         setIsReset(false);
+        setIsRecoveryLink(true);
         if (session?.user?.email) {
           setEmail(session.user.email);
         }
@@ -59,9 +65,27 @@ const Auth = () => {
         return; // Don't do anything else
       }
       
-      // Only redirect on SIGNED_IN if not in password setting mode and not a recovery link
-      if (event === "SIGNED_IN" && session?.user && !isSettingNewPassword && !isRecoveryLink) {
-        redirectBasedOnUserType(session.user.id);
+      // If we get SIGNED_IN right after a recovery token, treat it as recovery
+      if (event === "SIGNED_IN" && session?.user) {
+        // Check if we should be in recovery mode
+        const hash = window.location.hash;
+        if (hash.includes('type=recovery')) {
+          console.log("SIGNED_IN with recovery hash, switching to password reset mode");
+          setIsSettingNewPassword(true);
+          setIsLogin(false);
+          setIsReset(false);
+          setIsRecoveryLink(true);
+          setEmail(session.user.email || '');
+          toast({
+            title: "Set your new password",
+            description: "Enter your new password below.",
+          });
+          return;
+        }
+        
+        if (!isSettingNewPassword && !isRecoveryLink) {
+          redirectBasedOnUserType(session.user.id);
+        }
       }
     });
 
