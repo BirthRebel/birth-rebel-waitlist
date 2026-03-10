@@ -86,8 +86,16 @@ export type Database = {
           city_town: string | null
           code_of_conduct_accepted: boolean | null
           code_of_conduct_accepted_at: string | null
+          contract_pdf_url: string | null
+          contract_signed: boolean | null
+          contract_signed_at: string | null
+          contract_submission_id: string | null
           country: string | null
           created_at: string
+          credentials_approved: boolean | null
+          credentials_reviewed: boolean | null
+          credentials_reviewed_at: string | null
+          credentials_reviewer_notes: string | null
           dbs_certificate_url: string | null
           doula_package_rate: number | null
           email: string
@@ -115,10 +123,15 @@ export type Database = {
           offers_newborn_sleep_support: boolean | null
           offers_nutrition_support: boolean | null
           offers_postnatal_support: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_current_step: number | null
+          onboarding_started_at: string | null
           phone: string | null
           profile_completed_at: string | null
           profile_photo_url: string | null
           pronouns: string | null
+          service_agreement_accepted: boolean | null
+          service_agreement_accepted_at: string | null
           services_other: string | null
           speaks_arabic: boolean | null
           speaks_bengali: boolean | null
@@ -187,8 +200,16 @@ export type Database = {
           city_town?: string | null
           code_of_conduct_accepted?: boolean | null
           code_of_conduct_accepted_at?: string | null
+          contract_pdf_url?: string | null
+          contract_signed?: boolean | null
+          contract_signed_at?: string | null
+          contract_submission_id?: string | null
           country?: string | null
           created_at?: string
+          credentials_approved?: boolean | null
+          credentials_reviewed?: boolean | null
+          credentials_reviewed_at?: string | null
+          credentials_reviewer_notes?: string | null
           dbs_certificate_url?: string | null
           doula_package_rate?: number | null
           email: string
@@ -216,10 +237,15 @@ export type Database = {
           offers_newborn_sleep_support?: boolean | null
           offers_nutrition_support?: boolean | null
           offers_postnatal_support?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_current_step?: number | null
+          onboarding_started_at?: string | null
           phone?: string | null
           profile_completed_at?: string | null
           profile_photo_url?: string | null
           pronouns?: string | null
+          service_agreement_accepted?: boolean | null
+          service_agreement_accepted_at?: string | null
           services_other?: string | null
           speaks_arabic?: boolean | null
           speaks_bengali?: boolean | null
@@ -288,8 +314,16 @@ export type Database = {
           city_town?: string | null
           code_of_conduct_accepted?: boolean | null
           code_of_conduct_accepted_at?: string | null
+          contract_pdf_url?: string | null
+          contract_signed?: boolean | null
+          contract_signed_at?: string | null
+          contract_submission_id?: string | null
           country?: string | null
           created_at?: string
+          credentials_approved?: boolean | null
+          credentials_reviewed?: boolean | null
+          credentials_reviewed_at?: string | null
+          credentials_reviewer_notes?: string | null
           dbs_certificate_url?: string | null
           doula_package_rate?: number | null
           email?: string
@@ -317,10 +351,15 @@ export type Database = {
           offers_newborn_sleep_support?: boolean | null
           offers_nutrition_support?: boolean | null
           offers_postnatal_support?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_current_step?: number | null
+          onboarding_started_at?: string | null
           phone?: string | null
           profile_completed_at?: string | null
           profile_photo_url?: string | null
           pronouns?: string | null
+          service_agreement_accepted?: boolean | null
+          service_agreement_accepted_at?: string | null
           services_other?: string | null
           speaks_arabic?: boolean | null
           speaks_bengali?: boolean | null
@@ -468,6 +507,7 @@ export type Database = {
           decline_reason: string | null
           id: string
           meeting_link: string | null
+          parent_contract_accepted_at: string | null
           parent_email: string
           parent_first_name: string
           reviewed_at: string | null
@@ -481,6 +521,7 @@ export type Database = {
           decline_reason?: string | null
           id?: string
           meeting_link?: string | null
+          parent_contract_accepted_at?: string | null
           parent_email: string
           parent_first_name: string
           reviewed_at?: string | null
@@ -494,6 +535,7 @@ export type Database = {
           decline_reason?: string | null
           id?: string
           meeting_link?: string | null
+          parent_contract_accepted_at?: string | null
           parent_email?: string
           parent_first_name?: string
           reviewed_at?: string | null
