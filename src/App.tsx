@@ -4,6 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { CaregiverRoute } from "@/components/CaregiverRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
@@ -24,7 +28,15 @@ import QuoteView from "./pages/QuoteView";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -32,29 +44,87 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <CookieConsentBanner />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/caregiver/auth" element={<CaregiverAuth />} />
-          <Route path="/caregiver/profile" element={<CaregiverProfile />} />
-          <Route path="/caregiver/matches" element={<CaregiverMatches />} />
-          <Route path="/parent/dashboard" element={<ParentDashboard />} />
-          <Route path="/admin/import" element={<AdminImport />} />
-          <Route path="/admin/caregivers" element={<AdminCaregivers />} />
-          <Route path="/admin/messages" element={<AdminMessages />} />
-          <Route path="/admin/parent-requests" element={<AdminParentRequests />} />
-          <Route path="/admin/matches" element={<AdminMatches />} />
-          <Route path="/quote/:quoteId" element={<QuoteView />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <CookieConsentBanner />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/caregiver/auth" element={<CaregiverAuth />} />
+            <Route
+              path="/caregiver/profile"
+              element={
+                <CaregiverRoute>
+                  <CaregiverProfile />
+                </CaregiverRoute>
+              }
+            />
+            <Route
+              path="/caregiver/matches"
+              element={
+                <CaregiverRoute>
+                  <CaregiverMatches />
+                </CaregiverRoute>
+              }
+            />
+            <Route
+              path="/parent/dashboard"
+              element={
+                <ProtectedRoute>
+                  <ParentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/import"
+              element={
+                <AdminRoute>
+                  <AdminImport />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/caregivers"
+              element={
+                <AdminRoute>
+                  <AdminCaregivers />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/messages"
+              element={
+                <AdminRoute>
+                  <AdminMessages />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/parent-requests"
+              element={
+                <AdminRoute>
+                  <AdminParentRequests />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/matches"
+              element={
+                <AdminRoute>
+                  <AdminMatches />
+                </AdminRoute>
+              }
+            />
+            <Route path="/quote/:quoteId" element={<QuoteView />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -8,18 +8,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import {
+  validatePassword,
+  isPasswordRecoveryUrl,
+  formatAuthError,
+} from "@/lib/authUtils";
 
-const TYPEFORM_URL = "https://form.typeform.com/to/eAJV4XXH?typeform-source=birthrebel.com";
+const TYPEFORM_URL =
+  "https://form.typeform.com/to/eAJV4XXH?typeform-source=birthrebel.com";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const prefillEmail = searchParams.get("email") || "";
   const prefillType = searchParams.get("type") as "parent" | "caregiver" | null;
-  
+
   const [isLogin, setIsLogin] = useState(true);
   const [isReset, setIsReset] = useState(false);
   const [isSettingNewPassword, setIsSettingNewPassword] = useState(false);
-  const [userType, setUserType] = useState<"parent" | "caregiver">(prefillType || "parent");
+  const [userType, setUserType] = useState<"parent" | "caregiver">(
+    prefillType || "parent",
+  );
   const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -27,28 +35,24 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Show helpful message if coming from email link
   const isFromEmailLink = !!prefillEmail;
 
-  // Check if this is a password recovery link (has token in URL hash or query params)
-  const [isRecoveryLink, setIsRecoveryLink] = useState(() => {
-    const hash = window.location.hash;
-    const search = window.location.search;
-    return hash.includes('type=recovery') || 
-           hash.includes('access_token') ||
-           search.includes('type=recovery');
-  });
+  const [isRecoveryLink, setIsRecoveryLink] = useState(() =>
+    isPasswordRecoveryUrl(),
+  );
 
   useEffect(() => {
-    // If this looks like a recovery link, don't do anything until the auth event fires
     if (isRecoveryLink) {
-      console.log("Recovery link detected, waiting for PASSWORD_RECOVERY event");
+      console.log(
+        "Recovery link detected, waiting for PASSWORD_RECOVERY event",
+      );
     }
 
-    // Listen for auth state changes including PASSWORD_RECOVERY
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth event:", event);
-      
+
       if (event === "PASSWORD_RECOVERY") {
         console.log("Password recovery event detected");
         setIsSettingNewPassword(true);
@@ -62,70 +66,44 @@ const Auth = () => {
           title: "Set your new password",
           description: "Enter your new password below.",
         });
-        return; // Don't do anything else
+        return;
       }
-      
-      // If we get SIGNED_IN right after a recovery token, treat it as recovery
+
       if (event === "SIGNED_IN" && session?.user) {
-        // Check if we should be in recovery mode
         const hash = window.location.hash;
-        if (hash.includes('type=recovery')) {
-          console.log("SIGNED_IN with recovery hash, switching to password reset mode");
+        if (hash.includes("type=recovery")) {
+          console.log(
+            "SIGNED_IN with recovery hash, switching to password reset mode",
+          );
           setIsSettingNewPassword(true);
           setIsLogin(false);
           setIsReset(false);
           setIsRecoveryLink(true);
-          setEmail(session.user.email || '');
+          setEmail(session.user.email || "");
           toast({
             title: "Set your new password",
             description: "Enter your new password below.",
           });
           return;
         }
-        
+
         if (!isSettingNewPassword && !isRecoveryLink) {
           redirectBasedOnUserType(session.user.id);
         }
       }
     });
 
-    // Only check existing session if NOT a recovery link
-    if (!isRecoveryLink) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user && !isSettingNewPassword) {
-          redirectBasedOnUserType(session.user.id);
-        }
-      });
-    }
-
     return () => subscription.unsubscribe();
   }, [isSettingNewPassword, isRecoveryLink]);
 
   const redirectBasedOnUserType = async (userId: string) => {
     try {
-      // Check if caregiver with timeout
-      const caregiverPromise = supabase
+      const { data } = await supabase
         .from("caregivers")
         .select("id")
         .eq("user_id", userId)
         .maybeSingle();
-      
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('timeout')), 3000)
-      );
-
-      try {
-        const { data: caregiver } = await Promise.race([caregiverPromise, timeoutPromise]) as any;
-        if (caregiver) {
-          navigate("/caregiver/matches");
-          return;
-        }
-      } catch (e) {
-        console.log("Caregiver check timed out or failed, continuing as parent");
-      }
-
-      // Default to parent dashboard
-      navigate("/parent/dashboard");
+      navigate(data ? "/caregiver/matches" : "/parent/dashboard");
     } catch (error) {
       console.error("Redirect error:", error);
       navigate("/parent/dashboard");
@@ -137,35 +115,36 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Handle setting new password after recovery
       if (isSettingNewPassword) {
-        // Client-side validation matching Supabase policy
-        const missing: string[] = [];
-        if (password.length < 8) missing.push('at least 8 characters');
-        if (!/[a-z]/.test(password)) missing.push('a lowercase letter');
-        if (!/[A-Z]/.test(password)) missing.push('an uppercase letter');
-        if (!/[^a-zA-Z0-9]/.test(password)) missing.push('a special character (e.g. !@#$%)');
-        if (missing.length > 0) {
-          throw new Error(`Password must include: ${missing.join(', ')}.`);
+        const { valid, message } = validatePassword(password);
+        if (!valid) {
+          throw new Error(message);
         }
 
         const { error } = await supabase.auth.updateUser({ password });
         if (error) {
-          if (error.message?.toLowerCase().includes('must contain') || error.status === 422) {
-            throw new Error('Password does not meet requirements. Please include at least 8 characters, uppercase, lowercase, and a special character.');
+          if (
+            error.message?.toLowerCase().includes("must contain") ||
+            error.status === 422
+          ) {
+            throw new Error(
+              "Password does not meet requirements. Please include at least 8 characters, uppercase, lowercase, and a special character.",
+            );
           }
           throw error;
         }
 
         toast({
           title: "Password updated!",
-          description: "Your password has been successfully changed. You are now logged in.",
+          description:
+            "Your password has been successfully changed. You are now logged in.",
         });
         setIsSettingNewPassword(false);
         setLoading(false);
-        
-        // Get current session and redirect
-        const { data: { session } } = await supabase.auth.getSession();
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.user) {
           redirectBasedOnUserType(session.user.id);
         }
@@ -188,31 +167,33 @@ const Auth = () => {
       }
 
       if (isLogin) {
-        const { data: signInData, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data: signInData, error } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
         if (error) {
           setLoading(false);
           toast({
             title: "Error",
-            description: error.message,
+            description: formatAuthError(error),
             variant: "destructive",
           });
           return;
         }
 
-        // Check user type and redirect accordingly
         const { data: caregiver, error: caregiverError } = await supabase
           .from("caregivers")
           .select("id")
           .eq("user_id", signInData.user.id)
           .maybeSingle();
 
-        // If there's an error (likely RLS), just skip caregiver check
         if (caregiverError) {
-          console.log("Caregiver check skipped (RLS or error):", caregiverError.message);
+          console.log(
+            "Caregiver check skipped (RLS or error):",
+            caregiverError.message,
+          );
         }
 
         if (caregiver) {
@@ -225,7 +206,6 @@ const Auth = () => {
           return;
         }
 
-        // Try to link by email for caregivers (ignore errors)
         const { error: linkError } = await supabase
           .from("caregivers")
           .update({ user_id: signInData.user.id })
@@ -233,7 +213,6 @@ const Auth = () => {
           .is("user_id", null);
 
         if (!linkError) {
-          // Re-check if linking worked
           const { data: linkedCaregiver } = await supabase
             .from("caregivers")
             .select("id")
@@ -251,7 +230,6 @@ const Auth = () => {
           }
         }
 
-        // Not a caregiver, treat as parent
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
@@ -278,13 +256,12 @@ const Auth = () => {
         setLoading(false);
         toast({
           title: "Error",
-          description: error.message,
+          description: formatAuthError(error),
           variant: "destructive",
         });
         return;
       }
 
-      // If signing up as caregiver, try to link existing caregiver record
       if (userType === "caregiver" && signUpData.user) {
         await supabase
           .from("caregivers")
@@ -293,9 +270,7 @@ const Auth = () => {
           .is("user_id", null);
       }
 
-      // If signing up as parent, create or update parent request
       if (userType === "parent" && signUpData.user) {
-        // Check if parent request exists
         const { data: existingRequest } = await supabase
           .from("parent_requests")
           .select("id")
@@ -303,7 +278,6 @@ const Auth = () => {
           .maybeSingle();
 
         if (!existingRequest && firstName) {
-          // Create a basic parent request entry
           await supabase.from("parent_requests").insert({
             email,
             first_name: firstName,
@@ -314,14 +288,15 @@ const Auth = () => {
 
       toast({
         title: "Check your email",
-        description: "Click the confirmation link, then come back here to log in.",
+        description:
+          "Click the confirmation link, then come back here to log in.",
       });
       setLoading(false);
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
         title: "Error",
-        description: error.message || "Something went wrong. Please try again.",
+        description: formatAuthError(error),
         variant: "destructive",
       });
       setLoading(false);
@@ -329,7 +304,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#FFFAF5" }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "#FFFAF5" }}
+    >
       <Header />
       <main className="flex-1 flex items-center justify-center pt-32 pb-16 px-6">
         <div className="w-full max-w-md">
@@ -341,21 +319,23 @@ const Auth = () => {
               {isSettingNewPassword
                 ? "Set New Password"
                 : isReset
-                ? "Reset Password"
-                : isLogin
-                ? "Welcome Back"
-                : "Create Account"}
+                  ? "Reset Password"
+                  : isLogin
+                    ? "Welcome Back"
+                    : "Create Account"}
             </h1>
 
             {isFromEmailLink && !isLogin && (
               <p className="text-center text-sm text-muted-foreground mb-4">
-                Create an account with <strong>{prefillEmail}</strong> to view your messages
+                Create an account with <strong>{prefillEmail}</strong> to view
+                your messages
               </p>
             )}
 
             {isFromEmailLink && isLogin && (
               <p className="text-center text-sm text-muted-foreground mb-4">
-                Log in with <strong>{prefillEmail}</strong> to view your messages, or sign up if this is your first time
+                Log in with <strong>{prefillEmail}</strong> to view your
+                messages, or sign up if this is your first time
               </p>
             )}
 
@@ -415,7 +395,9 @@ const Auth = () => {
 
               {(!isReset || isSettingNewPassword) && (
                 <div>
-                  <Label htmlFor="password">{isSettingNewPassword ? "New Password" : "Password"}</Label>
+                  <Label htmlFor="password">
+                    {isSettingNewPassword ? "New Password" : "Password"}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -423,7 +405,7 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
               )}
@@ -437,12 +419,12 @@ const Auth = () => {
                 {loading
                   ? "Loading..."
                   : isSettingNewPassword
-                  ? "Save New Password"
-                  : isReset
-                  ? "Send Reset Link"
-                  : isLogin
-                  ? "Log In"
-                  : "Sign Up"}
+                    ? "Save New Password"
+                    : isReset
+                      ? "Send Reset Link"
+                      : isLogin
+                        ? "Log In"
+                        : "Sign Up"}
               </Button>
             </form>
 
@@ -460,7 +442,10 @@ const Auth = () => {
             )}
 
             {!isSettingNewPassword && (
-              <p className="text-center mt-4 text-sm" style={{ color: "#36454F" }}>
+              <p
+                className="text-center mt-4 text-sm"
+                style={{ color: "#36454F" }}
+              >
                 {isReset ? (
                   <button
                     type="button"
@@ -472,7 +457,9 @@ const Auth = () => {
                   </button>
                 ) : (
                   <>
-                    {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+                    {isLogin
+                      ? "Don't have an account?"
+                      : "Already have an account?"}{" "}
                     <button
                       type="button"
                       onClick={() => setIsLogin(!isLogin)}

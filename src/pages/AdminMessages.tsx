@@ -1,6 +1,10 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useAdminConversations,
+  useConversationMessages,
+  useSendMessage,
+} from "@/hooks/useAdminData";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,7 +14,6 @@ import { MessageThread } from "@/components/messaging/MessageThread";
 import { MessageInput } from "@/components/messaging/MessageInput";
 import { NewConversationModal } from "@/components/messaging/NewConversationModal";
 import { Plus, ArrowLeft, Mail } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
 
 interface Conversation {
   id: string;
@@ -25,209 +28,80 @@ interface Conversation {
   last_message?: string;
 }
 
-interface Message {
-  id: string;
-  content: string;
-  sender_type: string;
-  created_at: string;
-  read_at: string | null;
-}
-
 const AdminMessages = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [showNewModal, setShowNewModal] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
+  const { data: conversations = [], isLoading } = useAdminConversations();
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [selectOnLoad, setSelectOnLoad] = useState<string | null>(null);
+
+  const { data: messages = [], isLoading: messagesLoading } =
+    useConversationMessages(selectedConversation?.id ?? null);
+
+  const sendMessage = useSendMessage();
+
+  // Handle pending conversation selection after refetch
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          checkAdminRole(session.user.id);
-        } else {
-          navigate("/caregiver/auth");
-        }
+    if (selectOnLoad && conversations.length > 0) {
+      const conv = conversations.find((c) => c.id === selectOnLoad);
+      if (conv) {
+        setSelectedConversation(conv);
+        setSelectOnLoad(null);
       }
-    );
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminRole(session.user.id);
-      } else {
-        navigate("/caregiver/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const checkAdminRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        toast({
-          title: "Access Denied",
-          description: "You need admin privileges to access this page.",
-          variant: "destructive",
-        });
-        navigate("/");
-        return;
-      }
-
-      setIsAdmin(true);
-      fetchConversations();
-    } catch (error) {
-      console.error("Error checking admin role:", error);
-      navigate("/");
     }
-  };
+  }, [conversations, selectOnLoad]);
 
-  const fetchConversations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("*")
-        .order("updated_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch caregiver names for conversations
-      const conversationsWithDetails = await Promise.all(
-        (data || []).map(async (conv) => {
-          let caregiverName = "";
-          if (conv.caregiver_id) {
-            const { data: cgData } = await supabase.functions.invoke("get-all-caregivers");
-            const caregiver = cgData?.caregivers?.find((c: any) => c.id === conv.caregiver_id);
-            caregiverName = caregiver ? `${caregiver.first_name || ""} ${caregiver.last_name || ""}`.trim() : "";
-          }
-
-          // Get last message
-          const { data: lastMsg } = await supabase
-            .from("messages")
-            .select("content")
-            .eq("conversation_id", conv.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          return {
-            ...conv,
-            caregiver_name: caregiverName,
-            last_message: lastMsg?.content,
-          };
-        })
-      );
-
-      setConversations(conversationsWithDetails);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMessages = async (conversationId: string) => {
-    setMessagesLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    } finally {
-      setMessagesLoading(false);
-    }
-  };
-
-  const handleSelectConversation = async (conversationId: string) => {
+  const handleSelectConversation = (conversationId: string) => {
     const conv = conversations.find((c) => c.id === conversationId);
     if (conv) {
       setSelectedConversation(conv);
-      fetchMessages(conversationId);
     }
   };
 
   const handleSendMessage = async (content: string) => {
     if (!selectedConversation) return;
 
-    try {
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: selectedConversation.id,
+    sendMessage.mutate(
+      {
+        conversationId: selectedConversation.id,
         content,
-        sender_type: "admin",
-      });
-
-      if (error) throw error;
-
-      // Refresh messages
-      fetchMessages(selectedConversation.id);
-
-      // Update conversation updated_at
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", selectedConversation.id);
-
-      // Send email notification to caregiver (if conversation has one)
-      if (selectedConversation.caregiver_id) {
-        supabase.functions.invoke("send-message-notification", {
-          body: {
-            conversationId: selectedConversation.id,
-            messageContent: content,
-            senderType: "admin",
-          },
-        }).then(({ error: notifError }) => {
-          if (notifError) {
-            console.error("Failed to send notification:", notifError);
-          }
-        });
-      }
-
-      toast({
-        title: "Message sent",
-        description: selectedConversation.caregiver_id
-          ? "The caregiver has been notified by email."
-          : "Message saved. Consider sending an email to the parent.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error sending message",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+        caregiverId: selectedConversation.caregiver_id,
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Message sent",
+            description: selectedConversation.caregiver_id
+              ? "The caregiver has been notified by email."
+              : "Message saved. Consider sending an email to the parent.",
+          });
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Error sending message",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   const handleConversationCreated = (conversationId: string) => {
-    fetchConversations();
-    handleSelectConversation(conversationId);
+    queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+    setSelectOnLoad(conversationId);
     setShowNewModal(false);
   };
 
-  if (loading || !isAdmin) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#FFFAF5" }}>
+      <div
+        className="min-h-screen flex flex-col"
+        style={{ backgroundColor: "#FFFAF5" }}
+      >
         <Header />
         <main className="flex-1 flex items-center justify-center pt-32">
           <p>Loading...</p>
@@ -238,12 +112,18 @@ const AdminMessages = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#FFFAF5" }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "#FFFAF5" }}
+    >
       <Header />
       <main className="flex-1 pt-24 pb-8 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "#E2725B" }}>
+            <h1
+              className="text-2xl md:text-3xl font-bold"
+              style={{ color: "#E2725B" }}
+            >
               Messages
             </h1>
             <Button onClick={() => setShowNewModal(true)}>
@@ -253,7 +133,7 @@ const AdminMessages = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[calc(100vh-220px)] flex">
-            {/* Conversation List - Hidden on mobile when conversation selected */}
+            {/* Conversation List */}
             <div
               className={`w-full md:w-80 border-r border-border flex-shrink-0 overflow-y-auto ${
                 selectedConversation ? "hidden md:block" : ""
@@ -266,15 +146,18 @@ const AdminMessages = () => {
                 conversations={conversations}
                 selectedId={selectedConversation?.id || null}
                 onSelect={handleSelectConversation}
-                isLoading={loading}
+                isLoading={isLoading}
               />
             </div>
 
             {/* Message Thread */}
-            <div className={`flex-1 flex flex-col ${!selectedConversation ? "hidden md:flex" : ""}`}>
+            <div
+              className={`flex-1 flex flex-col ${
+                !selectedConversation ? "hidden md:flex" : ""
+              }`}
+            >
               {selectedConversation ? (
                 <>
-                  {/* Thread Header */}
                   <div className="p-4 border-b border-border flex items-center gap-3">
                     <button
                       onClick={() => setSelectedConversation(null)}
@@ -284,7 +167,8 @@ const AdminMessages = () => {
                     </button>
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground">
-                        {selectedConversation.subject || selectedConversation.parent_email}
+                        {selectedConversation.subject ||
+                          selectedConversation.parent_email}
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         {selectedConversation.caregiver_name

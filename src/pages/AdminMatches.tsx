@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAdminMatches } from "@/hooks/useAdminData";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -63,20 +65,29 @@ interface Match {
 }
 
 const AdminMatches = () => {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
-  const [messageContent, setMessageContent] = useState<{ [key: string]: { parent: string; caregiver: string } }>({});
-  const [sendingMessage, setSendingMessage] = useState<string | null>(null);
-  const [sendingSubscriptionLink, setSendingSubscriptionLink] = useState<string | null>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<Record<string, { subscribed: boolean; subscription_end?: string }>>({});
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: matches = [], isLoading: loading, refetch } = useAdminMatches();
+
+  const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+  const [messageContent, setMessageContent] = useState<{
+    [key: string]: { parent: string; caregiver: string };
+  }>({});
+  const [sendingMessage, setSendingMessage] = useState<string | null>(null);
+  const [sendingSubscriptionLink, setSendingSubscriptionLink] = useState<
+    string | null
+  >(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<
+    Record<string, { subscribed: boolean; subscription_end?: string }>
+  >({});
 
   const fetchSubscriptionStatus = async (emails: string[]) => {
     try {
-      const { data, error } = await supabase.functions.invoke("check-caregiver-subscription", {
-        body: { emails },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "check-caregiver-subscription",
+        { body: { emails } },
+      );
       if (error) throw error;
       if (data?.subscriptions) {
         setSubscriptionStatus(data.subscriptions);
@@ -86,75 +97,40 @@ const AdminMatches = () => {
     }
   };
 
-  const fetchMatches = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("matches")
-        .select(`
-          *,
-          caregiver:caregivers(id, first_name, last_name, email, phone, city_town)
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Fetch parent requests for each match
-      const matchesWithParents = await Promise.all(
-        (data || []).map(async (match) => {
-          const { data: parentRequest } = await supabase
-            .from("parent_requests")
-            .select("*")
-            .eq("email", match.parent_email)
-            .maybeSingle();
-          return { ...match, parent_request: parentRequest };
-        })
-      );
-
-      setMatches(matchesWithParents);
-      
-      // Fetch subscription status for all caregivers
-      const caregiverEmails = matchesWithParents
+  // Fetch subscription status when matches load
+  useEffect(() => {
+    if (matches.length > 0) {
+      const caregiverEmails = matches
         .map((m) => m.caregiver?.email)
         .filter((email): email is string => !!email);
       if (caregiverEmails.length > 0) {
         fetchSubscriptionStatus([...new Set(caregiverEmails)]);
       }
-    } catch (error: any) {
-      console.error("Error fetching matches:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load matches",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchMatches();
-  }, []);
+  }, [matches]);
 
   const sendSubscriptionLink = async (match: Match) => {
     if (!match.caregiver) return;
-    
+
     setSendingSubscriptionLink(match.id);
     try {
-      // Get checkout session URL
-      const { data, error } = await supabase.functions.invoke("create-caregiver-subscription", {
-        body: {
-          caregiver_email: match.caregiver.email,
-          caregiver_name: `${match.caregiver.first_name || ""} ${match.caregiver.last_name || ""}`.trim(),
+      const { data, error } = await supabase.functions.invoke(
+        "create-caregiver-subscription",
+        {
+          body: {
+            caregiver_email: match.caregiver.email,
+            caregiver_name: `${match.caregiver.first_name || ""} ${
+              match.caregiver.last_name || ""
+            }`.trim(),
+          },
         },
-      });
+      );
 
       if (error) throw error;
       if (!data?.url) throw new Error("Failed to generate subscription link");
 
       const subscriptionUrl = data.url;
 
-      // Find or create conversation with caregiver
       let { data: conversation } = await supabase
         .from("conversations")
         .select("id")
@@ -176,7 +152,6 @@ const AdminMatches = () => {
         conversation = newConv;
       }
 
-      // Send message with subscription link
       const messageText = `Hi ${match.caregiver.first_name},\n\nWe have a match for you with ${match.parent_first_name}! Before we can connect you, please complete your Birth Rebel subscription (£25/month) using this link:\n\n${subscriptionUrl}\n\nOnce your subscription is active, we'll introduce you to ${match.parent_first_name}.\n\nThank you!\nThe Birth Rebel Team`;
 
       const { error: msgError } = await supabase.from("messages").insert({
@@ -187,7 +162,6 @@ const AdminMatches = () => {
 
       if (msgError) throw msgError;
 
-      // Send email notification
       await supabase.functions.invoke("send-message-notification", {
         body: {
           conversationId: conversation.id,
@@ -238,7 +212,7 @@ const AdminMatches = () => {
       if (error) throw error;
 
       toast({ title: "Status updated" });
-      fetchMatches();
+      queryClient.invalidateQueries({ queryKey: ["admin-matches"] });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -250,7 +224,7 @@ const AdminMatches = () => {
 
   const deleteMatch = async (matchId: string) => {
     if (!confirm("Are you sure you want to delete this match?")) return;
-    
+
     try {
       const { error } = await supabase
         .from("matches")
@@ -260,7 +234,7 @@ const AdminMatches = () => {
       if (error) throw error;
 
       toast({ title: "Match deleted" });
-      fetchMatches();
+      queryClient.invalidateQueries({ queryKey: ["admin-matches"] });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -276,7 +250,6 @@ const AdminMatches = () => {
 
     setSendingMessage(`${match.id}-parent`);
     try {
-      // Find or create conversation with parent
       let { data: conversation } = await supabase
         .from("conversations")
         .select("id")
@@ -298,7 +271,6 @@ const AdminMatches = () => {
         conversation = newConv;
       }
 
-      // Send message
       const { error: msgError } = await supabase.from("messages").insert({
         conversation_id: conversation.id,
         content: content.trim(),
@@ -307,7 +279,6 @@ const AdminMatches = () => {
 
       if (msgError) throw msgError;
 
-      // Send email notification to parent
       const { error: notifyError } = await supabase.functions.invoke(
         "send-parent-message-notification",
         {
@@ -316,7 +287,7 @@ const AdminMatches = () => {
             parentName: match.parent_first_name,
             messageContent: content.trim(),
           },
-        }
+        },
       );
 
       if (notifyError) {
@@ -345,7 +316,6 @@ const AdminMatches = () => {
 
     setSendingMessage(`${match.id}-caregiver`);
     try {
-      // Find or create conversation with caregiver
       let { data: conversation } = await supabase
         .from("conversations")
         .select("id")
@@ -368,7 +338,6 @@ const AdminMatches = () => {
         conversation = newConv;
       }
 
-      // Send message
       const { error: msgError } = await supabase.from("messages").insert({
         conversation_id: conversation.id,
         content: content.trim(),
@@ -377,7 +346,6 @@ const AdminMatches = () => {
 
       if (msgError) throw msgError;
 
-      // Send email notification to caregiver
       const { error: notifyError } = await supabase.functions.invoke(
         "send-message-notification",
         {
@@ -386,7 +354,7 @@ const AdminMatches = () => {
             messageContent: content.trim(),
             senderType: "admin",
           },
-        }
+        },
       );
 
       if (notifyError) {
@@ -410,7 +378,10 @@ const AdminMatches = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#FFFAF5" }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "#FFFAF5" }}
+    >
       <Header />
       <main className="flex-1 pt-32 pb-16 px-6">
         <div className="max-w-6xl mx-auto">
@@ -423,13 +394,18 @@ const AdminMatches = () => {
                 {matches.length} total matches
               </p>
             </div>
-            <Button onClick={fetchMatches} variant="outline" disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <Button
+              onClick={() => refetch()}
+              variant="outline"
+              disabled={loading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </div>
 
-          {/* Admin Notifications Panel */}
           <div className="mb-8">
             <AdminNotificationsPanel />
           </div>
@@ -449,23 +425,30 @@ const AdminMatches = () => {
                 <Collapsible
                   key={match.id}
                   open={expandedMatch === match.id}
-                  onOpenChange={(open) => setExpandedMatch(open ? match.id : null)}
+                  onOpenChange={(open) =>
+                    setExpandedMatch(open ? match.id : null)
+                  }
                 >
                   <div className="bg-white rounded-lg shadow">
-                  <CollapsibleTrigger className="w-full p-6 text-left">
+                    <CollapsibleTrigger className="w-full p-6 text-left">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <h3 className="text-lg font-semibold" style={{ color: "#36454F" }}>
-                              <Link 
-                                to={`/admin/parent-requests?email=${encodeURIComponent(match.parent_email)}`}
+                            <h3
+                              className="text-lg font-semibold"
+                              style={{ color: "#36454F" }}
+                            >
+                              <Link
+                                to={`/admin/parent-requests?email=${encodeURIComponent(
+                                  match.parent_email,
+                                )}`}
                                 className="hover:underline hover:text-primary"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {match.parent_first_name}
                               </Link>
                               {" ↔ "}
-                              <Link 
+                              <Link
                                 to={`/admin/caregivers?id=${match.caregiver_id}`}
                                 className="hover:underline hover:text-primary"
                                 onClick={(e) => e.stopPropagation()}
@@ -476,20 +459,27 @@ const AdminMatches = () => {
                             <Badge className={getStatusColor(match.status)}>
                               {match.status}
                             </Badge>
-                            {match.caregiver?.email && subscriptionStatus[match.caregiver.email]?.subscribed && (
-                              <Badge className="bg-green-500 text-white hover:bg-green-600">
-                                <CreditCard className="h-3 w-3 mr-1" />
-                                Subscribed
-                              </Badge>
-                            )}
+                            {match.caregiver?.email &&
+                              subscriptionStatus[match.caregiver.email]
+                                ?.subscribed && (
+                                <Badge className="bg-green-500 text-white hover:bg-green-600">
+                                  <CreditCard className="h-3 w-3 mr-1" />
+                                  Subscribed
+                                </Badge>
+                              )}
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {format(new Date(match.created_at), "MMM d, yyyy")}
+                              {format(
+                                new Date(match.created_at),
+                                "MMM d, yyyy",
+                              )}
                             </span>
-                            <Badge variant="outline">{match.support_type}</Badge>
+                            <Badge variant="outline">
+                              {match.support_type}
+                            </Badge>
                           </div>
                         </div>
 
@@ -506,13 +496,18 @@ const AdminMatches = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Parent Details */}
                           <div className="space-y-4">
-                            <h4 className="font-semibold flex items-center gap-2" style={{ color: "#E2725B" }}>
+                            <h4
+                              className="font-semibold flex items-center gap-2"
+                              style={{ color: "#E2725B" }}
+                            >
                               <User className="h-4 w-4" />
                               Parent Details
                             </h4>
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                              <Link 
-                                to={`/admin/parent-requests?email=${encodeURIComponent(match.parent_email)}`}
+                              <Link
+                                to={`/admin/parent-requests?email=${encodeURIComponent(
+                                  match.parent_email,
+                                )}`}
                                 className="font-medium hover:underline hover:text-primary flex items-center gap-1"
                               >
                                 {match.parent_request?.first_name}{" "}
@@ -538,7 +533,11 @@ const AdminMatches = () => {
                               {match.parent_request?.due_date && (
                                 <p className="flex items-center gap-2 text-sm">
                                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  Due: {format(new Date(match.parent_request.due_date), "PPP")}
+                                  Due:{" "}
+                                  {format(
+                                    new Date(match.parent_request.due_date),
+                                    "PPP",
+                                  )}
                                 </p>
                               )}
                               {match.parent_request?.special_requirements && (
@@ -579,25 +578,31 @@ const AdminMatches = () => {
                                 style={{ backgroundColor: "#E2725B" }}
                               >
                                 <Send className="h-4 w-4 mr-2" />
-                                {sendingMessage === `${match.id}-parent` ? "Sending..." : "Send"}
+                                {sendingMessage === `${match.id}-parent`
+                                  ? "Sending..."
+                                  : "Send"}
                               </Button>
                             </div>
                           </div>
 
                           {/* Caregiver Details */}
                           <div className="space-y-4">
-                            <h4 className="font-semibold flex items-center gap-2" style={{ color: "#E2725B" }}>
+                            <h4
+                              className="font-semibold flex items-center gap-2"
+                              style={{ color: "#E2725B" }}
+                            >
                               <User className="h-4 w-4" />
                               Caregiver Details
                             </h4>
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                               {match.caregiver ? (
                                 <>
-                                  <Link 
+                                  <Link
                                     to={`/admin/caregivers?id=${match.caregiver.id}`}
                                     className="font-medium hover:underline hover:text-primary flex items-center gap-1"
                                   >
-                                    {match.caregiver.first_name} {match.caregiver.last_name}
+                                    {match.caregiver.first_name}{" "}
+                                    {match.caregiver.last_name}
                                     <ExternalLink className="h-3 w-3" />
                                   </Link>
                                   <p className="flex items-center gap-2 text-sm">
@@ -618,11 +623,12 @@ const AdminMatches = () => {
                                   )}
                                 </>
                               ) : (
-                                <p className="text-muted-foreground">Caregiver not found</p>
+                                <p className="text-muted-foreground">
+                                  Caregiver not found
+                                </p>
                               )}
                             </div>
 
-                            {/* Message Caregiver */}
                             {match.caregiver && (
                               <div className="space-y-2">
                                 <label className="text-sm font-medium flex items-center gap-2">
@@ -631,7 +637,9 @@ const AdminMatches = () => {
                                 </label>
                                 <Textarea
                                   placeholder="Type a message to the caregiver..."
-                                  value={messageContent[match.id]?.caregiver || ""}
+                                  value={
+                                    messageContent[match.id]?.caregiver || ""
+                                  }
                                   onChange={(e) =>
                                     setMessageContent((prev) => ({
                                       ...prev,
@@ -647,13 +655,17 @@ const AdminMatches = () => {
                                   size="sm"
                                   onClick={() => sendMessageToCaregiver(match)}
                                   disabled={
-                                    !messageContent[match.id]?.caregiver?.trim() ||
+                                    !messageContent[
+                                      match.id
+                                    ]?.caregiver?.trim() ||
                                     sendingMessage === `${match.id}-caregiver`
                                   }
                                   style={{ backgroundColor: "#E2725B" }}
                                 >
                                   <Send className="h-4 w-4 mr-2" />
-                                  {sendingMessage === `${match.id}-caregiver` ? "Sending..." : "Send"}
+                                  {sendingMessage === `${match.id}-caregiver`
+                                    ? "Sending..."
+                                    : "Send"}
                                 </Button>
                               </div>
                             )}
@@ -663,13 +675,17 @@ const AdminMatches = () => {
                         {/* Subscription Link Section */}
                         {match.caregiver && (
                           <div className="mt-6 pt-4 border-t">
-                            <h4 className="font-semibold flex items-center gap-2 mb-3" style={{ color: "#E2725B" }}>
+                            <h4
+                              className="font-semibold flex items-center gap-2 mb-3"
+                              style={{ color: "#E2725B" }}
+                            >
                               <CreditCard className="h-4 w-4" />
                               Caregiver Subscription
                             </h4>
                             <div className="flex items-center gap-4">
                               <p className="text-sm text-muted-foreground">
-                                Send subscription link to {match.caregiver.first_name} (£25/month)
+                                Send subscription link to{" "}
+                                {match.caregiver.first_name} (£25/month)
                               </p>
                               <Button
                                 size="sm"
@@ -678,7 +694,9 @@ const AdminMatches = () => {
                                 style={{ backgroundColor: "#E2725B" }}
                               >
                                 <CreditCard className="h-4 w-4 mr-2" />
-                                {sendingSubscriptionLink === match.id ? "Sending..." : "Send Subscription Link"}
+                                {sendingSubscriptionLink === match.id
+                                  ? "Sending..."
+                                  : "Send Subscription Link"}
                               </Button>
                             </div>
                           </div>
@@ -687,12 +705,18 @@ const AdminMatches = () => {
                         {/* Status Actions */}
                         <div className="mt-6 pt-4 border-t flex flex-wrap gap-2 items-center justify-between">
                           <div className="flex flex-wrap gap-2 items-center">
-                            <span className="text-sm font-medium mr-2 self-center">Update status:</span>
+                            <span className="text-sm font-medium mr-2 self-center">
+                              Update status:
+                            </span>
                             {["matched", "booked", "closed"].map((status) => (
                               <Button
                                 key={status}
                                 size="sm"
-                                variant={match.status === status ? "default" : "outline"}
+                                variant={
+                                  match.status === status
+                                    ? "default"
+                                    : "outline"
+                                }
                                 onClick={() => updateStatus(match.id, status)}
                                 disabled={match.status === status}
                                 className="capitalize"

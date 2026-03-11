@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import {
+  useCaregiverProfile,
+  useUpdateCaregiverProfile,
+  useUploadCaregiverPhoto,
+} from "@/hooks/useCaregiverProfile";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,12 +14,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Upload, User, Calendar, FileText, CreditCard, Check, ExternalLink } from "lucide-react";
+import {
+  Loader2,
+  Upload,
+  User,
+  Calendar,
+  FileText,
+  CreditCard,
+  Check,
+  ExternalLink,
+} from "lucide-react";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { StripeConnectCard } from "@/components/caregiver/StripeConnectCard";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface CaregiverProfile {
   id: string;
@@ -48,11 +67,16 @@ interface CaregiverProfile {
 }
 
 const CaregiverProfilePage = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { data: caregiverData, isLoading } = useCaregiverProfile(user?.id);
+  const updateProfile = useUpdateCaregiverProfile();
+  const uploadPhoto = useUploadCaregiverPhoto();
+
+  // Local profile state (mirrors caregiverData, allows local updates for doc uploads)
   const [profile, setProfile] = useState<CaregiverProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Form state - editable fields
   const [firstName, setFirstName] = useState("");
@@ -68,89 +92,31 @@ const CaregiverProfilePage = () => {
   const [insuranceExpires, setInsuranceExpires] = useState("");
   const [calLink, setCalLink] = useState("");
 
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
+  // Populate form and local profile state when query data arrives
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-      } else {
-        navigate("/caregiver/auth", { replace: true });
-      }
-    };
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        navigate("/caregiver/auth", { replace: true });
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
+    if (caregiverData) {
+      setProfile(caregiverData as CaregiverProfile);
+      setFirstName(caregiverData.first_name || "");
+      setLastName(caregiverData.last_name || "");
+      setPhone(caregiverData.phone || "");
+      setCityTown(caregiverData.city_town || "");
+      setCountry(caregiverData.country || "");
+      setYearsPracticing(caregiverData.years_practicing || "");
+      setBirthsSupported(caregiverData.births_supported || "");
+      setBio(caregiverData.bio || "");
+      setHourlyRate(caregiverData.hourly_rate?.toString() || "");
+      setDoulaPackageRate(caregiverData.doula_package_rate?.toString() || "");
+      setInsuranceExpires(caregiverData.insurance_certificate_expires || "");
+      setCalLink(caregiverData.cal_link || "");
     }
-  }, [user]);
+  }, [caregiverData?.id]);
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("caregivers")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching profile:", error);
-        toast({
-          title: "Error loading profile",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!data) {
-        toast({
-          title: "No caregiver profile found",
-          description: "Please contact support.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setProfile(data as CaregiverProfile);
-      setFirstName(data.first_name || "");
-      setLastName(data.last_name || "");
-      setPhone(data.phone || "");
-      setCityTown(data.city_town || "");
-      setCountry(data.country || "");
-      setYearsPracticing(data.years_practicing || "");
-      setBirthsSupported(data.births_supported || "");
-      setBio(data.bio || "");
-      setHourlyRate(data.hourly_rate?.toString() || "");
-      setDoulaPackageRate(data.doula_package_rate?.toString() || "");
-      setInsuranceExpires(data.insurance_certificate_expires || "");
-      setCalLink(data.cal_link || "");
-    } catch (err) {
-      console.error("Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file || !profile) return;
 
-    // Validate file type and size
     if (!file.type.startsWith("image/")) {
       toast({
         title: "Invalid file type",
@@ -169,50 +135,33 @@ const CaregiverProfilePage = () => {
       return;
     }
 
-    setUploadingPhoto(true);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${profile.id}/profile.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("caregiver-photos")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("caregiver-photos")
-        .getPublicUrl(filePath);
-
-      // Update profile with new photo URL
-      const { error: updateError } = await supabase
-        .from("caregivers")
-        .update({ profile_photo_url: publicUrl })
-        .eq("id", profile.id);
-
-      if (updateError) throw updateError;
-
-      setProfile({ ...profile, profile_photo_url: publicUrl });
-      toast({
-        title: "Photo uploaded!",
-        description: "Your profile photo has been updated.",
-      });
-    } catch (err: any) {
-      console.error("Upload error:", err);
-      toast({
-        title: "Upload failed",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingPhoto(false);
-    }
+    uploadPhoto.mutate(
+      { file, caregiverId: profile.id },
+      {
+        onSuccess: (publicUrl) => {
+          setProfile((prev) =>
+            prev ? { ...prev, profile_photo_url: publicUrl } : prev,
+          );
+          toast({
+            title: "Photo uploaded!",
+            description: "Your profile photo has been updated.",
+          });
+        },
+        onError: (err: any) => {
+          console.error("Upload error:", err);
+          toast({
+            title: "Upload failed",
+            description: err.message,
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   const handleSaveProfile = async () => {
     if (!profile) return;
 
-    // Validate required fields
     if (!bio.trim()) {
       toast({
         title: "Bio required",
@@ -231,7 +180,10 @@ const CaregiverProfilePage = () => {
       return;
     }
 
-    if (profile.is_doula && (!doulaPackageRate || parseFloat(doulaPackageRate) <= 0)) {
+    if (
+      profile.is_doula &&
+      (!doulaPackageRate || parseFloat(doulaPackageRate) <= 0)
+    ) {
       toast({
         title: "Doula package rate required",
         description: "As a doula, please enter your full support package rate.",
@@ -239,8 +191,6 @@ const CaregiverProfilePage = () => {
       });
       return;
     }
-
-    // Insurance is optional - no validation needed
 
     if (!profile.profile_photo_url) {
       toast({
@@ -251,55 +201,49 @@ const CaregiverProfilePage = () => {
       return;
     }
 
-    setSaving(true);
-    try {
-      const updateData: Record<string, unknown> = {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        phone: phone.trim() || null,
-        city_town: cityTown.trim() || null,
-        country: country.trim() || null,
-        years_practicing: yearsPracticing.trim() || null,
-        births_supported: birthsSupported.trim() || null,
-        bio: bio.trim(),
-        hourly_rate: parseFloat(hourlyRate),
-        insurance_certificate_expires: insuranceExpires || null,
-        profile_completed_at: new Date().toISOString(),
-        cal_link: calLink.trim() || null,
-      };
+    const updateData: Record<string, unknown> = {
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      phone: phone.trim() || null,
+      city_town: cityTown.trim() || null,
+      country: country.trim() || null,
+      years_practicing: yearsPracticing.trim() || null,
+      births_supported: birthsSupported.trim() || null,
+      bio: bio.trim(),
+      hourly_rate: parseFloat(hourlyRate),
+      insurance_certificate_expires: insuranceExpires || null,
+      profile_completed_at: new Date().toISOString(),
+      cal_link: calLink.trim() || null,
+    };
 
-      if (profile.is_doula) {
-        updateData.doula_package_rate = parseFloat(doulaPackageRate);
-      }
-
-      const { error } = await supabase
-        .from("caregivers")
-        .update(updateData)
-        .eq("id", profile.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Profile saved!",
-        description: "Your profile has been updated successfully.",
-      });
-
-      // Navigate to matches page
-      navigate("/caregiver/matches");
-    } catch (err: any) {
-      console.error("Save error:", err);
-      toast({
-        title: "Error saving profile",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
+    if (profile.is_doula) {
+      updateData.doula_package_rate = parseFloat(doulaPackageRate);
     }
+
+    updateProfile.mutate(
+      { id: profile.id, updateData },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Profile saved!",
+            description: "Your profile has been updated successfully.",
+          });
+          navigate("/caregiver/matches");
+        },
+        onError: (err: any) => {
+          console.error("Save error:", err);
+          toast({
+            title: "Error saving profile",
+            description: err.message,
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate("/");
   };
 
@@ -315,7 +259,7 @@ const CaregiverProfilePage = () => {
     return roles;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
@@ -340,6 +284,8 @@ const CaregiverProfilePage = () => {
   }
 
   const isProfileComplete = profile.profile_completed_at;
+  const saving = updateProfile.isPending;
+  const uploadingPhoto = uploadPhoto.isPending;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -352,8 +298,8 @@ const CaregiverProfilePage = () => {
                 {isProfileComplete ? "My Profile" : "Complete Your Profile"}
               </h1>
               <p className="text-muted-foreground mt-1">
-                {isProfileComplete 
-                  ? "Update your information anytime" 
+                {isProfileComplete
+                  ? "Update your information anytime"
                   : "Please add the following information to complete your profile"}
               </p>
             </div>
@@ -362,14 +308,16 @@ const CaregiverProfilePage = () => {
             </Button>
           </div>
 
-          {/* Personal Information - Editable */}
+          {/* Personal Information */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
                 Personal Information
               </CardTitle>
-              <CardDescription>Update your contact details and experience</CardDescription>
+              <CardDescription>
+                Update your contact details and experience
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -442,13 +390,19 @@ const CaregiverProfilePage = () => {
                 </div>
               </div>
               <div>
-                <Label className="text-muted-foreground text-sm">Your Roles</Label>
+                <Label className="text-muted-foreground text-sm">
+                  Your Roles
+                </Label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {getRoles().map((role) => (
-                    <Badge key={role} variant="secondary">{role}</Badge>
+                    <Badge key={role} variant="secondary">
+                      {role}
+                    </Badge>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Contact admin to update your roles</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Contact admin to update your roles
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -460,7 +414,9 @@ const CaregiverProfilePage = () => {
                 <FileText className="h-5 w-5 text-primary" />
                 Required Information
               </CardTitle>
-              <CardDescription>Please complete all fields below</CardDescription>
+              <CardDescription>
+                Please complete all fields below
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Profile Photo */}
@@ -473,14 +429,15 @@ const CaregiverProfilePage = () => {
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={profile.profile_photo_url || undefined} />
                     <AvatarFallback className="text-lg">
-                      {profile.first_name?.[0]}{profile.last_name?.[0]}
+                      {profile.first_name?.[0]}
+                      {profile.last_name?.[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <label htmlFor="photo-upload">
-                      <Button 
-                        variant="outline" 
-                        asChild 
+                      <Button
+                        variant="outline"
+                        asChild
                         disabled={uploadingPhoto}
                         className="cursor-pointer"
                       >
@@ -490,7 +447,9 @@ const CaregiverProfilePage = () => {
                           ) : (
                             <Upload className="h-4 w-4 mr-2" />
                           )}
-                          {profile.profile_photo_url ? "Change Photo" : "Upload Photo"}
+                          {profile.profile_photo_url
+                            ? "Change Photo"
+                            : "Upload Photo"}
                         </span>
                       </Button>
                     </label>
@@ -501,7 +460,9 @@ const CaregiverProfilePage = () => {
                       onChange={handlePhotoUpload}
                       className="hidden"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Max 5MB, JPG or PNG</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Max 5MB, JPG or PNG
+                    </p>
                   </div>
                 </div>
               </div>
@@ -520,12 +481,17 @@ const CaregiverProfilePage = () => {
                   className="min-h-[120px]"
                   maxLength={500}
                 />
-                <p className="text-xs text-muted-foreground mt-1">{bio.length}/500 characters</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {bio.length}/500 characters
+                </p>
               </div>
 
               {/* Hourly Rate */}
               <div>
-                <Label htmlFor="hourly-rate" className="flex items-center gap-2 mb-2">
+                <Label
+                  htmlFor="hourly-rate"
+                  className="flex items-center gap-2 mb-2"
+                >
                   <CreditCard className="h-4 w-4" />
                   Hourly Rate (£) *
                 </Label>
@@ -541,10 +507,12 @@ const CaregiverProfilePage = () => {
                 />
               </div>
 
-              {/* Doula Package Rate - only show if they are a doula */}
               {profile.is_doula && (
                 <div>
-                  <Label htmlFor="doula-rate" className="flex items-center gap-2 mb-2">
+                  <Label
+                    htmlFor="doula-rate"
+                    className="flex items-center gap-2 mb-2"
+                  >
                     <CreditCard className="h-4 w-4" />
                     Full Birth Support Package Rate (£) *
                   </Label>
@@ -558,13 +526,18 @@ const CaregiverProfilePage = () => {
                     step="0.01"
                     className="max-w-[200px]"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Your rate for full birth support package</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your rate for full birth support package
+                  </p>
                 </div>
               )}
 
               {/* Insurance Expiry */}
               <div>
-                <Label htmlFor="insurance-expires" className="flex items-center gap-2 mb-2">
+                <Label
+                  htmlFor="insurance-expires"
+                  className="flex items-center gap-2 mb-2"
+                >
                   <Calendar className="h-4 w-4" />
                   Insurance Certificate Expiry Date (as applicable)
                 </Label>
@@ -587,30 +560,47 @@ const CaregiverProfilePage = () => {
                 Booking Calendar
               </CardTitle>
               <CardDescription>
-                Set up your free Cal.com account to let parents book video calls with you directly.
+                Set up your free Cal.com account to let parents book video calls
+                with you directly.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Setup instructions */}
               <div className="bg-accent/30 p-4 rounded-lg border border-accent space-y-3">
-                <h4 className="font-semibold text-sm">Setup Instructions (required)</h4>
+                <h4 className="font-semibold text-sm">
+                  Setup Instructions (required)
+                </h4>
                 <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                   <li>
-                    <a href="https://cal.com/signup" target="_blank" rel="noopener noreferrer" className="text-primary underline">Sign up for a free Cal.com account</a> and set your availability
+                    <a
+                      href="https://cal.com/signup"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      Sign up for a free Cal.com account
+                    </a>{" "}
+                    and set your availability
                   </li>
                   <li>
-                    Go to <strong>Event Types</strong> → select your event → <strong>Location</strong> → choose <strong>"Cal Video"</strong> as the conferencing app
+                    Go to <strong>Event Types</strong> → select your event →{" "}
+                    <strong>Location</strong> → choose{" "}
+                    <strong>"Cal Video"</strong> as the conferencing app
                   </li>
                   <li>
-                    This is <strong>mandatory</strong> — all Birth Rebel calls must use Cal Video so parents have a consistent, reliable experience
+                    This is <strong>mandatory</strong> — all Birth Rebel calls
+                    must use Cal Video so parents have a consistent, reliable
+                    experience
                   </li>
                   <li>
-                    Copy your booking link (e.g. <span className="font-mono text-xs">cal.com/your-name/30min</span>) and paste it below
+                    Copy your booking link (e.g.{" "}
+                    <span className="font-mono text-xs">
+                      cal.com/your-name/30min
+                    </span>
+                    ) and paste it below
                   </li>
                 </ol>
               </div>
 
-              {/* Link input */}
               <div>
                 <Label htmlFor="cal-link">Cal.com Booking URL</Label>
                 <Input
@@ -620,30 +610,35 @@ const CaregiverProfilePage = () => {
                   placeholder="e.g. https://cal.com/your-name/30min"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Paste your Cal.com event link here. Make sure Cal Video is set as the conferencing app.
+                  Paste your Cal.com event link here. Make sure Cal Video is set
+                  as the conferencing app.
                 </p>
               </div>
 
               {calLink && (
                 <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg border border-green-200">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-green-800">Booking link set — parents will see a "Schedule a Call" button with Cal Video</span>
+                  <span className="text-sm text-green-800">
+                    Booking link set — parents will see a "Schedule a Call"
+                    button with Cal Video
+                  </span>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Stripe Connect */}
           <StripeConnectCard />
 
-          {/* Documents - Upload Section */}
+          {/* Documents */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
                 Your Documents
               </CardTitle>
-              <CardDescription>Upload or update your certificates and documents</CardDescription>
+              <CardDescription>
+                Upload or update your certificates and documents
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -653,51 +648,80 @@ const CaregiverProfilePage = () => {
                   label="Training Certificate"
                   currentUrl={profile.training_certificate_url}
                   expiryDate={null}
-                  onUploadComplete={(url) => setProfile({ ...profile, training_certificate_url: url })}
+                  onUploadComplete={(url) =>
+                    setProfile((prev) =>
+                      prev ? { ...prev, training_certificate_url: url } : prev,
+                    )
+                  }
                   showExpiryInput={false}
                 />
-                
+
                 <DocumentUpload
                   caregiverId={profile.id}
                   documentType="insurance"
                   label="Insurance Certificate"
                   currentUrl={profile.insurance_certificate_url}
                   expiryDate={profile.insurance_certificate_expires}
-                  onUploadComplete={(url) => setProfile({ ...profile, insurance_certificate_url: url })}
-                  onExpiryChange={(date) => setProfile({ ...profile, insurance_certificate_expires: date })}
+                  onUploadComplete={(url) =>
+                    setProfile((prev) =>
+                      prev ? { ...prev, insurance_certificate_url: url } : prev,
+                    )
+                  }
+                  onExpiryChange={(date) =>
+                    setProfile((prev) =>
+                      prev
+                        ? { ...prev, insurance_certificate_expires: date }
+                        : prev,
+                    )
+                  }
                 />
-                
+
                 <DocumentUpload
                   caregiverId={profile.id}
                   documentType="dbs"
                   label="DBS Certificate"
                   currentUrl={profile.dbs_certificate_url}
                   expiryDate={null}
-                  onUploadComplete={(url) => setProfile({ ...profile, dbs_certificate_url: url })}
+                  onUploadComplete={(url) =>
+                    setProfile((prev) =>
+                      prev ? { ...prev, dbs_certificate_url: url } : prev,
+                    )
+                  }
                   showExpiryInput={false}
                 />
-                
+
                 <DocumentUpload
                   caregiverId={profile.id}
                   documentType="additional1"
                   label="Additional Certificate 1"
                   currentUrl={profile.additional_certificate_1_url}
                   expiryDate={null}
-                  onUploadComplete={(url) => setProfile({ ...profile, additional_certificate_1_url: url })}
+                  onUploadComplete={(url) =>
+                    setProfile((prev) =>
+                      prev
+                        ? { ...prev, additional_certificate_1_url: url }
+                        : prev,
+                    )
+                  }
                   showExpiryInput={false}
                 />
-                
+
                 <DocumentUpload
                   caregiverId={profile.id}
                   documentType="additional2"
                   label="Additional Certificate 2"
                   currentUrl={profile.additional_certificate_2_url}
                   expiryDate={null}
-                  onUploadComplete={(url) => setProfile({ ...profile, additional_certificate_2_url: url })}
+                  onUploadComplete={(url) =>
+                    setProfile((prev) =>
+                      prev
+                        ? { ...prev, additional_certificate_2_url: url }
+                        : prev,
+                    )
+                  }
                   showExpiryInput={false}
                 />
 
-                {/* Profile Photo - View Only */}
                 {profile.profile_photo_url && (
                   <div className="flex items-center justify-between p-3 bg-accent/30 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -720,18 +744,20 @@ const CaregiverProfilePage = () => {
 
           {/* Save Button */}
           <div className="flex gap-4">
-            <Button 
-              onClick={handleSaveProfile} 
+            <Button
+              onClick={handleSaveProfile}
               disabled={saving}
               size="lg"
               className="flex-1"
             >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {isProfileComplete ? "Save Changes" : "Complete Profile & Continue"}
+              {isProfileComplete
+                ? "Save Changes"
+                : "Complete Profile & Continue"}
             </Button>
             {isProfileComplete && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => navigate("/caregiver/matches")}
                 size="lg"
               >

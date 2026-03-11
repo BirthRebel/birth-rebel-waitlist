@@ -7,12 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { validatePassword, formatAuthError } from "@/lib/authUtils";
 
-const TYPEFORM_URL = "https://form.typeform.com/to/eAJV4XXH?typeform-source=birthrebel.com";
+const TYPEFORM_URL =
+  "https://form.typeform.com/to/eAJV4XXH?typeform-source=birthrebel.com";
 
 const CaregiverAuth = () => {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<"login" | "signup" | "reset" | "update_password">("login");
+  const [mode, setMode] = useState<
+    "login" | "signup" | "reset" | "update_password"
+  >("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,11 +26,12 @@ const CaregiverAuth = () => {
 
   // Listen for PASSWORD_RECOVERY event when user clicks reset link
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth event:", event);
-      
+
       if (event === "PASSWORD_RECOVERY") {
-        // User clicked the password reset link - show update password form
         setMode("update_password");
         if (session?.user?.email) {
           setEmail(session.user.email);
@@ -36,7 +41,6 @@ const CaregiverAuth = () => {
           description: "Please enter your new password below.",
         });
       } else if (event === "SIGNED_IN" && mode !== "update_password") {
-        // Regular sign in - redirect to matches
         navigate("/caregiver/matches", { replace: true });
       }
     });
@@ -48,7 +52,7 @@ const CaregiverAuth = () => {
   useEffect(() => {
     const emailParam = searchParams.get("email");
     const signupParam = searchParams.get("signup");
-    
+
     if (emailParam) {
       setEmail(emailParam);
     }
@@ -67,10 +71,11 @@ const CaregiverAuth = () => {
       return;
     }
 
-    if (password.length < 6) {
+    const { valid, message } = validatePassword(password);
+    if (!valid) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters.",
+        title: "Password too weak",
+        description: message,
         variant: "destructive",
       });
       return;
@@ -79,23 +84,19 @@ const CaregiverAuth = () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
-      
       if (error) throw error;
-      
+
       toast({
         title: "Password updated!",
         description: "Your password has been set. Redirecting...",
       });
-      
-      // Navigate to matches after password update
-      setTimeout(() => {
-        navigate("/caregiver/matches", { replace: true });
-      }, 1500);
+
+      navigate("/caregiver/matches", { replace: true });
     } catch (error: any) {
       console.error("Password update error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update password. Please try again.",
+        description: formatAuthError(error),
         variant: "destructive",
       });
       setLoading(false);
@@ -104,13 +105,12 @@ const CaregiverAuth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Handle password update separately
+
     if (mode === "update_password") {
       await handleUpdatePassword();
       return;
     }
-    
+
     setLoading(true);
 
     try {
@@ -119,7 +119,7 @@ const CaregiverAuth = () => {
           redirectTo: "https://birth-rebel-waitlist.lovable.app/caregiver/auth",
         });
         if (error) throw error;
-        
+
         toast({
           title: "Check your email",
           description: "We've sent you a password reset link.",
@@ -130,7 +130,6 @@ const CaregiverAuth = () => {
       }
 
       if (mode === "signup") {
-        // Validate passwords match
         if (password !== confirmPassword) {
           toast({
             title: "Passwords don't match",
@@ -141,32 +140,46 @@ const CaregiverAuth = () => {
           return;
         }
 
-        // Sign up the user
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: "https://birth-rebel-waitlist.lovable.app/caregiver/auth",
-          },
-        });
+        const { valid, message } = validatePassword(password);
+        if (!valid) {
+          toast({
+            title: "Password too weak",
+            description: message,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { data: signUpData, error: signUpError } =
+          await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo:
+                "https://birth-rebel-waitlist.lovable.app/caregiver/auth",
+            },
+          });
 
         if (signUpError) {
           console.error("Signup error:", signUpError);
-          // Handle various signup error scenarios
-          if (signUpError.message.includes("already registered") || signUpError.message.includes("User already registered")) {
+          if (
+            signUpError.message.includes("already registered") ||
+            signUpError.message.includes("User already registered")
+          ) {
             toast({
               title: "Account exists",
-              description: "This email is already registered. Please log in instead.",
+              description:
+                "This email is already registered. Please log in instead.",
               variant: "destructive",
             });
             setMode("login");
             setLoading(false);
             return;
           }
-          // Show the actual error message for any other signup failure
           toast({
             title: "Signup failed",
-            description: signUpError.message || "Unable to create account. Please try again.",
+            description: formatAuthError(signUpError),
             variant: "destructive",
           });
           setLoading(false);
@@ -174,7 +187,6 @@ const CaregiverAuth = () => {
         }
 
         if (signUpData.user) {
-          // Try to link the caregiver profile
           await supabase
             .from("caregivers")
             .update({ user_id: signUpData.user.id })
@@ -185,12 +197,13 @@ const CaregiverAuth = () => {
             title: "Account created!",
             description: "Your account has been set up. You can now log in.",
           });
-          
-          // Auto-login after signup
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
+
+          const { error: signInError } = await supabase.auth.signInWithPassword(
+            {
+              email,
+              password,
+            },
+          );
 
           if (!signInError) {
             navigate("/caregiver/matches");
@@ -198,40 +211,39 @@ const CaregiverAuth = () => {
             setMode("login");
           }
         }
-        
+
         setLoading(false);
         return;
       }
-      
+
       // Login mode
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-        
+
       if (error) {
         setLoading(false);
         toast({
           title: "Error",
-          description: error.message,
+          description: formatAuthError(error),
           variant: "destructive",
         });
         return;
       }
-      
+
       toast({
         title: "Welcome!",
         description: "Logging you in...",
       });
-      
-      // Navigate directly after successful login
+
       setLoading(false);
       navigate("/caregiver/matches", { replace: true });
     } catch (error: any) {
       console.error("Auth error:", error);
       toast({
         title: "Error",
-        description: error.message || "Something went wrong. Please try again.",
+        description: formatAuthError(error),
         variant: "destructive",
       });
       setLoading(false);
@@ -240,33 +252,47 @@ const CaregiverAuth = () => {
 
   const getTitle = () => {
     switch (mode) {
-      case "signup": return "Create Your Account";
-      case "reset": return "Reset Password";
-      case "update_password": return "Set New Password";
-      default: return "Caregiver Login";
+      case "signup":
+        return "Create Your Account";
+      case "reset":
+        return "Reset Password";
+      case "update_password":
+        return "Set New Password";
+      default:
+        return "Caregiver Login";
     }
   };
 
   const getButtonText = () => {
     if (loading) return "Loading...";
     switch (mode) {
-      case "signup": return "Create Account";
-      case "reset": return "Send Reset Link";
-      case "update_password": return "Set Password";
-      default: return "Log In";
+      case "signup":
+        return "Create Account";
+      case "reset":
+        return "Send Reset Link";
+      case "update_password":
+        return "Set Password";
+      default:
+        return "Log In";
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FFFAF5' }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ backgroundColor: "#FFFAF5" }}
+    >
       <Header />
       <main className="flex-1 flex items-center justify-center pt-32 pb-16 px-6">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <h1 className="text-2xl font-bold text-center mb-2" style={{ color: '#E2725B' }}>
+            <h1
+              className="text-2xl font-bold text-center mb-2"
+              style={{ color: "#E2725B" }}
+            >
               {getTitle()}
             </h1>
-            
+
             {mode === "signup" && (
               <p className="text-center text-sm text-muted-foreground mb-6">
                 Set up your password to access your caregiver dashboard
@@ -278,7 +304,7 @@ const CaregiverAuth = () => {
                 Choose a secure password for your account
               </p>
             )}
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode !== "update_password" && (
                 <div>
@@ -290,7 +316,9 @@ const CaregiverAuth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="you@example.com"
-                    disabled={mode === "signup" && searchParams.get("email") !== null}
+                    disabled={
+                      mode === "signup" && searchParams.get("email") !== null
+                    }
                   />
                 </div>
               )}
@@ -301,8 +329,10 @@ const CaregiverAuth = () => {
                   <p className="text-sm text-muted-foreground py-2">{email}</p>
                 </div>
               )}
-              
-              {(mode === "login" || mode === "signup" || mode === "update_password") && (
+
+              {(mode === "login" ||
+                mode === "signup" ||
+                mode === "update_password") && (
                 <div>
                   <Label htmlFor="password">
                     {mode === "update_password" ? "New Password" : "Password"}
@@ -314,7 +344,7 @@ const CaregiverAuth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
               )}
@@ -329,46 +359,49 @@ const CaregiverAuth = () => {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     placeholder="••••••••"
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
               )}
-              
-              <Button 
-                type="submit" 
+
+              <Button
+                type="submit"
                 className="w-full"
                 disabled={loading}
-                style={{ backgroundColor: '#E2725B' }}
+                style={{ backgroundColor: "#E2725B" }}
               >
                 {getButtonText()}
               </Button>
             </form>
-            
+
             {mode === "login" && (
               <p className="text-center mt-3 text-sm">
                 <button
                   type="button"
                   onClick={() => setMode("reset")}
                   className="underline font-medium"
-                  style={{ color: '#E2725B' }}
+                  style={{ color: "#E2725B" }}
                 >
                   Forgot password?
                 </button>
               </p>
             )}
-            
-            <div className="text-center mt-4 text-sm" style={{ color: '#36454F' }}>
+
+            <div
+              className="text-center mt-4 text-sm"
+              style={{ color: "#36454F" }}
+            >
               {mode === "reset" && (
                 <button
                   type="button"
                   onClick={() => setMode("login")}
                   className="underline font-medium"
-                  style={{ color: '#E2725B' }}
+                  style={{ color: "#E2725B" }}
                 >
                   Back to login
                 </button>
               )}
-              
+
               {mode === "login" && (
                 <>
                   <p className="mb-2">
@@ -377,7 +410,7 @@ const CaregiverAuth = () => {
                       type="button"
                       onClick={() => setMode("signup")}
                       className="underline font-medium"
-                      style={{ color: '#E2725B' }}
+                      style={{ color: "#E2725B" }}
                     >
                       Create account
                     </button>
@@ -389,7 +422,7 @@ const CaregiverAuth = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline font-medium"
-                      style={{ color: '#E2725B' }}
+                      style={{ color: "#E2725B" }}
                     >
                       Register here
                     </a>
@@ -404,7 +437,7 @@ const CaregiverAuth = () => {
                     type="button"
                     onClick={() => setMode("login")}
                     className="underline font-medium"
-                    style={{ color: '#E2725B' }}
+                    style={{ color: "#E2725B" }}
                   >
                     Log in
                   </button>
